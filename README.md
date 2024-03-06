@@ -8,7 +8,7 @@ All code required to generate figures and example analyses.
 
 Writing occurs either via this repo and the standard GitHub workflows,
 or using the linked
-[Overleaf project](https://www.overleaf.com/project/659c19afc265913df38df1ab).
+[Overleaf project](https://www.overleaf.com/project/65e8387b792e2d6e5065b7a6).
 Both are useful for different things, and so will be used in parallel.
 
 Please contact Jerome Kelleher if you want to get edit access on
