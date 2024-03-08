@@ -3,17 +3,21 @@ import matplotlib.pyplot as plt
 import humanize
 import pandas as pd
 import click
+import numpy as np
+import scipy.optimize as optimize
+
 
 sgkit_colour = "tab:blue"
 bcf_colour = "tab:orange"
 sav_colour = "tab:red"
 genozip_colour = "tab:purple"
+zarr_colour = "tab:blue"
 
 
 def plot_size(ax, df):
     colour_map = {
         "bcf": bcf_colour,
-        "sgkit": sgkit_colour,
+        "zarr": zarr_colour,
         "sav": sav_colour,
         "genozip": genozip_colour,
     }
@@ -55,7 +59,7 @@ def plot_size(ax, df):
 def plot_total_cpu(ax, df):
     colours = {
         "bcftools": bcf_colour,
-        "sgkit": sgkit_colour,
+        "zarr": zarr_colour,
         "savvy": sav_colour,
         "genozip": genozip_colour,
     }
@@ -78,7 +82,6 @@ def plot_total_cpu(ax, df):
         ax.loglog(
             dfs["num_samples"].values,
             dfs["wall_time"].values,
-            label=f"{tool}",
             linestyle=":",
             # marker=".",
             color=colours[tool],
@@ -87,13 +90,38 @@ def plot_total_cpu(ax, df):
 
         hours = total_cpu[-1] // 3600
 
-        ax.annotate(
-            f"{hours:.0f}h",
-            textcoords="offset points",
-            xytext=(15, 0),
-            xy=(row.num_samples, total_cpu[-1]),
-            xycoords="data",
-        )
+        if tool != "genozip":
+            ax.annotate(
+                f"{hours:.0f}h",
+                textcoords="offset points",
+                xytext=(15, 0),
+                xy=(row.num_samples, total_cpu[-1]),
+                xycoords="data",
+            )
+
+    # Extrapolate for genozip
+    def mulplicative_model(n, a, b):
+        # Fit a simple exponential function.
+        return a * np.power(n, b)
+
+    dfs = df[(df.threads == 1) & (df.tool == "genozip")]
+    fit_params, _ = optimize.curve_fit(
+        mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:])
+    num_samples = df[(df.threads == 1) & (df.tool == "bcftools")].num_samples.values
+    fit = mulplicative_model(num_samples, *fit_params)
+    # print(fit)
+
+    ax.loglog(num_samples[4:], fit[4:], linestyle=":", color="lightgray")
+    hours = fit[-1] // 3600
+    ax.annotate(
+        f"{hours:.0f}h*",
+        textcoords="offset points",
+        xytext=(15, 0),
+        xy=(num_samples[-1], fit[-1]),
+        xycoords="data",
+    )
+    ax.legend()
+
 
 
 def plot_wall_time(ax, df, threads=1):
@@ -186,18 +214,16 @@ def whole_matrix_compute(time_data, output):
     df = df[df.storage == "hdd"]
 
     # TODO set the width properly based on document
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4, 6))
+    fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
 
     plot_total_cpu(ax1, df)
-    plot_thread_speedup(ax2, df, 8)
+    # plot_thread_speedup(ax2, df, 8)
 
-    ax2.set_xlabel("Sample size (diploid)")
+    ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
-    ax2.set_ylabel("Threads utilisation")
 
     ax1.set_title(f"Afdist CPU time")
-    ax2.set_title(f"Speedup with 8 threads")
-    ax2.legend()
+    ax1.legend()
 
     plt.tight_layout()
     plt.savefig(output)

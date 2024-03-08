@@ -178,6 +178,20 @@ def run_savvy_afdist(path, *, num_threads, num_sites, debug=False):
     return time_cli_command(cmd, debug)
 
 
+@numba.njit("void(int64, int8[:], int32[:], int32[:], int32[:])")
+def count_genotypes(index, g, hom_ref, hom_alt, het):
+    n = g.shape[0] // 2
+    # NB Assuming no missing data!
+    for i in range(n):
+        j = 2 * i
+        if g[j] == 0 and g[j + 1] == 0:
+            hom_ref[index] += 1
+        elif g[j] > 0 and g[j + 1] > 0:
+            hom_alt[index] += 1
+        else:
+            het[index] += 1
+
+
 def zarr_afdist(path, num_bins=10):
     root = zarr.open(path)
     call_genotype = root["call_genotype"]
@@ -188,7 +202,7 @@ def zarr_afdist(path, num_bins=10):
     hom_alt = np.zeros(m, dtype=np.int32)
     hom_ref = np.zeros(m, dtype=np.int32)
     for j, genotypes in enumerate(call_genotype):
-        hom_ref[j], hom_alt[j], het[j] = count_genotypes(genotypes)
+        count_genotypes(j, genotypes.reshape(2 * n), hom_ref, hom_alt, het)
     alt_count = 2 * hom_alt + het
     af = alt_count / (n * 2)
 
@@ -548,23 +562,6 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
                 df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
                 df.to_csv(output, index=False)
                 print(df)
-
-
-@numba.njit
-def count_genotypes(g):
-    hom_ref = 0
-    hom_alt = 0
-    het = 0
-    # NB Assuming no missing data!
-    for j in range(len(g)):
-        gt = g[j]
-        if gt[0] == 0 and gt[1] == 0:
-            hom_ref += 1
-        elif gt[0] > 0 and gt[1] > 0:
-            hom_alt += 1
-        else:
-            het += 1
-    return hom_ref, hom_alt, het
 
 
 @click.command()
