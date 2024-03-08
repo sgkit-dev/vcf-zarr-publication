@@ -46,3 +46,7 @@ plot_data/data-scaling.csv:
 figures/data-scaling.pdf: plot_data/data-scaling.csv
 	python3 src/plot.py data-scaling plot_data/data-scaling.csv  \
 		figures/data-scaling.pdf
+
+figures/whole-matrix-compute-pdf: plot_data/whole-matrix-compute.csv
+	python3 src/plot.py whole-matrix-compute plot_data/whole-matrix-compute.csv  \
+		figures/whole-matrix-compute.pdf
