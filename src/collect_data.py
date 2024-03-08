@@ -1,13 +1,11 @@
 import os
+import sys
 import pathlib
 import subprocess
 import time
 import dataclasses
 import multiprocessing
 import tempfile
-
-# Need to do this to avoid crashes with numba :cry:
-os.environ["SGKIT_DISABLE_NUMBA_CACHE"] = "1"
 
 import numba
 import zarr
@@ -18,7 +16,11 @@ import pandas as pd
 import tskit
 import click
 import sgkit as sg
-import dask.distributed
+
+
+# yuck - but simplest way to avoid changing directory structure
+sys.path.insert(0, "src")
+from zarr_afdist import zarr_afdist
 
 
 def get_file_size(file):
@@ -78,10 +80,6 @@ def genozip_version():
     cmd = "./software/genozip --version"
     out = subprocess.run(cmd, shell=True, check=True, capture_output=True)
     return out.stdout.decode()
-
-
-def sgkit_version():
-    return f"sgkit version: {sg.__version__}"
 
 
 def get_variant_slice_region(ds, variant_slice):
@@ -178,87 +176,6 @@ def run_savvy_afdist(path, *, num_threads, num_sites, debug=False):
     return time_cli_command(cmd, debug)
 
 
-
-def get_prob_dist(ds, num_bins=10):
-    ds = sg.variant_stats(ds, merge=False).compute()
-    bins = np.linspace(0, 1.0, num_bins + 1)
-    bins[-1] += 0.01
-    af = ds.variant_allele_frequency.values[:, 1]
-    pRA = 2 * af * (1 - af)
-    pAA = af * af
-    hets = ds.variant_n_het.values
-    homs = ds.variant_n_hom_alt.values
-    a = np.bincount(np.digitize(pRA, bins), weights=hets, minlength=num_bins + 1)
-    b = np.bincount(np.digitize(pAA, bins), weights=homs, minlength=num_bins + 1)
-
-    count = (a + b).astype(int)
-    return pd.DataFrame({"start": bins[:-1], "stop": bins[1:], "prob_dist": count[1:]})
-
-
-def _sgkit_afdist_subset_worker(
-    ds_path, variant_slice, sample_slice, num_threads, debug, conn
-):
-    before = time.time()
-    with dask.distributed.Client(
-        processes=False, threads_per_worker=num_threads
-    ) as client:
-        ds = sg.load_dataset(ds_path)
-        if sample_slice is not None:
-            assert variant_slice is not None
-            ds = ds.isel(variants=variant_slice, samples=sample_slice)
-        df = get_prob_dist(ds)
-    wall_time = time.time() - before
-    cpu_times = psutil.Process().cpu_times()
-    if debug:
-        print(df)
-    conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
-
-
-def sgkit_afdist_worker(ds_path, num_threads, debug, conn):
-    return _sgkit_afdist_subset_worker(ds_path, None, None, num_threads, debug, conn)
-
-
-def sgkit_afdist_subset_worker(
-    ds_path, variant_slice, sample_slice, num_threads, debug, conn
-):
-    return _sgkit_afdist_subset_worker(
-        ds_path, variant_slice, sample_slice, num_threads, debug, conn
-    )
-
-
-def run_sgkit_afdist(ds_path, *, num_threads, num_sites, debug=False):
-    conn1, conn2 = multiprocessing.Pipe()
-    p = multiprocessing.Process(
-        target=sgkit_afdist_worker, args=(ds_path, num_threads, debug, conn2)
-    )
-    p.start()
-    value = conn1.recv()
-    wall_time, user_time, sys_time = map(float, value.split())
-    p.join()
-    if p.exitcode != 0:
-        raise ValueError()
-    p.close()
-    return ProcessTimeResult(wall_time, sys_time, user_time)
-
-
-def run_sgkit_afdist_subset(
-    ds_path, ds, variant_slice, sample_slice, *, num_threads, debug=False
-):
-    conn1, conn2 = multiprocessing.Pipe()
-    p = multiprocessing.Process(
-        target=sgkit_afdist_subset_worker,
-        args=(ds_path, variant_slice, sample_slice, num_threads, debug, conn2),
-    )
-    p.start()
-    value = conn1.recv()
-    wall_time, user_time, sys_time = map(float, value.split())
-    p.join()
-    if p.exitcode != 0:
-        raise ValueError()
-    p.close()
-    return ProcessTimeResult(wall_time, sys_time, user_time)
-
-
 def _zarr_afdist_subset_worker(
     ds_path, variant_slice, sample_slice, num_threads, debug, conn
 ):
@@ -330,7 +247,6 @@ class Tool:
 
 all_tools = [
     Tool("savvy", ".sav", run_savvy_afdist, None, savvy_version),
-    Tool("sgkit", ".sgz", run_sgkit_afdist, run_sgkit_afdist_subset, sgkit_version),
     Tool("zarr", ".sgz", run_zarr_afdist, run_zarr_afdist_subset, None),
     # Making sure we run on the output of bcftools fill-tags
     Tool(
@@ -414,7 +330,8 @@ def file_size(src, output, debug):
         ts = tskit.load(ts_path)
         click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
         bcf_path = ts_path.with_suffix(".bcf")
-        sg_path = ts_path.with_suffix(".sgz")
+        # FIXME
+        zarr_path = ts_path.with_suffix(".sgz")
         sav_path = ts_path.with_suffix(".sav")
         genozip_path = ts_path.with_suffix(".genozip")
         if not sg_path.exists:
@@ -427,7 +344,7 @@ def file_size(src, output, debug):
         tmap = {
             "tsk": ts_path,
             "bcf": bcf_path,
-            "sgkit": sg_path,
+            "zarr": zarr_path,
             "sav": sav_path,
             "genozip": genozip_path,
         }
