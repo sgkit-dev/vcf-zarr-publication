@@ -9,6 +9,8 @@ import tempfile
 # Need to do this to avoid crashes with numba :cry:
 os.environ["SGKIT_DISABLE_NUMBA_CACHE"] = "1"
 
+import numba
+import zarr
 import psutil
 import humanize
 import numpy as np
@@ -176,6 +178,45 @@ def run_savvy_afdist(path, *, num_threads, num_sites, debug=False):
     return time_cli_command(cmd, debug)
 
 
+@numba.njit("void(int64, int8[:], int32[:], int32[:], int32[:])")
+def count_genotypes(index, g, hom_ref, hom_alt, het):
+    n = g.shape[0] // 2
+    # NB Assuming no missing data!
+    for i in range(n):
+        j = 2 * i
+        if g[j] == 0 and g[j + 1] == 0:
+            hom_ref[index] += 1
+        elif g[j] > 0 and g[j + 1] > 0:
+            hom_alt[index] += 1
+        else:
+            het[index] += 1
+
+
+def zarr_afdist(path, num_bins=10):
+    root = zarr.open(path)
+    call_genotype = root["call_genotype"]
+    m = call_genotype.shape[0]
+    n = call_genotype.shape[1]
+
+    het = np.zeros(m, dtype=np.int32)
+    hom_alt = np.zeros(m, dtype=np.int32)
+    hom_ref = np.zeros(m, dtype=np.int32)
+    for j, genotypes in enumerate(call_genotype):
+        count_genotypes(j, genotypes.reshape(2 * n), hom_ref, hom_alt, het)
+    alt_count = 2 * hom_alt + het
+    af = alt_count / (n * 2)
+
+    bins = np.linspace(0, 1.0, num_bins + 1)
+    bins[-1] += 0.01
+    pRA = 2 * af * (1 - af)
+    pAA = af * af
+    a = np.bincount(np.digitize(pRA, bins), weights=het, minlength=num_bins + 1)
+    b = np.bincount(np.digitize(pAA, bins), weights=hom_alt, minlength=num_bins + 1)
+
+    count = (a + b).astype(int)
+    return pd.DataFrame({"start": bins[:-1], "stop": bins[1:], "prob_dist": count[1:]})
+
+
 def get_prob_dist(ds, num_bins=10):
     ds = sg.variant_stats(ds, merge=False).compute()
     bins = np.linspace(0, 1.0, num_bins + 1)
@@ -256,6 +297,66 @@ def run_sgkit_afdist_subset(
     return ProcessTimeResult(wall_time, sys_time, user_time)
 
 
+def _zarr_afdist_subset_worker(
+    ds_path, variant_slice, sample_slice, num_threads, debug, conn
+):
+    before = time.time()
+    assert variant_slice is None
+    assert variant_slice is None
+    assert num_threads == 1
+    df = zarr_afdist(ds_path)
+    wall_time = time.time() - before
+    cpu_times = psutil.Process().cpu_times()
+    if debug:
+        print(df)
+    conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
+
+
+def zarr_afdist_worker(ds_path, num_threads, debug, conn):
+    return _zarr_afdist_subset_worker(ds_path, None, None, num_threads, debug, conn)
+
+
+def zarr_afdist_subset_worker(
+    ds_path, variant_slice, sample_slice, num_threads, debug, conn
+):
+    return _zarr_afdist_subset_worker(
+        ds_path, variant_slice, sample_slice, num_threads, debug, conn
+    )
+
+
+def run_zarr_afdist(ds_path, *, num_threads, num_sites, debug=False):
+    conn1, conn2 = multiprocessing.Pipe()
+    p = multiprocessing.Process(
+        target=zarr_afdist_worker, args=(ds_path, num_threads, debug, conn2)
+    )
+    p.start()
+    value = conn1.recv()
+    wall_time, user_time, sys_time = map(float, value.split())
+    p.join()
+    if p.exitcode != 0:
+        raise ValueError()
+    p.close()
+    return ProcessTimeResult(wall_time, sys_time, user_time)
+
+
+def run_zarr_afdist_subset(
+    ds_path, ds, variant_slice, sample_slice, *, num_threads, debug=False
+):
+    conn1, conn2 = multiprocessing.Pipe()
+    p = multiprocessing.Process(
+        target=zarr_afdist_subset_worker,
+        args=(ds_path, variant_slice, sample_slice, num_threads, debug, conn2),
+    )
+    p.start()
+    value = conn1.recv()
+    wall_time, user_time, sys_time = map(float, value.split())
+    p.join()
+    if p.exitcode != 0:
+        raise ValueError()
+    p.close()
+    return ProcessTimeResult(wall_time, sys_time, user_time)
+
+
 @dataclasses.dataclass
 class Tool:
     name: str
@@ -268,6 +369,7 @@ class Tool:
 all_tools = [
     Tool("savvy", ".sav", run_savvy_afdist, None, savvy_version),
     Tool("sgkit", ".sgz", run_sgkit_afdist, run_sgkit_afdist_subset, sgkit_version),
+    Tool("zarr", ".sgz", run_zarr_afdist, run_zarr_afdist_subset, None),
     # Making sure we run on the output of bcftools fill-tags
     Tool(
         "bcftools",
