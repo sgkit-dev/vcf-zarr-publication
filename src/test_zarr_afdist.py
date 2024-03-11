@@ -115,6 +115,35 @@ class TestSimulations:
         nt.assert_array_equal(sg_counts.variant_n_hom_alt, counts.hom_alt)
         nt.assert_array_equal(sg_counts.variant_n_hom_ref, counts.hom_ref)
 
+    @pytest.mark.parametrize(
+        ["n", "L"],
+        [
+            (10, 10**5),
+            (10, 10**6),
+            (100, 10**5),
+            (1000, 10**5),
+        ],
+    )
+    @pytest.mark.parametrize("seed", range(1, 10))
+    def test_classify_genotypes_subset(self, tmp_path, n, L, seed):
+        zarr_path = self.run_simulation(
+            tmp_path, n, L, seed, variant_chunk_size=200, sample_chunk_size=103
+        )
+        root = zarr.open(zarr_path)
+        G = root["call_genotype"]
+        m = G.shape[0]
+        n = G.shape[1]
+        variants_mask = np.ones(m, dtype=bool)
+        variants_mask[0 : m // 2] = 0
+        samples_mask = np.ones(n, dtype=bool)
+        samples_mask[n // 2 :] = 0
+        counts = zarr_afdist.classify_genotypes_subset(G, variants_mask, samples_mask)
+        ds = sg.load_dataset(zarr_path)
+        ds = ds.isel(variants=variants_mask, samples=samples_mask)
+        sg_counts = sg.variant_stats(ds, merge=False).compute()
+        nt.assert_array_equal(sg_counts.variant_n_het, counts.het)
+        nt.assert_array_equal(sg_counts.variant_n_hom_alt, counts.hom_alt)
+        nt.assert_array_equal(sg_counts.variant_n_hom_ref, counts.hom_ref)
 
     @pytest.mark.parametrize(
         ["n", "L"],
@@ -128,7 +157,7 @@ class TestSimulations:
     @pytest.mark.parametrize("seed", range(11, 15))
     def test_af(self, tmp_path, n, L, seed):
         zarr_path = self.run_simulation(tmp_path, n, L, seed)
-        counts = zarr_afdist.classify_genotypes(zarr.load(zarr_path)["call_genotype"])
+        counts = zarr_afdist.classify_genotypes(zarr.open(zarr_path)["call_genotype"])
         alt_count = 2 * n - counts.ref_count
         af = alt_count / (n * 2)
         ds = sg.load_dataset(zarr_path)
