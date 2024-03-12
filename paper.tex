@@ -364,77 +364,16 @@ to execute.
 \end{figure*}
 
 
-\subsection{Distributed computation}
-Distributed computation has been the reality in the analysis
-of genetic variation for many years,
-where data is most often provided as per-chromosome VCFs.
-This chunking provides a fairly straightforward way to parallelise
-computations, using HPC schedulers to split work per-file.
-When more fine-grained parallelism is required, users must
-provide exact genome coordinates of the genome regions
-as part of their submission scripts. Combining results
-is a manual operation.
-Workflow engines such as
-Snakemake~\cite{koster2012snakemake,molder2021sustainable}
-and [TODO mention WDL, Cromwell, etc?] make such analyses
-much easier, but there is still a great deal of room for
-mistakes.
-Per-chromosome VCFs are not practical for biobank scale
-projects, however, and variant call data tends to be split
-into many (still large) files.
-For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
-are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
-hundreds of files per chromosome.
-% This is horrible writing, but the point is important.
-While these files provide a natural
-unit for distributing work, the details of how they
-are split differ and essentially there is
-no interoperability among large-scale datasets because the VCFs are
-so cumbersome that a separate orchestration layer is required to
-access the data in parallel.
+\subsection{Non genotype data}
 
-Despite this long history of de-facto distributed computation
-and the clear need for better methods of accessing genetic
-variation data in a distributed fashion, there is almost
-no scientific literature on the topic (in stark contrast to the
-study of methods to compress a VCF into a single file,
-as discussed in section XXX).
-
-[This is a really rough outline, also not sure how exactly
-we sequence the ideas here. Just getting paragraph fragments
-on paper. We do need to explain something of the hadoop ecosystem
-to readers who are not familiar, though.]
-Distributed analytics for large-scale data is a mature
-techology, with many different approaches. Hadoop~\citep{white2012hadoop}
-is the original method, and remains the basis of the
-dominant ecosystem. HDFS. Spark [CITATION?] lets us
-do more complex analytics. Parquet [CITATION?]
-
-Although the Hadoop ecosystem has been hugely successful
-in many domains, it has had a limited impact in genomics.
-[List some things that have been tried for e.g variant calling
-, like ADAM~\citep{nothaft2015rethinking}].
-[Briefly mention two approaches using Hadoop clusters
-~\citep{boufea2017managing,fan2020variant}, to not very
-exiting results].
-
-[Hadoop/Spark/Parquet are fundamentally unsuited to genetic
-variation data [WHY]?]
-
-Discuss Hail. It's awesome, has enabled current
-generation of mega-scale projects. Drawbacks are the
-architecture has emphasised performance etc over adaptability
-and simplicity. Uses bits of Spark for X, but custom YZ .
-File format is undocumented, etc.
-
-Discuss why the sgkit architecture is suited to distributed
-computation. Discuss Zarr's use in cloud stores, and existing
-deployments. Discuss Dask.
-We do not attempt a head-to-head performance comparison with
-Hail here, but defer to Liangde's thesis~\citep{li2022efficient}
-with brief summary.
-Forward ref to following sections on applications to demonstate
-sgkit in a distributed context.
+\begin{table}
+\begin{tabular}{cc}
+Some & data on Genomics England\\
+\end{tabular}
+\caption{Summary of vcf-zarr performance on the Genomics England 100,000
+genomes VCF dataset.
+\label{tab-genomics-england-data}}
+\end{table}
 
 
 \section{Discussion}
@@ -816,6 +755,7 @@ discussion item though). The key thing is the \emph{interface}.
 They're all tying to the command line and to classical
 sequential workflows. We have Python, and distributed compute. ]
 
+
 % TEXT from HSG chapter section on compressing data
 
 % The simplest approach to compressing such data is to organise it in a
@@ -867,6 +807,78 @@ sequential workflows. We have Python, and distributed compute. ]
 % search~\citep{shimizu2016efficient} and generalisation to the setting of graph
 % genomes~\citep{novak2017graph}.
 
+
+\subsection{Distributed computation}
+Distributed computation has been the reality in the analysis
+of genetic variation for many years,
+where data is most often provided as per-chromosome VCFs.
+This chunking provides a fairly straightforward way to parallelise
+computations, using HPC schedulers to split work per-file.
+When more fine-grained parallelism is required, users must
+provide exact genome coordinates of the genome regions
+as part of their submission scripts. Combining results
+is a manual operation.
+Workflow engines such as
+Snakemake~\cite{koster2012snakemake,molder2021sustainable}
+and [TODO mention WDL, Cromwell, etc?] make such analyses
+much easier, but there is still a great deal of room for
+mistakes.
+Per-chromosome VCFs are not practical for biobank scale
+projects, however, and variant call data tends to be split
+into many (still large) files.
+For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
+are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
+hundreds of files per chromosome.
+% This is horrible writing, but the point is important.
+While these files provide a natural
+unit for distributing work, the details of how they
+are split differ and essentially there is
+no interoperability among large-scale datasets because the VCFs are
+so cumbersome that a separate orchestration layer is required to
+access the data in parallel.
+
+Despite this long history of de-facto distributed computation
+and the clear need for better methods of accessing genetic
+variation data in a distributed fashion, there is almost
+no scientific literature on the topic (in stark contrast to the
+study of methods to compress a VCF into a single file,
+as discussed in section XXX).
+
+[This is a really rough outline, also not sure how exactly
+we sequence the ideas here. Just getting paragraph fragments
+on paper. We do need to explain something of the hadoop ecosystem
+to readers who are not familiar, though.]
+Distributed analytics for large-scale data is a mature
+techology, with many different approaches. Hadoop~\citep{white2012hadoop}
+is the original method, and remains the basis of the
+dominant ecosystem. HDFS. Spark [CITATION?] lets us
+do more complex analytics. Parquet [CITATION?]
+
+Although the Hadoop ecosystem has been hugely successful
+in many domains, it has had a limited impact in genomics.
+[List some things that have been tried for e.g variant calling
+, like ADAM~\citep{nothaft2015rethinking}].
+[Briefly mention two approaches using Hadoop clusters
+~\citep{boufea2017managing,fan2020variant}, to not very
+exiting results].
+
+[Hadoop/Spark/Parquet are fundamentally unsuited to genetic
+variation data [WHY]?]
+
+Discuss Hail. It's awesome, has enabled current
+generation of mega-scale projects. Drawbacks are the
+architecture has emphasised performance etc over adaptability
+and simplicity. Uses bits of Spark for X, but custom YZ .
+File format is undocumented, etc.
+
+Discuss why the sgkit architecture is suited to distributed
+computation. Discuss Zarr's use in cloud stores, and existing
+deployments. Discuss Dask.
+We do not attempt a head-to-head performance comparison with
+Hail here, but defer to Liangde's thesis~\citep{li2022efficient}
+with brief summary.
+Forward ref to following sections on applications to demonstate
+sgkit in a distributed context.
 
 
 \end{document}
