@@ -351,43 +351,7 @@ on aribitrary subsets. Also participants regularly drop-out of
 large studies like UKB - do you update the AF values each time?
 
 \begin{figure*}
-\begin{tabular}{cc}
-\includegraphics[width=6cm]{figures/subset-matrix-compute} &
-\begin{tcolorbox}[width=7cm]
-\begin{minted}[fontsize=\footnotesize]{python}
-# TODO not sure how best to illustrate this. Trying out various
-# options
-
-ds = sgkit.load_dataset(ds_path)
-dss = ds.isel(
-    variants=slice(...),
-    samples=(slice(...)))
-df = sgkit_afdist(dss)
-
-# bcftools
-bcftools view PATH -S ... -r...
-| bcftools +fill-tags | bcftools +af-dist
-
-# genozip
-genocat PATH -r ... -s ...
-| bcftools +fill-tags | bcftools +af-dist
-
-# Complex query
-df = pd.read_csv("sample_info.csv",
-    sep="\t").set_index("sample_id")
-dss = ds.isel(
-    samples=df.decade[ds.sample_id.values] >= 1950)
-sgkit_afdist(dss)
-
-
-# Corresponding shell
-% tail -n+2 sample_info.csv | awk '$2 >= 1950'
-    | cut -f1 > samples.txt
-bcftools view PATH -s samples.txt
-    | bcftools +fill-tags | bcftools +af-dist
-\end{minted}
-\end{tcolorbox}
-\end{tabular}
+\includegraphics[width=6cm]{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
 (A) Total CPU time required to run the afdist calculation for
 a subset of 10 samples and 10000 variants from the middle of the matrix.
