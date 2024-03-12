@@ -350,7 +350,7 @@ intrinsically bad, and that it should be easy to do calculations
 on aribitrary subsets. Also participants regularly drop-out of
 large studies like UKB - do you update the AF values each time?
 
-\begin{figure*}
+\begin{figure}
 \includegraphics[width=6cm]{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
 (A) Total CPU time required to run the afdist calculation for
@@ -358,10 +358,10 @@ a subset of 10 samples and 10000 variants from the middle of the matrix.
 (B) Same for n/2 samples. Genozip did not run in this case for
 $n > 10^4$ samples because it does not support a file to specify
 sample IDs, and the command line was therefore too long for the shell
-to execute.
-(C) A simplified version of the source code used for these benchmarks.
+to execute. [TODO Note that in this case the bcftools pipeline requires
+an additional step to compute AF etc.]
 \label{fig-subset-matrix-compute}}
-\end{figure*}
+\end{figure}
 
 
 \subsection{Non genotype data}
@@ -544,27 +544,27 @@ VCF: Variant Call Format;
 \bibliography{paper}
 
 
-\clearpage
-\renewcommand\thefigure{S\arabic{figure}}
-\setcounter{figure}{0}
-\renewcommand\thetable{S\arabic{table}}
-\setcounter{table}{0}
+% \clearpage
+% \renewcommand\thefigure{S\arabic{figure}}
+% \setcounter{figure}{0}
+% \renewcommand\thetable{S\arabic{table}}
+% \setcounter{table}{0}
 
-\section*{Supplementary Material}
+% \section*{Supplementary Material}
 
-\begin{figure*}[ht]
-	\begin{center}
-		\includegraphics[width=\textwidth]{figures/whole-matrix-compute-supplemental}
-	\end{center}
-	\caption{\label{fig-whole-matrix-compute-supplemental}
-    Limitations of vertical scaling on whole-matrix afdist. The elapsed
-wall-clock time required to compute afdist on the whole genotype matrix using
-different numbers of threads and storage backends (top row), and the relative
-speedup obtained from threads as a fraction of optimum speedup (bottom row).
-[TODO more detail and link to fig 1. Also add the times for bcftools and
-genozip in col 1?]
-}
-\end{figure*}
+% \begin{figure*}[ht]
+% 	\begin{center}
+% 		\includegraphics[width=\textwidth]{figures/whole-matrix-compute-supplemental}
+% 	\end{center}
+% 	\caption{\label{fig-whole-matrix-compute-supplemental}
+%     Limitations of vertical scaling on whole-matrix afdist. The elapsed
+% wall-clock time required to compute afdist on the whole genotype matrix using
+% different numbers of threads and storage backends (top row), and the relative
+% speedup obtained from threads as a fraction of optimum speedup (bottom row).
+% [TODO more detail and link to fig 1. Also add the times for bcftools and
+% genozip in col 1?]
+% }
+% \end{figure*}
 
 
 \clearpage
