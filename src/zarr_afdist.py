@@ -149,18 +149,26 @@ def classify_genotypes_subset(call_genotype, variant_mask, sample_mask):
     return GenotypeCounts(hom_ref, hom_alt, het, ref_count)
 
 
-def zarr_afdist(path, num_bins=10):
+def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
     root = zarr.open(path)
     call_genotype = root["call_genotype"]
     m = call_genotype.shape[0]
     n = call_genotype.shape[1]
 
-    # Using the more general code is slightly slower, 35s vs 30s on one
-    # of the intermediate sized benchmarks.
-    # counts = classify_genotypes_subset(
-    #     call_genotype, np.ones(m, dtype=bool), np.ones(n, dtype=bool)
-    # )
-    counts = classify_genotypes(call_genotype)
+    if variant_slice is None and sample_slice is None:
+        # Using the more general code is slightly slower, 35s vs 30s on one
+        # of the intermediate sized benchmarks.
+        counts = classify_genotypes(call_genotype)
+    else:
+        variant_mask = np.zeros(m, dtype=bool)
+        variant_mask[variant_slice] = 1
+        sample_mask = np.zeros(n, dtype=bool)
+        sample_mask[sample_slice] = 1
+        counts = classify_genotypes_subset(
+            call_genotype, variant_mask, sample_mask
+        )
+        n = np.sum(sample_mask)
+
     alt_count = 2 * n - counts.ref_count
     af = alt_count / (n * 2)
     # print("af", af)

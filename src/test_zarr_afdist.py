@@ -89,6 +89,27 @@ class TestSimulations:
         nt.assert_array_equal(afdist1.prob_dist, afdist2.prob_dist)
 
     @pytest.mark.parametrize(
+        ["n", "L", "v_slice", "s_slice"],
+        [
+            (20, 10**5, slice(0, None), slice(0, None)),
+            (10, 10**5, slice(0, 2), slice(0, 100)),
+            (100, 10**5, slice(50, 100), slice(0, None)),
+            (100, 10**5, slice(0, None), slice(-100, None)),
+        ],
+    )
+    def test_afdist_subset(self, tmp_path, n, L, v_slice, s_slice):
+        zarr_path = self.run_simulation(tmp_path, n, L, 1234)
+        afdist1 = zarr_afdist.zarr_afdist(
+            zarr_path, variant_slice=v_slice, sample_slice=s_slice
+        )
+        ds = sg.load_dataset(zarr_path)
+        ds = ds.isel(variants=v_slice, samples=s_slice)
+        afdist2 = sgkit_afdist(ds)
+        nt.assert_array_equal(afdist1.start, afdist2.start)
+        nt.assert_array_equal(afdist1.stop, afdist2.stop)
+        nt.assert_array_equal(afdist1.prob_dist, afdist2.prob_dist)
+
+    @pytest.mark.parametrize(
         ["n", "L"],
         [
             (10, 10**5),
