@@ -106,7 +106,8 @@ def plot_total_cpu(ax, df):
 
     dfs = df[(df.threads == 1) & (df.tool == "genozip")]
     fit_params, _ = optimize.curve_fit(
-        mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:])
+        mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
+    )
     num_samples = df[(df.threads == 1) & (df.tool == "bcftools")].num_samples.values
     fit = mulplicative_model(num_samples, *fit_params)
     # print(fit)
@@ -121,7 +122,6 @@ def plot_total_cpu(ax, df):
         xycoords="data",
     )
     ax.legend()
-
 
 
 def plot_wall_time(ax, df, threads=1):
@@ -154,6 +154,7 @@ def plot_wall_time(ax, df, threads=1):
             xy=(row.num_samples, wall_time[-1]),
             xycoords="data",
         )
+
 
 def plot_thread_speedup(ax, df, threads):
     colours = {
@@ -247,11 +248,11 @@ def whole_matrix_compute_supplemental(time_data, output):
     ax5.sharey(ax4)
     ax6.sharey(ax4)
 
-    df_hdd = df[df.storage=="hdd"]
+    df_hdd = df[df.storage == "hdd"]
     plot_wall_time(ax1, df_hdd, 8)
     plot_thread_speedup(ax4, df_hdd, 8)
 
-    df_ssd = df[df.storage=="ssd"]
+    df_ssd = df[df.storage == "ssd"]
     plot_wall_time(ax2, df_ssd, 8)
     plot_thread_speedup(ax5, df_ssd, 8)
     plot_wall_time(ax3, df_ssd, 16)
@@ -275,7 +276,8 @@ def whole_matrix_compute_supplemental(time_data, output):
     plt.tight_layout()
     plt.savefig(output)
 
-def plot_subset_time(ax, df):
+
+def plot_subset_time(ax, df, extrapolate_genozip=False):
     colours = {
         "bcftools": bcf_colour,
         "zarr": zarr_colour,
@@ -302,7 +304,7 @@ def plot_subset_time(ax, df):
         ax.loglog(
             n,
             dfs["wall_time"].values,
-            label=f"{tool}",
+            # label=f"{tool}",
             linestyle=":",
             # marker=".",
             color=colours[tool],
@@ -319,6 +321,30 @@ def plot_subset_time(ax, df):
             xycoords="data",
         )
 
+    if extrapolate_genozip:
+        # Extrapolate for genozip
+        def mulplicative_model(n, a, b):
+            # Fit a simple exponential function.
+            return a * np.power(n, b)
+
+        dfs = df[(df.threads == 1) & (df.tool == "genozip")]
+        fit_params, _ = optimize.curve_fit(
+            mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
+        )
+        num_samples = df[(df.threads == 1) & (df.tool == "bcftools")].num_samples.values
+        fit = mulplicative_model(num_samples, *fit_params)
+        # print(fit)
+
+        ax.loglog(num_samples[3:], fit[3:], linestyle=":", color="lightgray")
+        t = fit[-1]
+        ax.annotate(
+            f"{t:.0f}s*",
+            textcoords="offset points",
+            xytext=(15, 0),
+            xy=(num_samples[-1], fit[-1]),
+            xycoords="data",
+        )
+
 
 @click.command()
 @click.argument("data", type=click.File("r"))
@@ -332,7 +358,7 @@ def subset_matrix_compute(data, output):
     # TODO set the width properly based on document
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4, 6))
     plot_subset_time(ax1, df[df.slice == "n10"])
-    plot_subset_time(ax2, df[df.slice == "n/2"])
+    plot_subset_time(ax2, df[df.slice == "n/2"], True)
 
     ax2.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
