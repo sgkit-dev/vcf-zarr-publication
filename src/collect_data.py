@@ -20,7 +20,7 @@ import sgkit as sg
 
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
-from zarr_afdist import zarr_afdist
+from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter
 
 
 def get_file_size(file):
@@ -442,6 +442,14 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
 
 
 @click.command()
+@click.argument("zarr_path", type=click.Path())
+def genotype_filtering(zarr_path):
+    zarr_ds = zarr.open(zarr_path)
+    counts = classify_genotypes_subset_filter(zarr_ds)
+    print(counts)
+
+
+@click.command()
 def report_versions():
     for tool in all_tools:
         print(tool.name)
@@ -456,6 +464,7 @@ def cli():
 cli.add_command(file_size)
 cli.add_command(processing_time)
 cli.add_command(subset_processing_time)
+cli.add_command(genotype_filtering)
 cli.add_command(report_versions)
 
 
