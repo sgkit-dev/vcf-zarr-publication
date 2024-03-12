@@ -180,10 +180,8 @@ def _zarr_afdist_subset_worker(
     ds_path, variant_slice, sample_slice, num_threads, debug, conn
 ):
     before = time.time()
-    assert variant_slice is None
-    assert variant_slice is None
     assert num_threads == 1
-    df = zarr_afdist(ds_path)
+    df = zarr_afdist(ds_path, variant_slice=variant_slice, sample_slice=sample_slice)
     wall_time = time.time() - before
     cpu_times = psutil.Process().cpu_times()
     if debug:
