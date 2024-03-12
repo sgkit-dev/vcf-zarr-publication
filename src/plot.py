@@ -278,7 +278,7 @@ def whole_matrix_compute_supplemental(time_data, output):
 def plot_subset_time(ax, df):
     colours = {
         "bcftools": bcf_colour,
-        "sgkit": sgkit_colour,
+        "zarr": zarr_colour,
         # "savvy": sav_colour,
         "genozip": genozip_colour,
     }

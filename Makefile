@@ -50,3 +50,7 @@ figures/data-scaling.pdf: plot_data/data-scaling.csv
 figures/whole-matrix-compute-pdf: plot_data/whole-matrix-compute.csv
 	python3 src/plot.py whole-matrix-compute plot_data/whole-matrix-compute.csv  \
 		figures/whole-matrix-compute.pdf
+
+figures/subset-matrix-compute-pdf: plot_data/subset-matrix-compute.csv
+	python3 src/plot.py subset-matrix-compute plot_data/subset-matrix-compute.csv  \
+		figures/subset-matrix-compute.pdf
