@@ -118,6 +118,7 @@ def run_bcftools_afdist_subset(
         )
         return time_cli_command(cmd, debug)
 
+
 def run_bcftools_afdist_filter(path, *, num_threads=1, debug=False):
     cmd = (
         "export BCFTOOLS_PLUGINS=software/bcftools-1.18/plugins; "
@@ -128,7 +129,7 @@ def run_bcftools_afdist_filter(path, *, num_threads=1, debug=False):
         # bcftools view updates the AC and AN fields by default, but
         # it doesn't update AF (which +af-dist uses). So, we use
         # -I to prevent it updating, and then call fill-tags
-        f"software/bcftools view -I --include \"FORMAT/DP>10 & FORMAT/GQ>20\" "
+        f'software/bcftools view -I --include "FORMAT/DP>10 & FORMAT/GQ>20" '
         # Output uncompressed BCF to make pipeline more efficient
         f"-Ou --threads {num_threads} {path} | "
         f"software/bcftools +fill-tags -Ou --threads {num_threads} | "
@@ -472,6 +473,28 @@ def genotype_filtering_processing_time(prefix):
 
 
 @click.command()
+@click.argument("prefix", type=click.Path())
+def site_filtering_processing_time(prefix):
+    # bcftools command:
+
+    # bcftools query -i 'FILTER="PASS"' -f "%CHROM,%POS,%INFO/AN_EUR\n" tmp/1kg_chr20_all.vcf.gz > tmp1.csv
+    zarr_ds = zarr.open(prefix + ".zarr")
+    pass_filter = zarr_ds["variant_filter"][:, 0]
+    contig_id = zarr_ds.contig_id[:]
+    df = pd.DataFrame(
+        {
+            "CHROM": contig_id[zarr_ds["variant_contig"].vindex[pass_filter]],
+            "POS": zarr_ds["variant_position"].vindex[pass_filter],
+            "INFO/AN_EUR": zarr_ds["variant_AN_EUR"].vindex[pass_filter],
+        }
+    )
+    before = time.perf_counter()
+    df.to_csv("tmp2.csv", header=False, index=False)
+    duration = time.perf_counter() - before
+    print("csv writing took", duration, "for", len(df), " variants")
+
+
+@click.command()
 def report_versions():
     for tool in all_tools:
         print(tool.name)
@@ -487,6 +510,7 @@ cli.add_command(file_size)
 cli.add_command(processing_time)
 cli.add_command(subset_processing_time)
 cli.add_command(genotype_filtering_processing_time)
+cli.add_command(site_filtering_processing_time)
 cli.add_command(report_versions)
 
 
