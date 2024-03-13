@@ -118,6 +118,25 @@ def run_bcftools_afdist_subset(
         )
         return time_cli_command(cmd, debug)
 
+def run_bcftools_afdist_filter(path, *, num_threads=1, debug=False):
+    cmd = (
+        "export BCFTOOLS_PLUGINS=software/bcftools-1.18/plugins; "
+        "/usr/bin/time -f'%S %U' "
+        # Need to run the pipeline in a subshell to make sure we're
+        # timing correctly
+        "sh -c '"
+        # bcftools view updates the AC and AN fields by default, but
+        # it doesn't update AF (which +af-dist uses). So, we use
+        # -I to prevent it updating, and then call fill-tags
+        f"software/bcftools view -I --include \"FORMAT/DP>10 & FORMAT/GQ>20\" "
+        # Output uncompressed BCF to make pipeline more efficient
+        f"-Ou --threads {num_threads} {path} | "
+        f"software/bcftools +fill-tags -Ou --threads {num_threads} | "
+        f"software/bcftools +af-dist --threads {num_threads}"
+        "'"
+    )
+    return time_cli_command(cmd, debug)
+
 
 # NOTE! These must be called on a file that has had fill-tags run on it.
 def run_bcftools_afdist(path, *, num_threads, num_sites, debug=False):
@@ -442,9 +461,12 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
 
 
 @click.command()
-@click.argument("zarr_path", type=click.Path())
-def genotype_filtering(zarr_path):
-    zarr_ds = zarr.open(zarr_path)
+@click.argument("prefix", type=click.Path())
+def genotype_filtering_processing_time(prefix):
+    # run_bcftools_afdist_filter(prefix + ".vcf.gz", debug=True)
+
+    # run_zarr_afdist_filter(prefix + ".zarr", debug=True)
+    zarr_ds = zarr.open(prefix + ".zarr")
     counts = classify_genotypes_subset_filter(zarr_ds)
     print(counts)
 
@@ -464,7 +486,7 @@ def cli():
 cli.add_command(file_size)
 cli.add_command(processing_time)
 cli.add_command(subset_processing_time)
-cli.add_command(genotype_filtering)
+cli.add_command(genotype_filtering_processing_time)
 cli.add_command(report_versions)
 
 
