@@ -7,8 +7,12 @@ bcftools:
 	cp bcftools-1.18/bcftools ./
 
 genozip:
-	wget https://raw.githubusercontent.com/divonlan/genozip/master/installers/genozip-linux-x86_64.tar
-	tar -xvf genozip-linux-x86_64.tar
+	# NOTE: using this specific version of genozip because it started using some 
+	# assembly instructions not supported by the CPU I'm using at some point after
+	# in the months that.
+	wget https://github.com/divonlan/genozip/archive/refs/tags/genozip-15.0.26.tar.gz
+	tar -xf genozip-15.0.26.tar.gz
+	tar -xf genozip-genozip-15.0.26/installers/genozip-linux-x86_64.tar
 	cp genozip-linux-x86_64/* ./
 
 savvy:
