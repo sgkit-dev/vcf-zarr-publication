@@ -12,25 +12,6 @@ import pysam
 from . import zarr_afdist
 
 
-# def _sgkit_afdist_subset_worker(
-#     ds_path, variant_slice, sample_slice, num_threads, debug, conn
-# ):
-#     before = time.time()
-#     with dask.distributed.Client(
-#         processes=False, threads_per_worker=num_threads
-#     ) as client:
-#         ds = sg.load_dataset(ds_path)
-#         if sample_slice is not None:
-#             assert variant_slice is not None
-#             ds = ds.isel(variants=variant_slice, samples=sample_slice)
-#         df = get_prob_dist(ds)
-#     wall_time = time.time() - before
-#     cpu_times = psutil.Process().cpu_times()
-#     if debug:
-#         print(df)
-#     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
-
-
 def sgkit_afdist(ds, num_bins=10):
     ds = sg.variant_stats(ds, merge=False).compute()
     bins = np.linspace(0, 1.0, num_bins + 1)

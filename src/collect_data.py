@@ -20,7 +20,7 @@ import sgkit as sg
 
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
-from zarr_afdist import zarr_afdist
+from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter
 
 
 def get_file_size(file):
@@ -117,6 +117,26 @@ def run_bcftools_afdist_subset(
             "'"
         )
         return time_cli_command(cmd, debug)
+
+
+def run_bcftools_afdist_filter(path, *, num_threads=1, debug=False):
+    cmd = (
+        "export BCFTOOLS_PLUGINS=software/bcftools-1.18/plugins; "
+        "/usr/bin/time -f'%S %U' "
+        # Need to run the pipeline in a subshell to make sure we're
+        # timing correctly
+        "sh -c '"
+        # bcftools view updates the AC and AN fields by default, but
+        # it doesn't update AF (which +af-dist uses). So, we use
+        # -I to prevent it updating, and then call fill-tags
+        f'software/bcftools view -I --include "FORMAT/DP>10 & FORMAT/GQ>20" '
+        # Output uncompressed BCF to make pipeline more efficient
+        f"-Ou --threads {num_threads} {path} | "
+        f"software/bcftools +fill-tags -Ou --threads {num_threads} | "
+        f"software/bcftools +af-dist --threads {num_threads}"
+        "'"
+    )
+    return time_cli_command(cmd, debug)
 
 
 # NOTE! These must be called on a file that has had fill-tags run on it.
@@ -442,6 +462,39 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
 
 
 @click.command()
+@click.argument("prefix", type=click.Path())
+def genotype_filtering_processing_time(prefix):
+    # run_bcftools_afdist_filter(prefix + ".vcf.gz", debug=True)
+
+    # run_zarr_afdist_filter(prefix + ".zarr", debug=True)
+    zarr_ds = zarr.open(prefix + ".zarr")
+    counts = classify_genotypes_subset_filter(zarr_ds)
+    print(counts)
+
+
+@click.command()
+@click.argument("prefix", type=click.Path())
+def site_filtering_processing_time(prefix):
+    # bcftools command:
+
+    # bcftools query -i 'FILTER="PASS"' -f "%CHROM,%POS,%INFO/AN_EUR\n" tmp/1kg_chr20_all.vcf.gz > tmp1.csv
+    zarr_ds = zarr.open(prefix + ".zarr")
+    pass_filter = zarr_ds["variant_filter"][:, 0]
+    contig_id = zarr_ds.contig_id[:]
+    df = pd.DataFrame(
+        {
+            "CHROM": contig_id[zarr_ds["variant_contig"].vindex[pass_filter]],
+            "POS": zarr_ds["variant_position"].vindex[pass_filter],
+            "INFO/AN_EUR": zarr_ds["variant_AN_EUR"].vindex[pass_filter],
+        }
+    )
+    before = time.perf_counter()
+    df.to_csv("tmp2.csv", header=False, index=False)
+    duration = time.perf_counter() - before
+    print("csv writing took", duration, "for", len(df), " variants")
+
+
+@click.command()
 def report_versions():
     for tool in all_tools:
         print(tool.name)
@@ -456,6 +509,8 @@ def cli():
 cli.add_command(file_size)
 cli.add_command(processing_time)
 cli.add_command(subset_processing_time)
+cli.add_command(genotype_filtering_processing_time)
+cli.add_command(site_filtering_processing_time)
 cli.add_command(report_versions)
 
 
