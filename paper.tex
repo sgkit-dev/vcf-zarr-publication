@@ -167,8 +167,9 @@ leads to bottlenecks. We discuss parallelism, and why
 bcftools and genozip can make limited use of available cores.
 Also that single-machine parallelism is inevitably constrained
 by IO (which is why savvy's thread utilisation drops off).
-Figure: \ref{fig-whole-matrix-compute}. Also
-supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
+Figure: \ref{fig-whole-matrix-compute}. 
+% Also
+% supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
 
 \paragraph{Subsetting the genotype matrix}
 Existing work overwhelmingly emphasises accessibility by variant.
@@ -327,8 +328,8 @@ leads to bottlenecks. We discuss parallelism, and why
 bcftools and genozip can make limited use of available cores.
 Also that single-machine parallelism is inevitably constrained
 by IO (which is why savvy's thread utilisation drops off).
-Figure: \ref{fig-whole-matrix-compute}. Also
-supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
+% Figure: \ref{fig-whole-matrix-compute}. Also
+% supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
 
 
 \begin{figure}
@@ -485,6 +486,50 @@ such a compute platform.
 \end{itemize}
 
 \section{Methods}
+
+\subsection{Zarr and block-based compression}
+% Zarr is a simple layer on top of best-in-class, modern components
+In the interest of completeness it is useful to provide a high-level overview
+of Zarr and the techologies that it depends upon. Zarr is a specialised format
+for storing large-scale $n$-dimensional numerical data (arrays). Arrays
+are split into chunks, which are compressed and stored separately. Chunks are 
+addressed by their indexes along the dimensions of the array, and the 
+compressed data associated with this key. Chunks are
+are often stored in individual files, but a wide array of different
+stores are supported including cloud buckets and NoSQL databases. 
+Metadata describing the array and its properties is then stored 
+in JSON format along with the chunks. Zarr is best seen as a 
+\emph{specification} that describes the details of how chunks are 
+addressed and stored: there are multiple implementations across
+different languages.
+
+Zarr is flexible in allowing different compression codecs and 
+pre-compression filters to be specified on a per-array basis.
+Two key technologies used by Zarr are the Blosc
+% This seems like the best citation for Blosc? It is mentioned here
+meta-compressor~\cite{alted2010modern}
+and Zstandard compression algorithm~\citep{collet2021rfc}.
+Blosc is a high-performance compressor optimised for numerical
+data which uses ``blocking''~\citep{alted2010modern} to 
+optimise CPU-cache access patterns, as well as highly optimised
+bit and byte shuffle filters.  Remarkably, on highly 
+compressible datasets, Blosc decompression can be faster 
+than \texttt{memcpy}.
+Blosc is written in C, with APIs for C, Python, Julia, Rust
+and others.
+
+Blosc is a ``meta-compressor'' because it provides different 
+access to several different compression codecs. The 
+Zstandard compressor~\citep{collet2021rfc} is of particular 
+interest here as it achieves very high compression ratios
+with fast decompression speeds [see fig]. 
+% This may seem a bit off topic, but want to reassure reader that 
+% this isn't some niche technology
+Zstandard is widely
+used and is being incorporated, e.g., as a standard compression
+mechanism for HTTP traffic and to decompress Linux kernel images
+during boot.
+
 
 \subsection{Benchmarking}
 Full details of the benchmarking done in
