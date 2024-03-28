@@ -529,6 +529,73 @@ Zstandard is widely
 used and is being incorporated, e.g., as a standard compression
 mechanism for HTTP traffic and to decompress Linux kernel images
 during boot.
+% LZ4 is also notable - any citations for this?
+
+\subsection{The vcfzarr specification}
+The vcfzarr specification is a direct mapping from the VCF data model 
+to a columnar binary format, expressed using Zarr. [A HIGH LEVEL 
+DESCRIPTION OF THE SPEC, FOCUSING ON RATIONALE BEHIND DECISIONS]
+
+The vcfzarr specification can represent anything described by BCF
+(which is somewhat more restrictive than BCF) except for two corner
+cases related to the encoding of missing data. Firstly, vcfzarr does
+not distinguish between a field that is not present and one that 
+is present but contains missing data. [FOR EXAMPLE...]
+Because of the use of -1 to represent missing data and -2 to 
+represent dimension padding for integers, these values 
+cannot be stored. In practise this doesn't seem to be much of 
+an issue (we have not found a real VCF that contains negative 
+integers). If -1 and -2 need to be stored, a float field
+can be used without issues.
+
+\subsection{vcf2zarr}
+Converting VCF to Zarr format at Biobank scale is challenging. This main issue is 
+around memory usage: although we can view each record in the VCF one-by-one,
+we must buffer a full chunk (10,000 variants is reasonable choice) 
+in the variants dimension for each of the arrays. 
+For VCFs with many FORMAT fields and large numbers of samples this can
+easily require tens of gigabytes of RAM per worker, which makes 
+parallelism troublesome. Reading the VCF multiple times for different fields
+is possible, but would be prohibitively slow for multi-terabyte VCFs.
+
+The \texttt{vcf2zarr} utility solves this problem by first converting 
+the VCF data (which can be split across many files) into an Intermediate
+Columnar Format (ICF). The \texttt{vcf2zarr explode} command takes a set
+of VCFs and stores the data in per-field chunks (by default, 64MiB).
+In this way, the memory required is bounded by the size of single record 
+BCF record in htslib (plus the size of a decoded bgzf record
+[FIXME what is the correct terminology here?]), plus 64MiB for each 
+field.  The Intermediate Columnar Format stores the data for each 
+field spread across multiple partitions of the data (so that 
+multiple parts of the VCF can be read in parallel), and then 
+fixed size compressed chunks within those partitions. It also stores information
+about the number of records in each partition and chunk of a given
+field, so that the record at a particular index can be retrieved efficiently 
+later. Summaries such as the minimum and maximum value 
+of each field are also maintained, to aid choice of data types later.
+A set of VCF files can be converted to intermediate columnar 
+format in parallel on a single machine using a given number 
+of worker processes using the \texttt{explode} command,
+or can be distributed across a cluster using the 
+\texttt{dexplode-init},
+\texttt{dexplode-partition} and \texttt{dexplode-finalise} commands.
+
+Once the VCF data has converted to the intermediate columnar format,
+it can then be converted to Zarr using the \texttt{vcf2zarr encode}
+command. Alhough there is a one-to-one mapping between the VCF
+fields and the Zarr arrays, there is considerable flexibility 
+in how the data is stored, for example in integer width
+and compression and filter settings.
+By default vcf2zarr chooses integer type sizes based 
+on the range of values seen in the intermediate column format
+and reasonable compressor defaults, but these can be
+altered by generating a schema in JSON format and editing it.
+Encoding a given column (for example, \texttt{call\_AD})
+involves creating a buffer to hold a full variant-chunk of the 
+array in question, and then sequentially filling this buffer with 
+values read from the intermediate columnar format. Once the buffer 
+is full, the chunks in the samples dimension are compressed
+and written to file. [Something about parallelism and distributing]
 
 
 \subsection{Benchmarking}
