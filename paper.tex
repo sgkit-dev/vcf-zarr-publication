@@ -135,52 +135,6 @@ Keyword1; keyword 2; keyword 3 (Three to ten keywords representing the main cont
 
 \section{Results}
 
-\subsection{Overview of narrative for draft}
-
-\paragraph{Storing genetic variation data}
-High level discussion of
-strategies used to store genotype matrix and accompanying metadata.
-Emphasis on access by variant, not sample. Introduce Zarr, and
-refer to Fig~\ref{fig-data-storage}A to explain columnar storage,
-and Fig~\ref{fig-data-storage}B to show that is competitive
-with highly specialised approaches.
-Note that the FC simulated dataset is probably a best-case
-scenario for methods specialised to patterns in the genotype matrix.
-Discuss storing additional data, and advantages of the
-columnar approach (refs to genomics tools that do the same).
-
-\paragraph{Computing on the genotype matrix}
-Compressing data isn't ultimately the point - we want to use it.
-We discuss the problem of running computations on the entire
-genotype matrix, and how different formats limit what can be done.
-We illustrate the discussion by the afdist operation from
-the bcftools plugins package. This is perhaps a contrived example, but
-we chose it because it requires examining the entire genotype matrix
-and there is an efficient implementation available in bcftools.
-It is also a good example because the standard approach of
-divvying up the genome into chunks via HPC schedulers or workflow
-managers is quite tricky.
-We discuss the software development aspect, and how we developed
-the afdist-savvy program. We discuss the inherent limitations
-of the decode-to-vcf strategy, and how this inevitably
-leads to bottlenecks. We discuss parallelism, and why
-bcftools and genozip can make limited use of available cores.
-Also that single-machine parallelism is inevitably constrained
-by IO (which is why savvy's thread utilisation drops off).
-Figure: \ref{fig-whole-matrix-compute}. 
-% Also
-% supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
-
-\paragraph{Subsetting the genotype matrix}
-Existing work overwhelmingly emphasises accessibility by variant.
-We demonstrate that sgkit/zarr is good for getting subsets
-in terms of both variants and samples via afdist on various subsets.
-Discuss why storing AF values for crude population groupings is
-intrinsically bad, and that it should be easy to do calculations
-on aribitrary subsets. Also participants regularly drop-out of
-large studies like UKB - do you update the AF values each time?
-
-
 \subsection{Storing genetic variation data}
 Storage is the foundation on which any large-scale data-driven computation
 rests: how we encode and organise data on persistent storage (the format)
@@ -597,8 +551,7 @@ values read from the intermediate columnar format. Once the buffer
 is full, the chunks in the samples dimension are compressed
 and written to file. [Something about parallelism and distributing]
 
-
-\subsection{Benchmarking}
+\subsection{Benchmarks}
 Full details of the benchmarking done in
 Figure~\ref{fig-data-storage} and
 Figure~\ref{fig-whole-matrix-compute}.
@@ -619,14 +572,10 @@ were provided. For genozip, the time required to compute
 \texttt{genocat file.genozip | bcftools +af-dist}. Because commands
 in the pipeline execute concurrently on mutiple cores, the total CPU time is
 greater than the elapsed time.
-\item For the threading speedup plot, we report the time required to compute
-afdist with 8 threads relative to 1 thread (a speedup of 8 is therefore
-the maximum). For savvy, our C++ implementation of afdist calculates
-on 8 chunks of genome, and aggegates once they are completed.
-Bcftools has a ``--threads`` option, but it only applies to decoding.
 \item Where possible in pipelines we use uncompressed BCF
  output \texttt{-Ou} to make processing more efficient (skip printf
-and parsing costs, which are substantial).
+and parsing costs, which are substantial). Following advice
+in~\citep{danecek2021twelve}.
 \item We do not use BCF output in genozip because it doesn't support
 it directly, only VCF (supports BCF by pipeing through bcftools).
 \end{itemize}
@@ -663,20 +612,6 @@ VCF: Variant Call Format;
 % \setcounter{table}{0}
 
 % \section*{Supplementary Material}
-
-% \begin{figure*}[ht]
-% 	\begin{center}
-% 		\includegraphics[width=\textwidth]{figures/whole-matrix-compute-supplemental}
-% 	\end{center}
-% 	\caption{\label{fig-whole-matrix-compute-supplemental}
-%     Limitations of vertical scaling on whole-matrix afdist. The elapsed
-% wall-clock time required to compute afdist on the whole genotype matrix using
-% different numbers of threads and storage backends (top row), and the relative
-% speedup obtained from threads as a fraction of optimum speedup (bottom row).
-% [TODO more detail and link to fig 1. Also add the times for bcftools and
-% genozip in col 1?]
-% }
-% \end{figure*}
 
 
 \clearpage
