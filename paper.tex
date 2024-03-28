@@ -135,51 +135,6 @@ Keyword1; keyword 2; keyword 3 (Three to ten keywords representing the main cont
 
 \section{Results}
 
-\subsection{Overview of narrative for draft}
-
-\paragraph{Storing genetic variation data}
-High level discussion of
-strategies used to store genotype matrix and accompanying metadata.
-Emphasis on access by variant, not sample. Introduce Zarr, and
-refer to Fig~\ref{fig-data-storage}A to explain columnar storage,
-and Fig~\ref{fig-data-storage}B to show that is competitive
-with highly specialised approaches.
-Note that the FC simulated dataset is probably a best-case
-scenario for methods specialised to patterns in the genotype matrix.
-Discuss storing additional data, and advantages of the
-columnar approach (refs to genomics tools that do the same).
-
-\paragraph{Computing on the genotype matrix}
-Compressing data isn't ultimately the point - we want to use it.
-We discuss the problem of running computations on the entire
-genotype matrix, and how different formats limit what can be done.
-We illustrate the discussion by the afdist operation from
-the bcftools plugins package. This is perhaps a contrived example, but
-we chose it because it requires examining the entire genotype matrix
-and there is an efficient implementation available in bcftools.
-It is also a good example because the standard approach of
-divvying up the genome into chunks via HPC schedulers or workflow
-managers is quite tricky.
-We discuss the software development aspect, and how we developed
-the afdist-savvy program. We discuss the inherent limitations
-of the decode-to-vcf strategy, and how this inevitably
-leads to bottlenecks. We discuss parallelism, and why
-bcftools and genozip can make limited use of available cores.
-Also that single-machine parallelism is inevitably constrained
-by IO (which is why savvy's thread utilisation drops off).
-Figure: \ref{fig-whole-matrix-compute}. Also
-supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
-
-\paragraph{Subsetting the genotype matrix}
-Existing work overwhelmingly emphasises accessibility by variant.
-We demonstrate that sgkit/zarr is good for getting subsets
-in terms of both variants and samples via afdist on various subsets.
-Discuss why storing AF values for crude population groupings is
-intrinsically bad, and that it should be easy to do calculations
-on aribitrary subsets. Also participants regularly drop-out of
-large studies like UKB - do you update the AF values each time?
-
-
 \subsection{Storing genetic variation data}
 Storage is the foundation on which any large-scale data-driven computation
 rests: how we encode and organise data on persistent storage (the format)
@@ -327,8 +282,8 @@ leads to bottlenecks. We discuss parallelism, and why
 bcftools and genozip can make limited use of available cores.
 Also that single-machine parallelism is inevitably constrained
 by IO (which is why savvy's thread utilisation drops off).
-Figure: \ref{fig-whole-matrix-compute}. Also
-supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
+% Figure: \ref{fig-whole-matrix-compute}. Also
+% supplementary figure ~\ref{fig-whole-matrix-compute-supplemental}.
 
 
 \begin{figure}
@@ -486,7 +441,117 @@ such a compute platform.
 
 \section{Methods}
 
-\subsection{Benchmarking}
+\subsection{Zarr and block-based compression}
+% Zarr is a simple layer on top of best-in-class, modern components
+In the interest of completeness it is useful to provide a high-level overview
+of Zarr and the techologies that it depends upon. Zarr is a specialised format
+for storing large-scale $n$-dimensional numerical data (arrays). Arrays
+are split into chunks, which are compressed and stored separately. Chunks are 
+addressed by their indexes along the dimensions of the array, and the 
+compressed data associated with this key. Chunks are
+are often stored in individual files, but a wide array of different
+stores are supported including cloud buckets and NoSQL databases. 
+Metadata describing the array and its properties is then stored 
+in JSON format along with the chunks. Zarr is best seen as a 
+\emph{specification} that describes the details of how chunks are 
+addressed and stored: there are multiple implementations across
+different languages.
+
+Zarr is flexible in allowing different compression codecs and 
+pre-compression filters to be specified on a per-array basis.
+Two key technologies used by Zarr are the Blosc
+% This seems like the best citation for Blosc? It is mentioned here
+meta-compressor~\cite{alted2010modern}
+and Zstandard compression algorithm~\citep{collet2021rfc}.
+Blosc is a high-performance compressor optimised for numerical
+data which uses ``blocking''~\citep{alted2010modern} to 
+optimise CPU-cache access patterns, as well as highly optimised
+bit and byte shuffle filters.  Remarkably, on highly 
+compressible datasets, Blosc decompression can be faster 
+than \texttt{memcpy}.
+Blosc is written in C, with APIs for C, Python, Julia, Rust
+and others.
+
+Blosc is a ``meta-compressor'' because it provides different 
+access to several different compression codecs. The 
+Zstandard compressor~\citep{collet2021rfc} is of particular 
+interest here as it achieves very high compression ratios
+with fast decompression speeds [see fig]. 
+% This may seem a bit off topic, but want to reassure reader that 
+% this isn't some niche technology
+Zstandard is widely
+used and is being incorporated, e.g., as a standard compression
+mechanism for HTTP traffic and to decompress Linux kernel images
+during boot.
+% LZ4 is also notable - any citations for this?
+
+\subsection{The vcfzarr specification}
+The vcfzarr specification is a direct mapping from the VCF data model 
+to a columnar binary format, expressed using Zarr. [A HIGH LEVEL 
+DESCRIPTION OF THE SPEC, FOCUSING ON RATIONALE BEHIND DECISIONS]
+
+The vcfzarr specification can represent anything described by BCF
+(which is somewhat more restrictive than BCF) except for two corner
+cases related to the encoding of missing data. Firstly, vcfzarr does
+not distinguish between a field that is not present and one that 
+is present but contains missing data. [FOR EXAMPLE...]
+Because of the use of -1 to represent missing data and -2 to 
+represent dimension padding for integers, these values 
+cannot be stored. In practise this doesn't seem to be much of 
+an issue (we have not found a real VCF that contains negative 
+integers). If -1 and -2 need to be stored, a float field
+can be used without issues.
+
+\subsection{vcf2zarr}
+Converting VCF to Zarr format at Biobank scale is challenging. This main issue is 
+around memory usage: although we can view each record in the VCF one-by-one,
+we must buffer a full chunk (10,000 variants is reasonable choice) 
+in the variants dimension for each of the arrays. 
+For VCFs with many FORMAT fields and large numbers of samples this can
+easily require tens of gigabytes of RAM per worker, which makes 
+parallelism troublesome. Reading the VCF multiple times for different fields
+is possible, but would be prohibitively slow for multi-terabyte VCFs.
+
+The \texttt{vcf2zarr} utility solves this problem by first converting 
+the VCF data (which can be split across many files) into an Intermediate
+Columnar Format (ICF). The \texttt{vcf2zarr explode} command takes a set
+of VCFs and stores the data in per-field chunks (by default, 64MiB).
+In this way, the memory required is bounded by the size of single record 
+BCF record in htslib (plus the size of a decoded bgzf record
+[FIXME what is the correct terminology here?]), plus 64MiB for each 
+field.  The Intermediate Columnar Format stores the data for each 
+field spread across multiple partitions of the data (so that 
+multiple parts of the VCF can be read in parallel), and then 
+fixed size compressed chunks within those partitions. It also stores information
+about the number of records in each partition and chunk of a given
+field, so that the record at a particular index can be retrieved efficiently 
+later. Summaries such as the minimum and maximum value 
+of each field are also maintained, to aid choice of data types later.
+A set of VCF files can be converted to intermediate columnar 
+format in parallel on a single machine using a given number 
+of worker processes using the \texttt{explode} command,
+or can be distributed across a cluster using the 
+\texttt{dexplode-init},
+\texttt{dexplode-partition} and \texttt{dexplode-finalise} commands.
+
+Once the VCF data has converted to the intermediate columnar format,
+it can then be converted to Zarr using the \texttt{vcf2zarr encode}
+command. Alhough there is a one-to-one mapping between the VCF
+fields and the Zarr arrays, there is considerable flexibility 
+in how the data is stored, for example in integer width
+and compression and filter settings.
+By default vcf2zarr chooses integer type sizes based 
+on the range of values seen in the intermediate column format
+and reasonable compressor defaults, but these can be
+altered by generating a schema in JSON format and editing it.
+Encoding a given column (for example, \texttt{call\_AD})
+involves creating a buffer to hold a full variant-chunk of the 
+array in question, and then sequentially filling this buffer with 
+values read from the intermediate columnar format. Once the buffer 
+is full, the chunks in the samples dimension are compressed
+and written to file. [Something about parallelism and distributing]
+
+\subsection{Benchmarks}
 Full details of the benchmarking done in
 Figure~\ref{fig-data-storage} and
 Figure~\ref{fig-whole-matrix-compute}.
@@ -507,14 +572,10 @@ were provided. For genozip, the time required to compute
 \texttt{genocat file.genozip | bcftools +af-dist}. Because commands
 in the pipeline execute concurrently on mutiple cores, the total CPU time is
 greater than the elapsed time.
-\item For the threading speedup plot, we report the time required to compute
-afdist with 8 threads relative to 1 thread (a speedup of 8 is therefore
-the maximum). For savvy, our C++ implementation of afdist calculates
-on 8 chunks of genome, and aggegates once they are completed.
-Bcftools has a ``--threads`` option, but it only applies to decoding.
 \item Where possible in pipelines we use uncompressed BCF
  output \texttt{-Ou} to make processing more efficient (skip printf
-and parsing costs, which are substantial).
+and parsing costs, which are substantial). Following advice
+in~\citep{danecek2021twelve}.
 \item We do not use BCF output in genozip because it doesn't support
 it directly, only VCF (supports BCF by pipeing through bcftools).
 \end{itemize}
@@ -551,20 +612,6 @@ VCF: Variant Call Format;
 % \setcounter{table}{0}
 
 % \section*{Supplementary Material}
-
-% \begin{figure*}[ht]
-% 	\begin{center}
-% 		\includegraphics[width=\textwidth]{figures/whole-matrix-compute-supplemental}
-% 	\end{center}
-% 	\caption{\label{fig-whole-matrix-compute-supplemental}
-%     Limitations of vertical scaling on whole-matrix afdist. The elapsed
-% wall-clock time required to compute afdist on the whole genotype matrix using
-% different numbers of threads and storage backends (top row), and the relative
-% speedup obtained from threads as a fraction of optimum speedup (bottom row).
-% [TODO more detail and link to fig 1. Also add the times for bcftools and
-% genozip in col 1?]
-% }
-% \end{figure*}
 
 
 \clearpage
