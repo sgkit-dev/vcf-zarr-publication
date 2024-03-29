@@ -39,7 +39,7 @@
 \input{diagrams/data-model-preamble.tex}
 
 % tentative
-\title{Columnar VCF using Zarr}
+\title{Columnar VCF for Biobank scale datasets using Zarr}
 
 %%% Use the \authfn to add symbols for additional footnotes, if any. 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
 \author[1,\authfn{1},\authfn{2}]{First Author}
@@ -88,33 +88,43 @@
 % can see which stuff migrates to the intro
 \begin{abstract}
 \textbf{Background:}
-The largest dataset available today, the UK Biobank,
-has a genotype matrix of approximately 1,000,000,000 rows and 500,000 columns,
-along with metadata and quality control information of similar dimension.
-Processing such matrices on a single computer is not feasible,
-and computations must be distributed to complete in a reasonable timeframe.
-Classical methods in genomics are inherently single-computer focused,
-oriented around either streaming data through Unix pipelines or
-storing the entire genotype matrix in memory.
-The standard file format for genetic variation data (VCF: Variant Call Format)
-is also fundamentally unsuited to distributed computation and is a severe
-bottleneck at the Biobank scale.
+Variant Call Format (VCF) is the standard file format for interchanging
+genetic variation data and associated quality control metrics.
+It provides a well-defined data model and is central to a large ecosystem
+of tools interoperating through this format.
+The standard row-based encoding of the VCF data model (either as text
+or packed binary) emphasises efficient retrieval of all data for a given
+variant, but accessing subsets of the data within rows is inefficient.
+Biobank-scale datasets currently available 
+consist of hundreds of thousands of whole genomes with tens of terabytes
+of compressed VCF per chromosome.
+Row-based data storage is fundamentally unsuited to such datasets
+and these large VCFs represent a major computational bottleneck.
 
 \textbf{Results:}
-key part of this approach is to use Zarr, a cloud-native
-format for storing multi-dimensional numerical data, widely used in the
-across the sciences to store petabyte-scale datasets, and with
-multiple implementations.  We show that data stored in this format has
-comparable compression levels to specialised methods to compress the
-genotype matrix. We show that performing calculations on the genotype
-matrix on a single computer is much more efficient at scale using sgkit than standard
+We present the vcfzarr specification, a columnar encoding of the 
+VCF data model using Zarr which makes retrieving subsets of the 
+data much more efficient. Zarr is a cloud-native format for storing 
+multi-dimensional numerical data, widely used in scientific computing.
+We show how this format is competitive with specialised methods for 
+storing genotype data in terms of compression ratios, and also performs
+well on compressing the high-entropy quality-control fields that 
+tend to dominate. We show that performing calculations on the genotype
+matrix is much more efficient than standard
 approaches based on VCF, and is comparable with state-of-the-art methods
-using compiled languages.
+using compiled languages. We demonstrate 
+the vcfzarr format (and the vcf2zarr conversion utility) 
+on the Genomics England dataset of XX,XXX,XXX samples, showing
+an overall reduction in storage of XX, and a reduction in processing 
+time of common queries of up to XX fold.
 
 \textbf{Conclusions:}
-Such a standard, based on the language-agnostic Zarr format, would enable a
-diverse ecosystem of tools to efficiently access subsets of the data without
-copying, and substantially reduce research costs.
+Large row-encoded VCF files are a major bottleneck for current research, and 
+processing these files incurs a substantial economic cost.
+The vcfzarr specification, building on widely-used, open-source technologies
+has the potential to greatly reduce these costs,
+and may enable a diverse ecosystem of next-generation tools for analysing 
+genetic variation data.
 \end{abstract}
 
 \begin{keywords}
@@ -132,6 +142,12 @@ Keyword1; keyword 2; keyword 3 (Three to ten keywords representing the main cont
 \end{keypoints*}
 
 \section{Background}
+[Four paragraphs. (1) What is VCF, and the good things it has done. 
+(2) Explosion in dataset size. Summary of where we're at in terms of biobanks
+etc. (3) We have a problem. Existing solutions like TileDB etc
+are either proprietary, or tightly coupled to one specific software stack
+(Hail, e.g.).
+(4) We present the vcfzarr spec and the vcf2zarr conversion utility.]
 
 \section{Results}
 
