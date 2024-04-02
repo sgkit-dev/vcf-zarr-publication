@@ -318,7 +318,7 @@ all_tools = [
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-o", "--output", type=click.Path(), default=None)
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
 @click.option("-s", "--storage", default="hdd")
 @click.option("--debug", is_flag=True)
@@ -361,13 +361,14 @@ def processing_time(src, output, tool, storage, debug):
                 }
             )
             df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
-            df.to_csv(output, index=False)
+            if output is not None:
+                df.to_csv(output, index=False)
             print(df)
 
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-o", "--output", type=click.Path(), default=None)
 @click.option("--debug", is_flag=True)
 def file_size(src, output, debug):
     paths = [pathlib.Path(p) for p in sorted(src)]
@@ -413,7 +414,7 @@ def file_size(src, output, debug):
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-o", "--output", type=click.Path(), default=None)
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools[:2]])
 @click.option("-s", "--storage", default="hdd")
 @click.option("--debug", is_flag=True)
@@ -478,7 +479,7 @@ def midslice(n, k):
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-o", "--output", type=click.Path(), default=None)
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
 @click.option("-s", "--slice-id", multiple=True, default=["n10", "n/2"])
 @click.option("--debug", is_flag=True)
