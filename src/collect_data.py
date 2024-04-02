@@ -95,7 +95,7 @@ def write_sample_names(ds, sample_slice, f):
 
 
 def run_bcftools_afdist_subset(
-    path, ds, variant_slice, sample_slice, *, num_threads, debug=False
+    path, ds, variant_slice, sample_slice, *, num_threads=1, debug=False
 ):
     region = get_variant_slice_region(ds, variant_slice)
     with tempfile.NamedTemporaryFile("w") as f:
@@ -140,7 +140,7 @@ def run_bcftools_afdist_filter(path, *, num_threads=1, debug=False):
 
 
 # NOTE! These must be called on a file that has had fill-tags run on it.
-def run_bcftools_afdist(path, *, num_threads, num_sites, debug=False):
+def run_bcftools_afdist(path, *, num_threads=1, debug=False):
     cmd = (
         "BCFTOOLS_PLUGINS=software/bcftools-1.18/plugins "
         "/usr/bin/time -f'%S %U' "
@@ -149,7 +149,7 @@ def run_bcftools_afdist(path, *, num_threads, num_sites, debug=False):
     return time_cli_command(cmd, debug)
 
 
-def run_genozip_afdist(path, *, num_threads, num_sites, debug=False):
+def run_genozip_afdist(path, *, num_threads=1, debug=False):
     cmd = (
         "export BCFTOOLS_PLUGINS=software/bcftools-1.18/plugins; "
         "/usr/bin/time -f'%S %U' "
@@ -164,7 +164,7 @@ def run_genozip_afdist(path, *, num_threads, num_sites, debug=False):
 
 
 def run_genozip_afdist_subset(
-    path, ds, variant_slice, sample_slice, *, num_threads, debug=False
+    path, ds, variant_slice, sample_slice, *, num_threads=1, debug=False
 ):
     region = get_variant_slice_region(ds, variant_slice)
     # There's no "file" option for specifying samples with genozip,
@@ -187,7 +187,7 @@ def run_genozip_afdist_subset(
     return time_cli_command(cmd, debug)
 
 
-def run_savvy_afdist(path, *, num_threads, num_sites, debug=False):
+def run_savvy_afdist(path, *, debug=False):
     cmd = (
         "/usr/bin/time -f'%S %U' "
         f"software/savvy-afdist/sav-afdist {path}"
@@ -204,10 +204,9 @@ def run_savvy_decode(path, *, debug=False):
 
 
 def _zarr_afdist_subset_worker(
-    ds_path, variant_slice, sample_slice, num_threads, debug, conn
+    ds_path, variant_slice, sample_slice, debug, conn
 ):
     before = time.time()
-    assert num_threads == 1
     df = zarr_afdist(ds_path, variant_slice=variant_slice, sample_slice=sample_slice)
     wall_time = time.time() - before
     cpu_times = psutil.Process().cpu_times()
@@ -216,8 +215,8 @@ def _zarr_afdist_subset_worker(
     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
 
 
-def zarr_afdist_worker(ds_path, num_threads, debug, conn):
-    return _zarr_afdist_subset_worker(ds_path, None, None, num_threads, debug, conn)
+def zarr_afdist_worker(ds_path, debug, conn):
+    return _zarr_afdist_subset_worker(ds_path, None, None, debug, conn)
 
 
 def zarr_decode_worker(ds_path, debug, conn):
@@ -231,17 +230,17 @@ def zarr_decode_worker(ds_path, debug, conn):
 
 
 def zarr_afdist_subset_worker(
-    ds_path, variant_slice, sample_slice, num_threads, debug, conn
+    ds_path, variant_slice, sample_slice, debug, conn
 ):
     return _zarr_afdist_subset_worker(
-        ds_path, variant_slice, sample_slice, num_threads, debug, conn
+        ds_path, variant_slice, sample_slice, debug, conn
     )
 
 
-def run_zarr_afdist(ds_path, *, num_threads, num_sites, debug=False):
+def run_zarr_afdist(ds_path, *, debug=False):
     conn1, conn2 = multiprocessing.Pipe()
     p = multiprocessing.Process(
-        target=zarr_afdist_worker, args=(ds_path, num_threads, debug, conn2)
+        target=zarr_afdist_worker, args=(ds_path, debug, conn2)
     )
     p.start()
     value = conn1.recv()
@@ -267,12 +266,12 @@ def run_zarr_decode(ds_path, *, debug=False):
 
 
 def run_zarr_afdist_subset(
-    ds_path, ds, variant_slice, sample_slice, *, num_threads, debug=False
+    ds_path, ds, variant_slice, sample_slice, *, debug=False
 ):
     conn1, conn2 = multiprocessing.Pipe()
     p = multiprocessing.Process(
         target=zarr_afdist_subset_worker,
-        args=(ds_path, variant_slice, sample_slice, num_threads, debug, conn2),
+        args=(ds_path, variant_slice, sample_slice, debug, conn2),
     )
     p.start()
     value = conn1.recv()
@@ -322,9 +321,8 @@ all_tools = [
 @click.option("-o", "--output", type=click.File("w"), default="-")
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
 @click.option("-s", "--storage", default="hdd")
-@click.option("--num-threads", type=int, default=1)
 @click.option("--debug", is_flag=True)
-def processing_time(src, output, tool, storage, num_threads, debug):
+def processing_time(src, output, tool, storage, debug):
     if len(src) == 0:
         raise ValueError("Need at least one input file!")
     tool_map = {t.name: t for t in all_tools}
@@ -350,15 +348,12 @@ def processing_time(src, output, tool, storage, num_threads, debug):
             tool_path = ts_path.with_suffix(tool.suffix)
             if debug:
                 print("Running:", tool)
-            result = tool.afdist_func(
-                tool_path, num_threads=num_threads, num_sites=num_sites, debug=debug
-            )
+            result = tool.afdist_func(tool_path, debug=debug)
             data.append(
                 {
                     "num_samples": ds.samples.shape[0],
                     "num_sites": ts.num_sites,
                     "tool": tool.name,
-                    "threads": num_threads,
                     "user_time": result.user,
                     "sys_time": result.system,
                     "wall_time": result.wall,
@@ -486,9 +481,8 @@ def midslice(n, k):
 @click.option("-o", "--output", type=click.File("w"), default="-")
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
 @click.option("-s", "--slice-id", multiple=True, default=["n10", "n/2"])
-@click.option("--num-threads", type=int, default=1)
 @click.option("--debug", is_flag=True)
-def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
+def subset_processing_time(src, output, tool, slice_id, debug):
     if len(src) == 0:
         raise ValueError("Need at least one input file!")
     tool_map = {t.name: t for t in all_tools}
@@ -530,7 +524,6 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
                     ds,
                     variant_slice,
                     sample_slice,
-                    num_threads=num_threads,
                     debug=debug,
                 )
                 data.append(
@@ -539,7 +532,6 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
                         "num_sites": ts.num_sites,
                         "slice": sid,
                         "tool": tool.name,
-                        "threads": num_threads,
                         "user_time": result.user,
                         "sys_time": result.system,
                         "wall_time": result.wall,
