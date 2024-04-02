@@ -20,6 +20,10 @@ void classify_genotypes(const std::string& filename,
         int het_count = 0;
         int hom_count = 0;
 
+        /* Note: this assumes binary alleles, and is therefore slightly
+         * different to the Zarr version. This shouldn't make any difference
+         * to the gross timings of the operations, though.
+         */
         for (size_t i = 0; i < geno.size(); i += 2) {
             int allele1 = geno[i];
             int allele2 = geno[i + 1];

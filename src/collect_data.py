@@ -20,7 +20,7 @@ import sgkit as sg
 
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
-from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter
+from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter, zarr_decode
 
 
 def get_file_size(file):
@@ -190,8 +190,15 @@ def run_genozip_afdist_subset(
 def run_savvy_afdist(path, *, num_threads, num_sites, debug=False):
     cmd = (
         "/usr/bin/time -f'%S %U' "
-        f"software/savvy-afdist/sav-afdist --threads {num_threads} "
-        f"--sav-file {path} --num-variants {num_sites}"
+        f"software/savvy-afdist/sav-afdist {path}"
+    )
+    return time_cli_command(cmd, debug)
+
+
+def run_savvy_decode(path, *, debug=False):
+    cmd = (
+        "/usr/bin/time -f'%S %U' "
+        f"software/savvy-afdist/sav-afdist {path} --decode-only"
     )
     return time_cli_command(cmd, debug)
 
@@ -213,6 +220,16 @@ def zarr_afdist_worker(ds_path, num_threads, debug, conn):
     return _zarr_afdist_subset_worker(ds_path, None, None, num_threads, debug, conn)
 
 
+def zarr_decode_worker(ds_path, debug, conn):
+    before = time.time()
+    bytes_decoded = zarr_decode(ds_path)
+    wall_time = time.time() - before
+    cpu_times = psutil.Process().cpu_times()
+    if debug:
+        print(bytes_decoded)
+    conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
+
+
 def zarr_afdist_subset_worker(
     ds_path, variant_slice, sample_slice, num_threads, debug, conn
 ):
@@ -226,6 +243,19 @@ def run_zarr_afdist(ds_path, *, num_threads, num_sites, debug=False):
     p = multiprocessing.Process(
         target=zarr_afdist_worker, args=(ds_path, num_threads, debug, conn2)
     )
+    p.start()
+    value = conn1.recv()
+    wall_time, user_time, sys_time = map(float, value.split())
+    p.join()
+    if p.exitcode != 0:
+        raise ValueError()
+    p.close()
+    return ProcessTimeResult(wall_time, sys_time, user_time)
+
+
+def run_zarr_decode(ds_path, *, debug=False):
+    conn1, conn2 = multiprocessing.Pipe()
+    p = multiprocessing.Process(target=zarr_decode_worker, args=(ds_path, debug, conn2))
     p.start()
     value = conn1.recv()
     wall_time, user_time, sys_time = map(float, value.split())
@@ -261,11 +291,14 @@ class Tool:
     afdist_func: None
     afdist_subset_func: None
     version_func: None
+    decode_func: None = None
 
 
 all_tools = [
-    Tool("savvy", ".sav", run_savvy_afdist, None, savvy_version),
-    Tool("zarr", ".sgz", run_zarr_afdist, run_zarr_afdist_subset, None),
+    Tool("savvy", ".sav", run_savvy_afdist, None, savvy_version, run_savvy_decode),
+    Tool(
+        "zarr", ".zarr", run_zarr_afdist, run_zarr_afdist_subset, None, run_zarr_decode
+    ),
     # Making sure we run on the output of bcftools fill-tags
     Tool(
         "bcftools",
@@ -286,7 +319,7 @@ all_tools = [
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.argument("output", nargs=1, type=click.Path())
+@click.option("-o", "--output", type=click.File("w"), default="-")
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
 @click.option("-s", "--storage", default="hdd")
 @click.option("--num-threads", type=int, default=1)
@@ -302,7 +335,7 @@ def processing_time(src, output, tool, storage, num_threads, debug):
     for ts_path in paths:
         ts = tskit.load(ts_path)
         click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
-        sg_path = ts_path.with_suffix(".sgz")
+        sg_path = ts_path.with_suffix(".zarr")
 
         if not sg_path.exists:
             print("Skipping missing", sg_path)
@@ -339,7 +372,7 @@ def processing_time(src, output, tool, storage, num_threads, debug):
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.argument("output", type=click.Path())
+@click.option("-o", "--output", type=click.File("w"), default="-")
 @click.option("--debug", is_flag=True)
 def file_size(src, output, debug):
     paths = [pathlib.Path(p) for p in sorted(src)]
@@ -349,7 +382,7 @@ def file_size(src, output, debug):
         click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
         bcf_path = ts_path.with_suffix(".bcf")
         # FIXME
-        zarr_path = ts_path.with_suffix(".sgz")
+        zarr_path = ts_path.with_suffix(".zarr")
         sav_path = ts_path.with_suffix(".sav")
         genozip_path = ts_path.with_suffix(".genozip")
         if not sg_path.exists:
@@ -383,6 +416,62 @@ def file_size(src, output, debug):
     print(df)
 
 
+@click.command()
+@click.argument("src", type=click.Path(), nargs=-1)
+@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools[:2]])
+@click.option("-s", "--storage", default="hdd")
+@click.option("--debug", is_flag=True)
+def decoding_time(src, output, tool, storage, debug):
+    if len(src) == 0:
+        raise ValueError("Need at least one input file!")
+    tool_map = {t.name: t for t in all_tools[:2]}
+    tools = [tool_map[tool_name] for tool_name in tool]
+
+    data = []
+    paths = [pathlib.Path(p) for p in sorted(src)]
+    for ts_path in paths:
+        ts = tskit.load(ts_path)
+        click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
+        sg_path = ts_path.with_suffix(".zarr")
+
+        if not sg_path.exists:
+            print("Skipping missing", sg_path)
+            continue
+        ds = sg.load_dataset(sg_path)
+        num_sites = ts.num_sites
+        num_samples = ds.samples.shape[0]
+        assert ts.num_samples // 2 == ds.samples.shape[0]
+        assert num_sites == ds.variant_position.shape[0]
+        assert np.array_equal(ds.variant_position, ts.tables.sites.position.astype(int))
+
+        for tool in tools:
+            tool_path = ts_path.with_suffix(tool.suffix)
+            if debug:
+                print("Running:", tool)
+            result = tool.decode_func(tool_path, debug=debug)
+            data.append(
+                {
+                    "num_samples": ds.samples.shape[0],
+                    "num_sites": ts.num_sites,
+                    "tool": tool.name,
+                    "user_time": result.user,
+                    "sys_time": result.system,
+                    "wall_time": result.wall,
+                    "storage": storage,
+                    "total_genotypes": num_sites * num_samples * 2,
+                }
+            )
+            print("rate = ",
+                humanize.naturalsize(
+                    data[-1]["total_genotypes"] / data[-1]["wall_time"], format="%.1f"
+                ),  "/ s"
+            )
+            df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
+            df.to_csv(output, index=False)
+            print(df)
+
+
 def midslice(n, k):
     """
     Return a slice of size k from the middle of an array of size n.
@@ -394,7 +483,7 @@ def midslice(n, k):
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
-@click.argument("output", nargs=1, type=click.Path())
+@click.option("-o", "--output", type=click.File("w"), default="-")
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
 @click.option("-s", "--slice-id", multiple=True, default=["n10", "n/2"])
 @click.option("--num-threads", type=int, default=1)
@@ -410,7 +499,7 @@ def subset_processing_time(src, output, tool, slice_id, num_threads, debug):
     for ts_path in paths:
         ts = tskit.load(ts_path)
         click.echo(f"{ts_path} n={ts.num_individuals}, m={ts.num_sites}")
-        sg_path = ts_path.with_suffix(".sgz")
+        sg_path = ts_path.with_suffix(".zarr")
 
         if not sg_path.exists:
             print("Skipping missing", sg_path)
@@ -508,6 +597,7 @@ def cli():
 
 cli.add_command(file_size)
 cli.add_command(processing_time)
+cli.add_command(decoding_time)
 cli.add_command(subset_processing_time)
 cli.add_command(genotype_filtering_processing_time)
 cli.add_command(site_filtering_processing_time)

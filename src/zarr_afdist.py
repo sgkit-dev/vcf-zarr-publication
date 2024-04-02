@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import numba
 import zarr
+import numcodecs
+
+numcodecs.nthreads = 1
 
 
 @numba.njit("void(int64, int8[:], int32[:], int32[:], int32[:], int32[:])")
@@ -67,11 +70,20 @@ def count_genotypes_chunk_subset(
                     ref_count[index] += (a == 0) + (b == 0)
             index += 1
 
+
 @numba.njit(
     "void(int64, int8[:,:,:], b1[:], b1[:], b1[:,:], int32[:], int32[:], int32[:], int32[:])"
 )
 def count_genotypes_chunk_subset_filter(
-    offset, G, variant_mask, sample_mask, genotype_mask, hom_ref, hom_alt, het, ref_count
+    offset,
+    G,
+    variant_mask,
+    sample_mask,
+    genotype_mask,
+    hom_ref,
+    hom_alt,
+    het,
+    ref_count,
 ):
     # NB Assuming diploids and no missing data!
     index = offset
@@ -91,6 +103,7 @@ def count_genotypes_chunk_subset_filter(
                             het[index] += 1
                         ref_count[index] += (a == 0) + (b == 0)
             index += 1
+
 
 @dataclasses.dataclass
 class GenotypeCounts:
@@ -206,7 +219,7 @@ def classify_genotypes_subset_filter(zarr_ds, variant_mask=None, sample_mask=Non
                 if np.sum(sample_mask_chunk) > 0:
                     DP = call_DP.blocks[v_chunk, s_chunk]
                     GQ = call_GQ.blocks[v_chunk, s_chunk]
-                    genotype_mask_chunk = (DP > 20) & (GQ  > 10)
+                    genotype_mask_chunk = (DP > 20) & (GQ > 10)
                     G = call_genotype.blocks[v_chunk, s_chunk]
                     count_genotypes_chunk_subset_filter(
                         j,
@@ -221,6 +234,7 @@ def classify_genotypes_subset_filter(zarr_ds, variant_mask=None, sample_mask=Non
                     )
             j += count
     return GenotypeCounts(hom_ref, hom_alt, het, ref_count)
+
 
 def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
     root = zarr.open(path)
@@ -237,9 +251,7 @@ def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
         variant_mask[variant_slice] = 1
         sample_mask = np.zeros(n, dtype=bool)
         sample_mask[sample_slice] = 1
-        counts = classify_genotypes_subset(
-            call_genotype, variant_mask, sample_mask
-        )
+        counts = classify_genotypes_subset(call_genotype, variant_mask, sample_mask)
         n = np.sum(sample_mask)
 
     alt_count = 2 * n - counts.ref_count
@@ -257,3 +269,17 @@ def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
 
     count = (a + b).astype(int)
     return pd.DataFrame({"start": bins[:-1], "stop": bins[1:], "prob_dist": count[1:]})
+
+
+def zarr_decode(path):
+    root = zarr.open(path)
+    call_genotype = root["call_genotype"]
+
+    bytes_decoded = 0
+    for v_chunk in range(call_genotype.cdata_shape[0]):
+        for s_chunk in range(call_genotype.cdata_shape[1]):
+            G = call_genotype.blocks[v_chunk, s_chunk]
+            # Just to check that we have acually decoded this into numpy array
+            bytes_decoded += G.nbytes
+    assert bytes_decoded == call_genotype.nbytes
+    return bytes_decoded
