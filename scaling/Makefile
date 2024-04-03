@@ -34,7 +34,7 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 	vcf2zarr explode $< $@ -p8
 
 %.zarr: %.icf
-	vcf2zarr encode $< $@ -p8 --max-memory=200000
+	vcf2zarr encode $< $@ -p8 --max-memory=200GiB -v
 
 # Compute some minimal INFO summaries to support the af-dist computation
 %.tags.bcf: %.bcf
@@ -50,6 +50,3 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 	# to run --samples on output if it's derived directly from
 	# bcf, so we have to filter it through bcftools first.
 	${BCFTOOLS} view $< | ${GENOZIP} --no-test -o $@
-
-clean:
-	rm -fR data/chr21_*
