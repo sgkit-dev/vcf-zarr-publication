@@ -227,7 +227,17 @@ an additional step to compute AF etc.]
 
 \subsection{Case study: Genomics England 100,000 genomes}
 In this section we demonstrate the utility of vcfzarr on a large human dataset.
-[DETAILS ABOUT GeL DATA]
+Genomics England’s multi-sample VCF dataset (aggV2) is an 
+aggregate of 78,195 gVCFs from rare disease and cancer participants 
+recruited as part of the 100,000 Genomes Project~\cite{turnbull2018100}. 
+aggV2 comprises approximately 722 million annotated single-nucleotide 
+variants (SNVs) and small indels split into 1,371 roughly equal chunks and 
+totalling 165.3 Tib of data after \texttt{bgzip} compression. 
+The dataset is used for a variety of research purposes, ranging from 
+genome-wide association studies (GWAS)~\cite{kousathanas2022whole} and 
+imputation~\cite{shi2023genomics} to 
+simple queries involving single gene 
+regions~\cite{leggatt2023genotype}~\cite{lam2023repeat}.
 We converted the data to the intermediate columnar format 
 which took X hours with a cluster of Y workers using the 
 distributed explode commands. When then converted to Zarr using 
