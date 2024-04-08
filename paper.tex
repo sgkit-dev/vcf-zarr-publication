@@ -151,13 +151,65 @@ are either proprietary, or tightly coupled to one specific software stack
 
 \section{Results}
 
-\subsection{Storing the genotype matrix}
+\subsection{Storing genetic variation data}
 Although VCF is the standard format for exchanging genetic variation
-data, its limitations both in terms of compression ratios
-and query/compute performance are well known, and many methods 
-have been suggested to improve on these properties.[REVIEW METHODS]
-High level discussion of
-strategies used to store genotype matrix and accompanying metadata.
+data, its limitations both in terms of compression 
+and query/compute performance are well 
+known~\citep[e.g.][]{kelleher2013processing,layer2016efficient,li2016bgt},
+and many methods 
+have been suggested to improve on these properties.
+Most approaches balance compression with
+performance on particular types of queries, 
+typically using a command line interface
+and outputting VCF text~\citep{
+layer2016efficient, %GQT
+li2016bgt, % BGT
+tatwawadi2016gtrac, % GTRAC
+danek2018gtc, % GTC
+lin2020sparse, % SpVCF
+lan2020genozip,lan2021genozip, %genozip
+lefaive2021sparse, % SAVVY
+wertenbroek2022xsi,% XSI
+zhang2023gbc}. %GBC
+Several specialised algorithms for compressing 
+the genotype matrix (i.e., just the genotype calls without additional
+VCF information) have been proposed
+\citep{deorowicz2013genome, %TGC
+deorowicz2019gtshark, %GTShark
+deorowicz2021vcfshark}, % VCFShark
+most notably the highly-influential Positional
+Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
+
+VCF is a text-based format in which each line
+describes observations
+and metadata for a single variant (usually a position on the genome
+where variation occurs in the samples)~\citep{danecek2011variant}. 
+Blocks of VCF text are compressed using \texttt{bgzip},
+which allows subsets of the file to be retrieved using secondary
+indexes stored alongside the original file~\citep{li2011tabix}.
+VCF is therefore a \emph{row-wise} format, i.e., where all of the 
+data for a record is stored continguously. BCF is similarly 
+row-wise, as are the majority of proposed alternative storage formats.
+Row-wise storage makes retrieving all information
+for a given record straightforward and efficient, and 
+allows data to be easily streamed through Unix pipelines (see Discussion).
+
+Row-wise storage works well when records are relatively small, 
+or when we typically want to analyse each record in its entirity.
+When we want to analyse only a subset of a record 
+row-wise storage can inefficient because we will usually need to
+retrieve more information than required from storage. In the case 
+of VCF (and BCF) where records are not of a fixed size and 
+are almost always compressed in blocks, accessing any information
+for all rows means retrieving and decompressing \emph{all} 
+information from all rows.
+The alternative to row-wise storage is \emph{columnar} storage:
+instead of grouping toether all the fields for a record,
+we group together all the records for a given field.
+To our knowledge, the only existing method using columnar 
+storage for genetic variation data is 
+SeqArray~\citep{zheng2017seqarray} built on 
+the GDS container format~\citep{zheng2012high}.
 
 \begin{figure}
     \begin{tabular}{c}
@@ -165,25 +217,61 @@ strategies used to store genotype matrix and accompanying metadata.
 \includegraphics[width=7cm]{figures/data-scaling}
 \end{tabular}
 \caption{Chunked compressed storage of the genotype matrix using Zarr.
-(A) Schematic of the chunked array storage used in sgkit
+(A) Schematic of data stored under the \texttt{vcfzarr} specification.
 (B) Compression performance compared with BCF, savvy and genozip
 based on simulated data (see text for details).
 \label{fig-data-storage}}
 \end{figure}
 
-Emphasis on access by variant, not sample. Introduce Zarr, and
-refer to Fig~\ref{fig-data-storage}A to explain columnar storage,
-and Fig~\ref{fig-data-storage}B to show that is competitive
-with highly specialised approaches.
-Note that the FC simulated dataset is probably a best-case
-scenario for methods specialised to patterns in the genotype matrix.
-Discuss storing additional data, and advantages of the
-columnar approach (refs to genomics tools that do the same).
+We propose the \texttt{vcfzarr} specification which maps the 
+VCF data model into a columnar layout using the
+widely-used Zarr format (Fig~\ref{fig-data-storage}A). 
+Briefly, Zarr is a format 
+% FIXME two different uses of $n$ here in a paragraph
+for storing $n$-dimensional arrays of a fixed datatype, stored as 
+compressed chunks. In the \texttt{vcfzarr} specification, 
+each field in a VCF is mapped to an array, which is compressed 
+and stored individually allowing for efficient retrieval. 
+In particular, call-level data is stored as $m \times n$ arrays
+(for $m$ sites and $n$ samples), allowing for efficient 
+retrieval of subsets of those fields along both the 
+variants and samples axis.
+Note that this approach to storing higher dimensional 
+sets Zarr apart from more general columnar formats 
+such as Parquet [TODO more details and citations?].
+See the Methods for more detail on Zarr and the \texttt{vcfzarr}
+specification.
+
+Remarkably, the simple approach of compressing
+two dimensional chunks with the Zstandard 
+compressor~\citep{collet2021rfc} and the bit-shuffle
+filter from Blosc~\cite{alted2010modern} produces 
+compression levels competitive with specialised methods
+on the genotype matrix. In Fig~\ref{fig-data-storage}B
+we show compression performance on up to a million
+samples subset a large and highly realistic 
+simulation of French-Canadians~\cite{anderson2023on}
+(see Methods for details).
+Note that while simulations cannot capture 
+all the subtleties of real data, the allele frequency
+and population structure patterns in this dataset 
+have been shown to closely follow 
+observations~\cite{anderson2023on} and so provides 
+a reasonable data point when comparing such methods.
+% Could note here that this might represent a best 
+% case scenario for specialised methods, but maybe 
+% not worth bothering with.
 
 \subsection{Computing on the genotype matrix}
 Compressing data isn't ultimately the point - we want to use it.
 We discuss the problem of running computations on the entire
 genotype matrix, and how different formats limit what can be done.
+
+[Review computational accessibility of the available formats.
+We have those that only produce VCF in response to limited 
+query languages. Those with APIs.]
+
+
 We illustrate the discussion by the afdist operation from
 the bcftools plugins package. This is perhaps a contrived example, but
 we chose it because it requires examining the entire genotype matrix
@@ -193,6 +281,7 @@ divvying up the genome into chunks via HPC schedulers or workflow
 managers is quite tricky.
 We discuss the software development aspect, and how we developed
 the afdist-savvy program. We discuss the inherent limitations
+
 of the decode-to-vcf strategy, and how this inevitably
 leads to bottlenecks. 
 
@@ -427,10 +516,8 @@ interest here as it achieves very high compression ratios
 with fast decompression speeds [see fig]. 
 % This may seem a bit off topic, but want to reassure reader that 
 % this isn't some niche technology
-Zstandard is widely
-used and is being incorporated, e.g., as a standard compression
-mechanism for HTTP traffic and to decompress Linux kernel images
-during boot.
+Zstandard is also used in several recent VCF compression 
+methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
 % LZ4 is also notable - any citations for this?
 
 \subsection{The vcfzarr specification}
@@ -792,48 +879,10 @@ genotype calls and quality control data.
 [WIP: currently working on weaving together the stuff below into
 some sort of narrative]
 
-As has been noted many times~\citep[e.g.][]{kelleher2013processing,layer2016efficient,li2016bgt},
-
-The shortcomings of VCF (and to a lesser degree, BCF) as a storage
-format and the basis of efficient computation have long been
-recognised
-and many alternatives
-have been proposed.
-
-Purely archival formats try to get the maximum possible compression levels,
-without much attention to query performance. Typically these use
-highly specialised approaches to maximise compression performance
-on genotype data.
-
-These include:
-TGC~\citep{deorowicz2013genome}
-GTShark~\citep{deorowicz2019gtshark},
-VCFShark~\citep{deorowicz2021vcfshark}.
-
-SpVCF~\citep{lin2020sparse} is an extension of the VCF text
-format that maximises compatibility, while gaining substantial
-improvements in file sizes.
-
-Many tools focus on balancing compression performance with
-being able to run queries, typically outputting a VCF.
-e.g.
-BGT~\citep{li2016bgt},
-GQT~\citep{layer2016efficient},
-SAVVY~\citep{lefaive2021sparse},
-XSI~\citep{wertenbroek2022xsi},
-GTC~\citep{danek2018gtc},
-GTRAC~\citep{tatwawadi2016gtrac}
-genozip~\citep{lan2020genozip,lan2021genozip}
-GBC~\citep{zhang2023gbc}.
 
 SeqArray~\citep{zheng2017seqarray} and the GDS format~\citep{zheng2012high}
 provide efficient storage and programmatic access in R.
 
-
-Many recent tools are based on the Positional Burrows--Wheeler
-Transform (PBWT)~\citep{durbin2014efficient}, which takes advantage
-of the underlying haplotype structure of genomic data to provide
-concise storage, and efficient haplotype matching.
 
 The approach taken by \toolname{plink}~\citep{purcell2007plink,chang2015second} is to
 store data in an uncompressed binary format. This has some major
