@@ -23,18 +23,12 @@ sys.path.insert(0, "src")
 from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter, zarr_decode
 
 
-def get_file_size(file):
-    return file.stat().st_size
-
-
-def get_dir_size(dir):
-    return sum(get_file_size(f) for f in dir.glob("**/*") if f.is_file())
-
-
-def du(file):
-    if file.is_file():
-        return get_file_size(file)
-    return get_dir_size(file)
+def du(path):
+    """
+    Return the total disk usage of path in bytes.
+    """
+    out = subprocess.run(f"du -sb {path}", shell=True, check=True, capture_output=True)
+    return int(out.stdout.decode().split()[0])
 
 
 @dataclasses.dataclass
@@ -188,10 +182,7 @@ def run_genozip_afdist_subset(
 
 
 def run_savvy_afdist(path, *, debug=False):
-    cmd = (
-        "/usr/bin/time -f'%S %U' "
-        f"software/savvy-afdist/sav-afdist {path}"
-    )
+    cmd = "/usr/bin/time -f'%S %U' " f"software/savvy-afdist/sav-afdist {path}"
     return time_cli_command(cmd, debug)
 
 
@@ -203,9 +194,7 @@ def run_savvy_decode(path, *, debug=False):
     return time_cli_command(cmd, debug)
 
 
-def _zarr_afdist_subset_worker(
-    ds_path, variant_slice, sample_slice, debug, conn
-):
+def _zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn):
     before = time.time()
     df = zarr_afdist(ds_path, variant_slice=variant_slice, sample_slice=sample_slice)
     wall_time = time.time() - before
@@ -229,19 +218,13 @@ def zarr_decode_worker(ds_path, debug, conn):
     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
 
 
-def zarr_afdist_subset_worker(
-    ds_path, variant_slice, sample_slice, debug, conn
-):
-    return _zarr_afdist_subset_worker(
-        ds_path, variant_slice, sample_slice, debug, conn
-    )
+def zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn):
+    return _zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn)
 
 
 def run_zarr_afdist(ds_path, *, debug=False):
     conn1, conn2 = multiprocessing.Pipe()
-    p = multiprocessing.Process(
-        target=zarr_afdist_worker, args=(ds_path, debug, conn2)
-    )
+    p = multiprocessing.Process(target=zarr_afdist_worker, args=(ds_path, debug, conn2))
     p.start()
     value = conn1.recv()
     wall_time, user_time, sys_time = map(float, value.split())
@@ -265,9 +248,7 @@ def run_zarr_decode(ds_path, *, debug=False):
     return ProcessTimeResult(wall_time, sys_time, user_time)
 
 
-def run_zarr_afdist_subset(
-    ds_path, ds, variant_slice, sample_slice, *, debug=False
-):
+def run_zarr_afdist_subset(ds_path, ds, variant_slice, sample_slice, *, debug=False):
     conn1, conn2 = multiprocessing.Pipe()
     p = multiprocessing.Process(
         target=zarr_afdist_subset_worker,
@@ -367,7 +348,7 @@ def processing_time(src, output, tool, storage, debug):
 
 
 @click.command()
-@click.argument("src", type=click.Path(), nargs=-1)
+@click.argument("src", type=click.Path(), nargs=-1, required=True)
 @click.option("-o", "--output", type=click.Path(), default=None)
 @click.option("--debug", is_flag=True)
 def file_size(src, output, debug):
@@ -377,19 +358,21 @@ def file_size(src, output, debug):
         ts = tskit.load(ts_path)
         click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
         bcf_path = ts_path.with_suffix(".bcf")
+        vcf_path = ts_path.with_suffix(".vcf.gz")
         # FIXME
         zarr_path = ts_path.with_suffix(".zarr")
         sav_path = ts_path.with_suffix(".sav")
         genozip_path = ts_path.with_suffix(".genozip")
-        if not sg_path.exists:
-            print("Skipping missing", sg_path)
+        if not zarr_path.exists:
+            print("Skipping missing", zarr_path)
             continue
-        ds = sg.load_dataset(sg_path)
+        ds = sg.load_dataset(zarr_path)
         assert ts.num_samples // 2 == ds.samples.shape[0]
         assert ts.num_sites == ds.variant_position.shape[0]
         assert np.array_equal(ds.variant_position, ts.tables.sites.position.astype(int))
         tmap = {
             "tsk": ts_path,
+            "vcf": vcf_path,
             "bcf": bcf_path,
             "zarr": zarr_path,
             "sav": sav_path,
@@ -408,8 +391,7 @@ def file_size(src, output, debug):
             )
             df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
             df.to_csv(output, index=False)
-
-    print(df)
+        print(df)
 
 
 @click.command()
@@ -458,10 +440,12 @@ def decoding_time(src, output, tool, storage, debug):
                     "total_genotypes": num_sites * num_samples * 2,
                 }
             )
-            print("rate = ",
+            print(
+                "rate = ",
                 humanize.naturalsize(
                     data[-1]["total_genotypes"] / data[-1]["wall_time"], format="%.1f"
-                ),  "/ s"
+                ),
+                "/ s",
             )
             df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
             df.to_csv(output, index=False)
