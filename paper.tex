@@ -270,38 +270,85 @@ a reasonable data point when comparing such methods.
 % case scenario for specialised methods, but maybe 
 % not worth bothering with.
 
-\subsection{Computing on the genotype matrix}
-Compressing data isn't ultimately the point - we want to use it.
-We discuss the problem of running computations on the entire
-genotype matrix, and how different formats limit what can be done.
 
-[Review computational accessibility of the available formats.
-We have those that only produce VCF in response to limited 
-query languages. Those with APIs.]
+\subsection{Calculating with the genotype matrix}
+Storing genetic variation data compactly is important, but it is also
+important that we can analyse the data efficiently. Bioinformatics 
+workflows tend to emphasise text files and command line utilities 
+that consume and produce text~\citep[e.g.][]{buffalo2015bioinformatics}. 
+Thus, many tools that compress VCF data provide a command line 
+utility with a query language to restrict the records
+examined, perform some pre-specified calculations and finally 
+output some text, typically VCF or tab/comma separated values
+[TODO check these citations]~\citep{
+layer2016efficient, %GQT
+li2016bgt, % BGT
+tatwawadi2016gtrac, % GTRAC
+danek2018gtc, % GTC
+lin2020sparse, % SpVCF
+lan2020genozip,lan2021genozip, %genozip
+lefaive2021sparse, % SAVVY
+wertenbroek2022xsi,% XSI
+zhang2023gbc}. %GBC
+These pre-defined calculations are by necessity limited in scope, however,
+and the volumes of text involved in Biobank scale datasets
+make the classical approach of custom
+analyses via Unix utilities in pipelines prohibitively slow. Thus, 
+methods have begun to provide Application Programming Interfaces
+(APIs), providing efficient access to genotype and other VCF data
+[TODO check these citations]~\cite[e.g.][]{lefaive2021sparse,
+wertenbroek2022xsi,zhang2023gbc}.
 
-
-We illustrate the discussion by the afdist operation from
-the bcftools plugins package. This is perhaps a contrived example, but
-we chose it because it requires examining the entire genotype matrix
-and there is an efficient implementation available in bcftools.
-It is also a good example because the standard approach of
-divvying up the genome into chunks via HPC schedulers or workflow
-managers is quite tricky.
-We discuss the software development aspect, and how we developed
-the afdist-savvy program. We discuss the inherent limitations
-
-of the decode-to-vcf strategy, and how this inevitably
-leads to bottlenecks. 
+To demonstrate the accessibility of genotype data and efficiency with 
+which calculations can be performed under the different formats,
+we use the \texttt{bcftools +af-dist} plugin as an example of such a whole-matrix
+operation. 
+% The details of the \texttt{af-dist} operation are not important:
+% as an example of a whole-matrix operation. 
+We chose this particular operation for several
+reasons. First, it is a simple but non-trival calculation that requires 
+examining every element in the genotype matrix.
+Secondly, it produces a small volume of output (a table of
+deviations from Hardy-Weinberg expectations in ten allele frequency
+bins) and therefore the time spent outputting results is negligible.
+Finally, it has an efficient implementation written using the 
+\texttt{htslib} C API~\citep{bonfield2021htslib}, distributed as 
+\texttt{bcftools} plugin. 
 
 \begin{figure}
-\includegraphics[width=6cm]{figures/whole-matrix-compute}
+\includegraphics{figures/whole-matrix-compute}
 \caption{Whole-matrix compute performance with increasing sample size.
-(A) Total CPU time required to run \texttt{bcftools +afdist}
+Total CPU time required to run \texttt{bcftools +af-dist}
 and equivalent operations in a single thread for various tools.
 Elapsed time is also reported (dotted line). Run-time for genozip
 at $10^6$ samples was extrapolated by fitting an exponential.
 \label{fig-whole-matrix-compute}}
 \end{figure}
+
+Figure~\ref{fig-whole-matrix-compute} shows the results of 
+running \texttt{bcftools +af-dist} and equivalent operations 
+on the data of Figure~\ref{fig-data-storage}. We can see 
+that for $10^6$ samples, running \texttt{bcftools +af-dist}
+requires 20 hours (note that this is run on a BCF file, for 
+efficiency), which can be regarded as a reasonable baseline.
+Because genozip does not provide an API, we used the classical
+approach of piping the VCF text that it outputs into 
+\texttt{bcftools +af-dist}. The volumes of data involved here
+make this an expensive approach.
+[TODO discuss Zarr-python and Savvy C++ implementations]
+
+
+
+% We illustrate the discussion by the afdist operation from
+% the bcftools plugins package. This is perhaps a contrived example, but
+% we chose it because it requires examining the entire genotype matrix
+% and there is an efficient implementation available in bcftools.
+% It is also a good example because the standard approach of
+% divvying up the genome into chunks via HPC schedulers or workflow
+% managers is quite tricky.
+% We discuss the software development aspect, and how we developed
+% the afdist-savvy program. We discuss the inherent limitations
+
 
 \subsection{Subsetting the genotype matrix}
 Existing work overwhelmingly emphasises accessibility by variant.
