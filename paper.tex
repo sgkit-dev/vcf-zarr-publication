@@ -212,20 +212,16 @@ SeqArray~\citep{zheng2017seqarray} built on
 the GDS container format~\citep{zheng2012high}.
 
 \begin{figure}
-    \begin{tabular}{c}
-\resizebox{7cm}{!}{\input{diagrams/data-model.tex}} \\
-\includegraphics[width=7cm]{figures/data-scaling}
-\end{tabular}
-\caption{Chunked compressed storage of the genotype matrix using Zarr.
-(A) Schematic of data stored under the \texttt{vcfzarr} specification.
-(B) Compression performance compared with BCF, savvy and genozip
-based on simulated data (see text for details).
-\label{fig-data-storage}}
+\resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
+\caption{Columnar storage of VCF data in chunked, compressed form using Zarr.
+[TODO more detail, including brief overview of how data maps from 
+VCF to vcfzarr in the examples]
+\label{fig-data-model}}
 \end{figure}
 
 We propose the \texttt{vcfzarr} specification which maps the 
 VCF data model into a columnar layout using the
-widely-used Zarr format (Fig~\ref{fig-data-storage}A). 
+widely-used Zarr format (Fig~\ref{fig-data-model}). 
 Briefly, Zarr is a format 
 % FIXME two different uses of $n$ here in a paragraph
 for storing $n$-dimensional arrays of a fixed datatype, stored as 
@@ -242,12 +238,24 @@ such as Parquet [TODO more details and citations?].
 See the Methods for more detail on Zarr and the \texttt{vcfzarr}
 specification.
 
+\begin{figure}
+\begin{center}
+\includegraphics[]{figures/data-scaling}
+\end{center}
+\caption{Compression performance on simulated genotypes.
+Comparison of total stored bytes for VCF data produced 
+by subsets of a large simulation of French-Canadians.
+Sizes for $10^6$ samples are shown on the right. Sizes 
+for Savvy (21.25GiB) and Zarr (22.06GiB) are very similar.
+\label{fig-data-storage}}
+\end{figure}
+
 Remarkably, the simple approach of compressing
 two dimensional chunks with the Zstandard 
 compressor~\citep{collet2021rfc} and the bit-shuffle
 filter from Blosc~\cite{alted2010modern} produces 
 compression levels competitive with specialised methods
-on the genotype matrix. In Fig~\ref{fig-data-storage}B
+on the genotype matrix. In Fig~\ref{fig-data-storage}
 we show compression performance on up to a million
 samples subset a large and highly realistic 
 simulation of French-Canadians~\cite{anderson2023on}

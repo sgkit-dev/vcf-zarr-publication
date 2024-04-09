@@ -6,6 +6,11 @@ import click
 import numpy as np
 import scipy.optimize as optimize
 
+# Main text size is 9pt
+plt.rcParams.update({"font.size": 7})
+plt.rcParams.update({"legend.fontsize": 6})
+plt.rcParams.update({"lines.markersize": 4})
+
 
 sgkit_colour = "tab:blue"
 bcf_colour = "tab:orange"
@@ -13,9 +18,18 @@ sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
 
+def one_panel_fig(**kwargs):
+    # The columnwidth of the format is ~250pt, which is
+    # 3 15/32 inch, = 3.46
+    width = 3.46
+    fig, ax, = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
+    return fig, ax
 
-def plot_size(ax, df):
+
+
+def plot_size(ax, df, label_y_offset=None):
     colour_map = {
+        "vcf": "tab:pink",
         "bcf": bcf_colour,
         "zarr": zarr_colour,
         "sav": sav_colour,
@@ -23,6 +37,7 @@ def plot_size(ax, df):
     }
 
     GB = 2**30
+    label_y_offset = {} if label_y_offset is None else label_y_offset
 
     for tool, colour in colour_map.items():
         dfs = df[df.tool == tool]
@@ -32,14 +47,15 @@ def plot_size(ax, df):
             dfs["size"].values,
             ".-",
             color=colour,
-            label=tool,
+            label= "vcf.gz" if tool == "vcf" else tool
         )
         row = dfs.iloc[-1]
         size = row["size"] / GB
+        print(f"{tool} : {size:.2f}")
         ax.annotate(
             f"{size:.0f}G",
             textcoords="offset points",
-            xytext=(15, 0),
+            xytext=(15, label_y_offset.get(tool, 0)),
             xy=(row.num_samples, row["size"]),
             xycoords="data",
         )
@@ -137,14 +153,19 @@ def data_scaling(size_data, output):
     """
     df1 = pd.read_csv(size_data, index_col=None).sort_values("num_samples")
 
-    # TODO set the width properly based on document
-    fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
-
-    plot_size(ax1, df1)
+    fig, ax1 = one_panel_fig()
+    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav":-5.5, "genozip": -7})
 
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("File size (bytes)")
 
+    sav = df1[df1.tool == "sav"]
+    zarr = df1[df1.tool == "zarr"]
+    ratio = sav["size"].values / zarr["size"].values
+    print("sav / zarr ratio:", ratio)
+    # I tried putting an inset axis showing the ratio, but it was too small.
+    # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
+    # ax_inset.semilogx(sav["num_samples"], ratio)
     plt.tight_layout()
     plt.savefig(output)
 
