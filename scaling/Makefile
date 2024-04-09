@@ -42,6 +42,10 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 			 +fill-tags $< -Ob -o $@ -- -t AN,AC,AF
 	${BCFTOOLS} index $@
 
+%.tags.vcf.gz: %.tags.bcf
+	${BCFTOOLS} view -O z $< > $@
+	${BCFTOOLS} index $@
+
 %.sav: %.bcf
 	${SAVVY} import --phasing full $< > $@
 
