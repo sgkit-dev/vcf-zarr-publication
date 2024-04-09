@@ -37,8 +37,15 @@ mrproper: clean
 # The plan is to systematise things once the basic structure has settled
 # down a bit more
 
+TS_FILES=scaling/data/chr21_10_1.ts\
+	scaling/data/chr21_10_2.ts\
+	scaling/data/chr21_10_3.ts\
+	scaling/data/chr21_10_4.ts\
+	scaling/data/chr21_10_5.ts\
+	scaling/data/chr21_10_6.ts
+
 plot_data/data-scaling.csv:
-	python3 src/collect_data.py file-size 'scaling/data/chr21_n10*.ts' $@
+	python3 src/collect_data.py file-size $(TS_FILES) -o $@
 
 # TODO make rule for time-scaling
 
