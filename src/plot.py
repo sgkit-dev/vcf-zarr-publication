@@ -180,8 +180,8 @@ def whole_matrix_compute(time_data, output):
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
     df = df[df.storage == "hdd"]
 
-    # TODO set the width properly based on document
-    fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
+    fig, ax1 = one_panel_fig()
+    # fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
 
     plot_total_cpu(ax1, df)
 
