@@ -327,7 +327,15 @@ at $10^6$ samples was extrapolated by fitting an exponential.
 
 Figure~\ref{fig-whole-matrix-compute} shows the results of 
 running \texttt{bcftools +af-dist} and equivalent operations 
-on the data of Figure~\ref{fig-data-storage}.
+on the data of Figure~\ref{fig-data-storage}. We can see 
+that for $10^6$ samples, running \texttt{bcftools +af-dist}
+requires 20 hours (note that this is run on a BCF file, for 
+efficiency), which can be regarded as a reasonable baseline.
+Because genozip does not provide an API, we used the classical
+approach of piping the VCF text that it outputs into 
+\texttt{bcftools +af-dist}. The volumes of data involved here
+make this an expensive approach.
+[TODO discuss Zarr-python and Savvy C++ implementations]
 
 
 
