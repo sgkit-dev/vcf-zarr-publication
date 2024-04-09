@@ -18,13 +18,16 @@ sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
 
+
 def one_panel_fig(**kwargs):
     # The columnwidth of the format is ~250pt, which is
     # 3 15/32 inch, = 3.46
     width = 3.46
-    fig, ax, = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
+    (
+        fig,
+        ax,
+    ) = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
     return fig, ax
-
 
 
 def plot_size(ax, df, label_y_offset=None):
@@ -47,7 +50,7 @@ def plot_size(ax, df, label_y_offset=None):
             dfs["size"].values,
             ".-",
             color=colour,
-            label= "vcf.gz" if tool == "vcf" else tool
+            label="vcf.gz" if tool == "vcf" else tool,
         )
         row = dfs.iloc[-1]
         size = row["size"] / GB
@@ -72,22 +75,24 @@ def plot_size(ax, df, label_y_offset=None):
     ax2.set_xticklabels([humanize.metric(m) for m in num_sites])
 
 
-def plot_total_cpu(ax, df):
+def plot_total_cpu(ax, df, toolname=None):
     colours = {
         "bcftools": bcf_colour,
+        "genozip": genozip_colour,
         "zarr": zarr_colour,
         "savvy": sav_colour,
-        "genozip": genozip_colour,
     }
     have_genozip = False
+    toolname = {} if toolname is None else toolname
 
-    for tool in df.tool.unique():
+    # for tool in df.tool.unique():
+    for tool in colours.keys():
         dfs = df[(df.tool == tool)]
         total_cpu = dfs["user_time"].values + dfs["sys_time"].values
         ax.loglog(
             dfs["num_samples"].values,
             total_cpu,
-            label=f"{tool}",
+            label=f"{toolname.get(tool, tool)}",
             # linestyle=ls,
             marker=".",
             color=colours[tool],
@@ -154,7 +159,7 @@ def data_scaling(size_data, output):
     df1 = pd.read_csv(size_data, index_col=None).sort_values("num_samples")
 
     fig, ax1 = one_panel_fig()
-    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav":-5.5, "genozip": -7})
+    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
 
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("File size (bytes)")
@@ -181,14 +186,18 @@ def whole_matrix_compute(time_data, output):
     df = df[df.storage == "hdd"]
 
     fig, ax1 = one_panel_fig()
-    # fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
-
-    plot_total_cpu(ax1, df)
+    name_map = {
+        "bcftools": "bcftools +af-dist <BCF_FILE>",
+        "genozip": "genozip <FILE> | bcftools +af-dist",
+        "zarr": "zarr-python API",
+        "savvy": "savvy C++ API",
+    }
+    plot_total_cpu(ax1, df, name_map)
 
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
 
-    ax1.set_title(f"Afdist CPU time")
+    ax1.set_title(f"af-dist CPU time")
     ax1.legend()
 
     plt.tight_layout()
