@@ -1,15 +1,14 @@
-#include <savvy/reader.hpp>
-#include <vector>
-#include <thread>
-#include <iostream>
-#include <string>
+/* To any C++ programmers reading this file: apologies! */
+
 #include <fstream>
+#include <iostream>
+#include <savvy/reader.hpp>
+#include <string>
+#include <thread>
+#include <vector>
 
-void classify_genotypes(const std::string& filename,
-        std::vector<double>& af, std::vector<int>& hets,
-        std::vector<int>& homs) {
-
-    savvy::reader f(filename);
+void classify_genotypes(savvy::reader& f, std::vector<double>& af,
+                        std::vector<int>& hets, std::vector<int>& homs) {
     savvy::variant var;
     std::vector<int> geno;
 
@@ -37,16 +36,16 @@ void classify_genotypes(const std::string& filename,
             }
         }
 
-        double allele_freq = total_alleles > 0 ?
-            static_cast<double>(alt_alleles) / total_alleles : 0.0;
+        double allele_freq =
+            total_alleles > 0 ? static_cast<double>(alt_alleles) / total_alleles
+                              : 0.0;
         af.push_back(allele_freq);
         hets.push_back(het_count);
         homs.push_back(hom_count);
     }
 }
 
-void decode(const std::string& filename)
-{
+void decode(const std::string& filename) {
     savvy::reader f(filename);
     savvy::variant var;
     std::vector<int> geno;
@@ -68,7 +67,9 @@ auto findBinIndex = [](const std::vector<double>& bins, double value) -> int {
     if (value >= bins.back()) return static_cast<int>(bins.size()) - 2;
 
     auto it = std::lower_bound(bins.begin(), bins.end(), value);
-    return static_cast<int>((it == bins.end() || *it != value) ? it - bins.begin() - 1 : it - bins.begin());
+    return static_cast<int>((it == bins.end() || *it != value)
+                                ? it - bins.begin() - 1
+                                : it - bins.begin());
 };
 
 // Function to check if a file exists
@@ -78,15 +79,25 @@ bool fileExists(const std::string& filename) {
 }
 
 int main(int argc, char* argv[]) {
-    int num_threads = std::thread::hardware_concurrency(); // Default to the number of cores
     std::string filename;
+    std::string samples_file;
     bool decode_only = false;
-    int total_records = -1; // Initialize total_records to an invalid state
+    int start = -1;
+    int end = -1;
 
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--decode-only") {
             decode_only = true;
+        } else if (arg == "--start") {
+            i++;
+            start = std::stoi(argv[i]);
+        } else if (arg == "--end") {
+            i++;
+            end = std::stoi(argv[i]);
+        } else if (arg == "--samples-file") {
+            i++;
+            samples_file = argv[i];
         } else {
             filename = arg;
         }
@@ -98,7 +109,14 @@ int main(int argc, char* argv[]) {
     }
 
     if (!fileExists(filename)) {
-        std::cerr << "Error: File '" << filename << "' does not exist" << std::endl;
+        std::cerr << "Error: File '" << filename << "' does not exist"
+                  << std::endl;
+        return 1;
+    }
+
+    if ((start == -1) != (end == -1)) {
+        std::cerr << "Error: --start and --end must be supplied together"
+                  << std::endl;
         return 1;
     }
 
@@ -108,7 +126,34 @@ int main(int argc, char* argv[]) {
         std::vector<double> af;
         std::vector<int> hets;
         std::vector<int> homs;
-        classify_genotypes(filename, std::ref(af), std::ref(hets), std::ref(homs));
+        savvy::reader f(filename);
+
+        if (start != -1) {
+            // Hardcoding a CHROM to "1" here for our bencharks for simplicity
+            f.reset_bounds({"1", (uint64_t)start, (uint64_t)end});
+        }
+        if (!samples_file.empty()) {
+            if (!fileExists(samples_file)) {
+                std::cerr << "Error: File '" << samples_file
+                          << "' does not exist" << std::endl;
+                return 1;
+            }
+            std::vector<std::string> samples;
+            std::ifstream input;
+
+            input.open(samples_file);
+            for (std::string line; std::getline(input, line);) {
+                samples.push_back(line);
+            }
+            input.close();
+
+            std::cout << "Read " << samples.size() << " samples from file "
+                      << samples_file << std::endl;
+
+            f.subset_samples({samples.begin(), samples.end()});
+        }
+
+        classify_genotypes(f, std::ref(af), std::ref(hets), std::ref(homs));
 
         std::cout << "Number of variants: " << af.size() << std::endl;
 
@@ -117,7 +162,7 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i <= num_bins; ++i) {
             bins[i] = i * (1.0 / num_bins);
         }
-        bins.back() += 0.01; // Adjust the last bin
+        bins.back() += 0.01;  // Adjust the last bin
 
         std::vector<int> het_bins(num_bins, 0), hom_bins(num_bins, 0),
             total_counts(num_bins, 0);
@@ -138,11 +183,11 @@ int main(int argc, char* argv[]) {
 
         // Summing het and hom counts
         std::transform(het_bins.begin(), het_bins.end(), hom_bins.begin(),
-                total_counts.begin(), std::plus<int>());
+                       total_counts.begin(), std::plus<int>());
         // Output the results
         for (int i = 0; i < num_bins; ++i) {
-            std::cout << "Bin " << i << " (" << bins[i] << " - "
-                << bins[i + 1] << "): " << total_counts[i] << std::endl;
+            std::cout << "Bin " << i << " (" << bins[i] << " - " << bins[i + 1]
+                      << "): " << total_counts[i] << std::endl;
         }
     }
     return 0;

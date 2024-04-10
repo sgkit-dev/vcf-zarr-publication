@@ -76,6 +76,11 @@ def genozip_version():
     return out.stdout.decode()
 
 
+def variant_slice_coords(ds, variant_slice):
+    pos = ds.variant_position[variant_slice].values
+    return ds.contig_id.values[0], pos[0], pos[-1]
+
+
 def get_variant_slice_region(ds, variant_slice):
     pos = ds.variant_position[variant_slice].values
     return f"{ds.contig_id.values[0]}:{pos[0]}-{pos[-1]}"
@@ -194,6 +199,22 @@ def run_savvy_decode(path, *, debug=False):
     return time_cli_command(cmd, debug)
 
 
+def run_savvy_afdist_subset(
+    path, ds, variant_slice, sample_slice, *, num_threads=1, debug=False
+):
+    region_coords = variant_slice_coords(ds, variant_slice)
+    assert region_coords[0] == "1"
+    start, end = region_coords[1:]
+    with tempfile.NamedTemporaryFile("w") as f:
+        write_sample_names(ds, sample_slice, f.file)
+        cmd = (
+            "/usr/bin/time -f'%S %U' "
+            f"software/savvy-afdist/sav-afdist --samples-file {f.name} "
+            f"--start {start} --end {end} {path}"
+        )
+        return time_cli_command(cmd, debug)
+
+
 def _zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn):
     before = time.time()
     df = zarr_afdist(ds_path, variant_slice=variant_slice, sample_slice=sample_slice)
@@ -275,7 +296,14 @@ class Tool:
 
 
 all_tools = [
-    Tool("savvy", ".sav", run_savvy_afdist, None, savvy_version, run_savvy_decode),
+    Tool(
+        "savvy",
+        ".sav",
+        run_savvy_afdist,
+        run_savvy_afdist_subset,
+        savvy_version,
+        run_savvy_decode,
+    ),
     Tool(
         "zarr", ".zarr", run_zarr_afdist, run_zarr_afdist_subset, None, run_zarr_decode
     ),
