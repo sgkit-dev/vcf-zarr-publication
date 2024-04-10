@@ -1,19 +1,9 @@
 
 \begin{tikzpicture}
 
- %% sample_id
-  \node at (2.0,6.6,-.5) {\ttfamily \scriptsize sample\textunderscore id};
-  % bounds
-  \draw[densely dashed] (0,6.2,-.5) -- (3.9,6.2,-.5);
-  \draw[densely dashed] (0,6.4,-.5) -- (3.9,6.4,-.5);
- \tikzcuboidset{front face/.style={fill=yellow!20},right face/.style={fill=green!10},top face/.style={fill=yellow!20}}
-  \pic at (0,6.2,-.5) {cuboid=.9--.2--0};
-  \pic at (1,6.2,-.5) {cuboid=.9--.2--0};
-  \node at (2.5,6.3,-.5) {\ttfamily \dots};
-  \pic at (3,6.2,-.5) {cuboid=.9--.2--0};
 
- %% sample_cohort
-  \node at (2.0,5.9,-.5) {\ttfamily \scriptsize sample\textunderscore cohort};
+ %% sample_id
+  \node at (2.0,5.9,-.5) {\ttfamily \scriptsize sample\textunderscore id};
   % bounds
   \draw[densely dashed] (0,5.5,-.5) -- (3.9,5.5,-.5);
   \draw[densely dashed] (0,5.7,-.5) -- (3.9,5.7,-.5);
@@ -56,37 +46,37 @@
   \draw[densely dashed] (3.9,0,-0.5) -- (3.9,4.9,-0.5);
  \tikzcuboidset{front face/.style={fill=blue!10},right face/.style={fill=green!10},top face/.style={fill=yellow!20}}
   \pic at (0,0) {cuboid=.9--.9--.5};
-  \node at (0.45,0.5) {\ttfamily \tiny 100.0.0};
+  \node at (0.45,0.5) {\ttfamily \tiny 100/0/0};
   \node at (0.5,1.6) {\ttfamily \vdots};
   \pic at (0,2) {cuboid=.9--.9--.5};
-  \node at (0.45,2.5) {\ttfamily \tiny 2.0.0};
+  \node at (0.45,2.5) {\ttfamily \tiny 2/0/0};
   \pic at (0,3) {cuboid=.9--.9--.5};
-  \node at (0.45,3.5) {\ttfamily \tiny 1.0.0};
+  \node at (0.45,3.5) {\ttfamily \tiny 1/0/0};
   \pic at (0,4) {cuboid=.9--.9--.5};
-  \node at (0.45,4.5) {\ttfamily \tiny 0.0.0};
+  \node at (0.45,4.5) {\ttfamily \tiny 0/0/0};
   \pic at (1,0) {cuboid=.9--.9--.5};
-  \node at (1.45,0.5) {\ttfamily \tiny 100.1.0};
+  \node at (1.45,0.5) {\ttfamily \tiny 100/1/0};
   \node at (1.5,1.6) {\ttfamily \vdots};
   \pic at (1,2) {cuboid=.9--.9--.5};
-  \node at (1.45,2.5) {\ttfamily \tiny 2.1.0};
+  \node at (1.45,2.5) {\ttfamily \tiny 2/1/0};
   \pic at (1,3) {cuboid=.9--.9--.5};
-  \node at (1.45,3.5) {\ttfamily \tiny 1.1.0};
+  \node at (1.45,3.5) {\ttfamily \tiny 1/1/0};
   \pic at (1,4) {cuboid=.9--.9--.5};
-  \node at (1.45,4.5) {\ttfamily \tiny 0.1.0};
+  \node at (1.45,4.5) {\ttfamily \tiny 0/1/0};
   \node at (2.5,0.5) {\ttfamily \dots};
   \node at (2.5,1.55) {\ttfamily $\ddots$};
   \node at (2.5,2.5) {\ttfamily \dots};
   \node at (2.5,3.5) {\ttfamily \dots};
   \node at (2.5,4.5) {\ttfamily \dots};
   \pic at (3,0) {cuboid=.9--.9--.5};
-  \node at (3.45,0.5) {\ttfamily \tiny 100.10.0};
+  \node at (3.45,0.5) {\ttfamily \tiny 100/10/0};
   \node at (3.5,1.6) {\ttfamily \vdots};
   \pic at (3,2) {cuboid=.9--.9--.5};
-  \node at (3.45,2.5) {\ttfamily \tiny 2.10.0};
+  \node at (3.45,2.5) {\ttfamily \tiny 2/10/0};
   \pic[ultra thick, red] at (3,3) {cuboid=.9--.9--.5};
-  \node at (3.45,3.5) {\ttfamily \tiny 1.10.0};
+  \node at (3.45,3.5) {\ttfamily \tiny 1/10/0};
   \pic at (3,4) {cuboid=.9--.9--.5};
-  \node at (3.45,4.5) {\ttfamily \tiny 0.10.0};
+  \node at (3.45,4.5) {\ttfamily \tiny 0/10/0};
   % front box
   \draw[densely dashed] (0,0) -- (3.9,0);
   \draw[densely dashed] (0,0) -- (0,4.9);
@@ -102,14 +92,14 @@
  \node (numcodecs) [rectangle, draw, densely dotted, thick, rounded corners, minimum width=2.4cm, minimum height=2.6cm, anchor= south west]
     at (4.8,2.2) {};
  \node[anchor=north,below] at (numcodecs.north) {\scriptsize Filter \& compress};
- \node[anchor=south,below] at (numcodecs.south) {numcodecs};
+ %\node[anchor=south,below] at (numcodecs.south) {numcodecs};
  \node (blosk) [rectangle, ultra thick, red, draw, rounded corners, minimum width=1.8cm, minimum height=1.6cm, anchor=center,align=center,text=black]
     at (numcodecs) {\scriptsize Blosc\\\scriptsize ZSTD\\\scriptsize Autoshuffle};
  \draw[ultra thick, red,-stealth] (3.9,3.5,-.25) -- (5,3.5,-.25);
 
 %% storage
- \node (location) [rectangle, draw, densely dotted, thick, rounded corners, minimum width=2.4cm, minimum height=5cm, anchor= south west]
-    at (7.4,1.1) {};
+ \node (location) [rectangle, draw, densely dotted, thick, rounded corners, minimum width=2.4cm, minimum height=4.5cm, anchor= south west]
+    at (7.4,1.35) {};
  \node[anchor=south,below] at (location.south) {Storage};
  \node[anchor=center] at (location) {
         \begin{forest}
@@ -134,11 +124,11 @@
           }
         [{\scriptsize Cloud, file or blob}
           [\ttfamily call\textunderscore genotype
-            [\ttfamily 0.0.0]
+            [\ttfamily 0/0/0]
             [\ttfamily ...]
-            [\ttfamily 1.10.0, draw={red,ultra thick, rounded corners}]
+            [\ttfamily 1/10/0, draw={red,ultra thick, rounded corners}]
             [\ttfamily ...]
-            [\ttfamily 100.10.0]
+            [\ttfamily 100/10/0]
           ]
           [\ttfamily sample\textunderscore id]
           [\ttfamily ...]
