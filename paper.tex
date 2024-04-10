@@ -177,7 +177,7 @@ VCF information) have been proposed
 \citep{deorowicz2013genome, %TGC
 deorowicz2019gtshark, %GTShark
 deorowicz2021vcfshark}, % VCFShark
-most notably the highly-influential Positional
+most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
 
 VCF is a text-based format in which each line
@@ -196,20 +196,21 @@ allows data to be easily streamed through Unix pipelines (see Discussion).
 
 Row-wise storage works well when records are relatively small, 
 or when we typically want to analyse each record in its entirity.
-When we want to analyse only a subset of a record 
-row-wise storage can inefficient because we will usually need to
+When we want to analyse only a subset of a record,
+row-wise storage can be inefficient because we will usually need to
 retrieve more information than required from storage. In the case 
 of VCF (and BCF) where records are not of a fixed size and 
 are almost always compressed in blocks, accessing any information
 for all rows means retrieving and decompressing \emph{all} 
 information from all rows.
 The alternative to row-wise storage is \emph{columnar} storage:
-instead of grouping toether all the fields for a record,
+instead of grouping together all the fields for a record,
 we group together all the records for a given field.
+Columnar storage has become standard [very quick summary of columnar
+storage with some refs].
 To our knowledge, the only existing method using columnar 
 storage for genetic variation data is 
-SeqArray~\citep{zheng2017seqarray} built on 
-the GDS container format~\citep{zheng2012high}.
+SeqArray~\citep{zheng2017seqarray,zheng2012high}.
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
@@ -232,7 +233,7 @@ In particular, call-level data is stored as $m \times n$ arrays
 (for $m$ sites and $n$ samples), allowing for efficient 
 retrieval of subsets of those fields along both the 
 variants and samples axis.
-Note that this approach to storing higher dimensional 
+Note that this approach to storing higher dimensional data
 sets Zarr apart from more general columnar formats 
 such as Parquet [TODO more details and citations?].
 See the Methods for more detail on Zarr and the \texttt{vcfzarr}
@@ -296,13 +297,17 @@ make the classical approach of custom
 analyses via Unix utilities in pipelines prohibitively slow. Thus, 
 methods have begun to provide Application Programming Interfaces
 (APIs), providing efficient access to genotype and other VCF data
-[TODO check these citations]~\cite[e.g.][]{lefaive2021sparse,
-wertenbroek2022xsi,zhang2023gbc}.
+[TODO check these citations]~\cite[e.g.][]{kelleher2013processing,lefaive2021sparse,
+wertenbroek2022xsi,zhang2023gbc}. By providing programmatic access,
+the data can be retrieved from storage, decoded and then analysed
+in the same memory space, avoiding the need for copying
+the decoded data and inter-process communication. [TODO some refs
+on zero-copy semantics and things like Arrow?]
 
 To demonstrate the accessibility of genotype data and efficiency with 
 which calculations can be performed under the different formats,
 we use the \texttt{bcftools +af-dist} plugin as an example of such a whole-matrix
-operation. 
+computation. 
 % The details of the \texttt{af-dist} operation are not important:
 % as an example of a whole-matrix operation. 
 We chose this particular operation for several
@@ -313,7 +318,7 @@ deviations from Hardy-Weinberg expectations in ten allele frequency
 bins) and therefore the time spent outputting results is negligible.
 Finally, it has an efficient implementation written using the 
 \texttt{htslib} C API~\citep{bonfield2021htslib}, distributed as 
-\texttt{bcftools} plugin. 
+a \texttt{bcftools} plugin. 
 
 \begin{figure}
 \includegraphics{figures/whole-matrix-compute}
@@ -327,28 +332,35 @@ at $10^6$ samples was extrapolated by fitting an exponential.
 
 Figure~\ref{fig-whole-matrix-compute} shows the results of 
 running \texttt{bcftools +af-dist} and equivalent operations 
-on the data of Figure~\ref{fig-data-storage}. We can see 
-that for $10^6$ samples, running \texttt{bcftools +af-dist}
-requires 20 hours (note that this is run on a BCF file, for 
-efficiency), which can be regarded as a reasonable baseline.
-Because genozip does not provide an API, we used the classical
-approach of piping the VCF text that it outputs into 
-\texttt{bcftools +af-dist}. The volumes of data involved here
-make this an expensive approach.
-[TODO discuss Zarr-python and Savvy C++ implementations]
+on the data of Figure~\ref{fig-data-storage}. There is a large
+difference in the time required (note the log-log scale). 
+The slowest approach uses Genozip. Because genozip does not
+provide an API and only outputs VCF text, the best approach available 
+is to pipe its output into \texttt{bcftools +af-dist}. Thus,
+not only must we decode the data from the genozip format, we must 
+then parse the large volumes of VCF text and then finally do the 
+actual calculation. Running \texttt{bcftools +af-dist} directly
+on the gzipped VCF text incurs essentially the same cost, but
+the decompression cost is lower and without the interprocess 
+communication overhead. Using a BCF file is somewhat faster,
+because the packed binary format can be read into the internal 
+data structures used by the \texttt{htslib} API more efficiently.
 
-
-
-% We illustrate the discussion by the afdist operation from
-% the bcftools plugins package. This is perhaps a contrived example, but
-% we chose it because it requires examining the entire genotype matrix
-% and there is an efficient implementation available in bcftools.
-% It is also a good example because the standard approach of
-% divvying up the genome into chunks via HPC schedulers or workflow
-% managers is quite tricky.
-% We discuss the software development aspect, and how we developed
-% the afdist-savvy program. We discuss the inherent limitations
-
+The data shown in Figure~\ref{fig-whole-matrix-compute} for Zarr and Savvy
+is based on custom programs written using their respective APIs
+to implement the \texttt{af-dist} operation. The Zarr program uses
+the Zarr-Python package to iterate over the decoded chunks of the 
+genotype matrix and classifies genotypes within a chunk using a 14 line Python
+function, accelerated using the Numba JIT compliler~\cite{lam2015numba}.
+The allele frequencies and genotype counts are then analysed to produce 
+the final counts within the allele frequency bins with 9 lines of 
+Python using NumPy~\cite{harris2020array} functions. Remarkably, this 
+short and simple Python program is substantially faster than the 
+equivalent compiled C using \texttt{htslib} APIs on BCF (6 hours
+vs 20 hours for 1 million samples). The fastest method is the 
+C++ program written using the Savvy API. This would largely seem
+to be due to Savvy's excellent genotype decoding performance
+[TODO add fig for decode perf].
 
 \subsection{Subsetting the genotype matrix}
 Existing work overwhelmingly emphasises accessibility by variant.
