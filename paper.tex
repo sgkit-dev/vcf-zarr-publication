@@ -184,9 +184,6 @@ VCF is a text-based format in which each line
 describes observations
 and metadata for a single variant (usually a position on the genome
 where variation occurs in the samples)~\citep{danecek2011variant}. 
-Blocks of VCF text are compressed using \texttt{bgzip},
-which allows subsets of the file to be retrieved using secondary
-indexes stored alongside the original file~\citep{li2011tabix}.
 VCF is therefore a \emph{row-wise} format, i.e., where all of the 
 data for a record is stored continguously. BCF is similarly 
 row-wise, as are the majority of proposed alternative storage formats.
@@ -271,6 +268,11 @@ a reasonable data point when comparing such methods.
 % case scenario for specialised methods, but maybe 
 % not worth bothering with.
 
+[Short note here on why we choose these tools to
+benchmark against, and why there's no point in 
+a major benchmarkathon. Some recent papers 
+have good benchmarks which the interested 
+reader can cross-reference]
 
 \subsection{Calculating with the genotype matrix}
 Storing genetic variation data compactly is important, but it is also
@@ -362,24 +364,52 @@ vs 20 hours for 1 million samples). The fastest method is the
 C++ program written using the Savvy API. This would largely seem
 to be due to Savvy's excellent genotype decoding performance
 (up to 5.7GiB/s vs 1.2GiB/s for Zarr on this dataset;
-Figure~\ref{fig-whole-matrix-decode}).
+Figure~\ref{fig-whole-matrix-decode}). Different choices 
+of compressor and filters (zstandard with bit shuffle, in this case) 
+would likely lead to improved decoding performance in Zarr,
+at the expense of somewhat larger files.
 
 \subsection{Subsetting the genotype matrix}
-Existing work overwhelmingly emphasises accessibility by variant.
-We demonstrate that sgkit/zarr is good for getting subsets
-in terms of both variants and samples via afdist on various subsets.
-Refer to fig~\ref{fig-subset-matrix-compute}.
+As datasets grow ever larger, the ability to efficiently access subsets 
+of the data becomes more and more important. VCF/BCF achieve efficient 
+access to the data for genomic ranges 
+by compressing blocks of adjacent records using \texttt{bgzip},
+and storing secondary indexes alongside the original 
+files with a conventional suffix~\citep{li2011tabix}. 
+Thus, for a given range query we 
+decompress only the necessary blocks and can quickly access
+the required records. 
+Methods like Savvy and XSI largely follow the same principles [TODO check and 
+be more concrete]. The row-wise nature of these methods, however, mean 
+that we cannot efficiently subset \emph{by sample}. In the extreme
+case, if we want to access only the genotypes for a single sample
+we must still read in and decompress the entire dataset.
 
 \begin{figure}
 \includegraphics{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
 Total CPU time required to run the af-dist calculation for
-a subset of 10 samples and 10000 variants from the middle of the matrix
+a subset of 10000 variants $\times$ 10 samples from the middle of the matrix
 for the data in Figure~\ref{fig-data-storage}.
-[TODO Note that in this case the bcftools pipeline requires
-an additional step to compute AF etc.]
+The \texttt{bcftools} and \texttt{bcftools} pipelines involve
+multiple commands required to correctly calculate the AF INFO tag
+required by \texttt{bcftools +af-dist}. See the Methods for full details
+on the steps performed.
 \label{fig-subset-matrix-compute}}
 \end{figure}
+
+We illustrate the cost of row-wise encoding in
+Figure~\ref{fig-subset-matrix-compute}, where we run the af-dist calculation
+on a small fixed-size subset of the genotype matrices of
+Figure~\ref{fig-data-storage}. The two-dimensional chunking of Zarr
+means that this small subset of the overall matrix can be efficiently
+extracted, and therefore the execution time depends very weakly on 
+the overall dataset size, with the overall computation requiring around
+1 second for 1 million samples. CPU time, for this simple calculation
+on a fixed size sub-matrix scales, with the dataset size.
+Figure~\ref{fig-subset-matrix-compute-supplemental} shows performance
+for the same operation when selecting half of the samples in the 
+dataset.
 
 \subsection{Case study: Genomics England 100,000 genomes}
 In this section we demonstrate the utility of vcfzarr on a large human dataset.
@@ -448,6 +478,7 @@ It is also a good archival format: when compressed with a well established
 method like gzip and combined with the well-documented description of
 the text, we can be sure that files will still be readable decades
 from now.
+
 
 \item VCF is holding back large-scale genomics, however, and in particular the
 analysis of population scale genetic variation datasets like UKB and GeL.
@@ -542,6 +573,18 @@ we have provided would be a good starting point for designing
 such a compute platform.
 
 \end{itemize}
+[Random fragment to include somewhere]
+Row-wise storage of the genotype matrix makes accessing 
+sample haplotypes (i.e. the columns),
+required for many
+applications~\cite[e.g.][]{durbin2014efficient,kelleher2019inferring} 
+[TODO add phasing, imputation]
+inefficient. The simple approach of storing the genotype matrix
+in rectangular chunks allows efficient access both by row \emph{and}
+column. Similarly, these rectangular chunks capture patterns
+both of similarity between samples and linkage disequilibrium~\cite{mcvean2019linkage} 
+between sites, such that conventional compression schemes 
+perform very well~\ref{fig-data-storage}.
 
 \section{Methods}
 
