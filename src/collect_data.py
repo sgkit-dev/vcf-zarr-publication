@@ -428,7 +428,7 @@ def file_size(src, output, debug):
 @click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools[:2]])
 @click.option("-s", "--storage", default="hdd")
 @click.option("--debug", is_flag=True)
-def decoding_time(src, output, tool, storage, debug):
+def whole_matrix_decode(src, output, tool, storage, debug):
     if len(src) == 0:
         raise ValueError("Need at least one input file!")
     tool_map = {t.name: t for t in all_tools[:2]}
@@ -602,7 +602,7 @@ def cli():
 
 cli.add_command(file_size)
 cli.add_command(whole_matrix_compute)
-cli.add_command(decoding_time)
+cli.add_command(whole_matrix_decode)
 cli.add_command(subset_processing_time)
 cli.add_command(genotype_filtering_processing_time)
 cli.add_command(site_filtering_processing_time)
