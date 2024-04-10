@@ -256,8 +256,6 @@ def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
 
     alt_count = 2 * n - counts.ref_count
     af = alt_count / (n * 2)
-    # print("af", af)
-
     bins = np.linspace(0, 1.0, num_bins + 1)
     bins[-1] += 0.0125
     pRA = 2 * af * (1 - af)
@@ -266,8 +264,8 @@ def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
     b = np.bincount(
         np.digitize(pAA, bins), weights=counts.hom_alt, minlength=num_bins + 1
     )
-
     count = (a + b).astype(int)
+
     return pd.DataFrame({"start": bins[:-1], "stop": bins[1:], "prob_dist": count[1:]})
 
 
