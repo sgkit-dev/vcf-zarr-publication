@@ -327,6 +327,7 @@ Total CPU time required to run \texttt{bcftools +af-dist}
 and equivalent operations in a single thread for various tools.
 Elapsed time is also reported (dotted line). Run-time for genozip
 at $10^6$ samples was extrapolated by fitting an exponential.
+See Methods for full details.
 \label{fig-whole-matrix-compute}}
 \end{figure}
 
@@ -360,7 +361,8 @@ equivalent compiled C using \texttt{htslib} APIs on BCF (6 hours
 vs 20 hours for 1 million samples). The fastest method is the 
 C++ program written using the Savvy API. This would largely seem
 to be due to Savvy's excellent genotype decoding performance
-[TODO add fig for decode perf].
+(up to 5.7GiB/s vs 1.2GiB/s for Zarr on this dataset;
+Figure~\ref{fig-whole-matrix-decode}).
 
 \subsection{Subsetting the genotype matrix}
 Existing work overwhelmingly emphasises accessibility by variant.
@@ -369,14 +371,12 @@ in terms of both variants and samples via afdist on various subsets.
 Refer to fig~\ref{fig-subset-matrix-compute}.
 
 \begin{figure}
-\includegraphics[width=6cm]{figures/subset-matrix-compute}
+\includegraphics{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
-(A) Total CPU time required to run the afdist calculation for
-a subset of 10 samples and 10000 variants from the middle of the matrix.
-(B) Same for n/2 samples. Genozip did not run in this case for
-$n > 10^4$ samples because it does not support a file to specify
-sample IDs, and the command line was therefore too long for the shell
-to execute. [TODO Note that in this case the bcftools pipeline requires
+Total CPU time required to run the af-dist calculation for
+a subset of 10 samples and 10000 variants from the middle of the matrix
+for the data in Figure~\ref{fig-data-storage}.
+[TODO Note that in this case the bcftools pipeline requires
 an additional step to compute AF etc.]
 \label{fig-subset-matrix-compute}}
 \end{figure}
@@ -716,14 +716,36 @@ VCF: Variant Call Format;
 
 \bibliography{paper}
 
+\clearpage
+\renewcommand\thefigure{S\arabic{figure}}
+\setcounter{figure}{0}
+\renewcommand\thetable{S\arabic{table}}
+\setcounter{table}{0}
 
-% \clearpage
-% \renewcommand\thefigure{S\arabic{figure}}
-% \setcounter{figure}{0}
-% \renewcommand\thetable{S\arabic{table}}
-% \setcounter{table}{0}
+\section*{Supplementary Material}
 
-% \section*{Supplementary Material}
+\begin{figure}
+\includegraphics{figures/whole-matrix-decode}
+\caption{Genotype decoding performance.
+Total CPU time required to decode genotypes into memory using the zarr-python
+and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
+This corresponds to maximum rate of 1.2GiB/s for Zarr and 5.7GiB/s
+for Savvy. [TODO add data for 1 million samples]
+\label{fig-whole-matrix-decode}}
+\end{figure}
+
+\begin{figure}
+\includegraphics{figures/subset-matrix-compute-supplemental}
+\caption{Compute performance on a large subset of the genotype matrix.
+Total CPU time required to run the af-dist calculation for
+a subset of half of the samples and 10000 variants from the middle of the matrix
+for the data in Figure~\ref{fig-data-storage}.
+Genozip did not run for
+$n > 10^4$ samples because it does not support a file to specify
+sample IDs, and the command line was therefore too long for the shell
+to execute. 
+\label{fig-subset-matrix-compute-supplemental}}
+\end{figure}
 
 
 \clearpage

@@ -23,11 +23,18 @@ def one_panel_fig(**kwargs):
     # The columnwidth of the format is ~250pt, which is
     # 3 15/32 inch, = 3.46
     width = 3.46
-    (
-        fig,
-        ax,
-    ) = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
+    fig, ax = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
     return fig, ax
+
+
+# def two_panel_fig(**kwargs):
+#     # The columnwidth of the genetics format is ~250pt, which is
+#     # 3 15/32 inch, = 3.46
+#     width = 3.46
+#     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(width, 4 * width / 3), **kwargs)
+#     ax1.set_title("(A)")
+#     ax2.set_title("(B)")
+#     return fig, (ax1, ax2)
 
 
 def plot_size(ax, df, label_y_offset=None):
@@ -88,6 +95,8 @@ def plot_total_cpu(ax, df, toolname=None):
     # for tool in df.tool.unique():
     for tool in colours.keys():
         dfs = df[(df.tool == tool)]
+        if dfs.empty:
+            continue
         total_cpu = dfs["user_time"].values + dfs["sys_time"].values
         ax.loglog(
             dfs["num_samples"].values,
@@ -197,7 +206,7 @@ def whole_matrix_compute(time_data, output):
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
 
-    ax1.set_title(f"af-dist CPU time")
+    # ax1.set_title(f"af-dist CPU time")
     ax1.legend()
 
     plt.tight_layout()
@@ -214,15 +223,16 @@ def whole_matrix_decode(time_data, output):
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
     df = df[df.storage == "hdd"]
 
-    # TODO set the width properly based on document
-    fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
+    fig, ax1 = one_panel_fig()
 
     plot_total_cpu(ax1, df)
+    df["genotypes_per_second"] = df["total_genotypes"] / df["wall_time"]
+    for tool in ["zarr", "savvy"]:
+        max_rate = df[df.tool == tool]["genotypes_per_second"].max()
+        print(tool, humanize.naturalsize(max_rate, binary=True))
 
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
-
-    ax1.set_title(f"Genotype decode time")
     ax1.legend()
 
     plt.tight_layout()
@@ -232,9 +242,15 @@ def whole_matrix_decode(time_data, output):
 def plot_subset_time(ax, df, extrapolate_genozip=False):
     colours = {
         "bcftools": bcf_colour,
-        "zarr": zarr_colour,
-        # "savvy": sav_colour,
         "genozip": genozip_colour,
+        # "savvy": sav_colour,
+        "zarr": zarr_colour,
+    }
+
+    label_map = {
+        "bcftools": "bcftools pipeline",
+        "genozip": "genozip + bcftools pipeline",
+        "zarr": "zarr-python API",
     }
 
     for tool in colours.keys():
@@ -244,7 +260,7 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
         ax.loglog(
             n,
             total_cpu,
-            label=f"{tool}",
+            label=label_map[tool],
             # linestyle=ls,
             marker=".",
             color=colours[tool],
@@ -298,6 +314,21 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
         )
 
 
+def run_subset_matrix_plot(data, output, subset, extrapolate_genozip=False):
+    df = pd.read_csv(data, index_col=False).sort_values("num_samples")
+    fig, ax1 = one_panel_fig()
+    plot_subset_time(
+        ax1, df[df.slice == subset], extrapolate_genozip=extrapolate_genozip
+    )
+
+    ax1.set_xlabel("Sample size (diploid)")
+    ax1.set_ylabel("Time (seconds)")
+    ax1.legend()
+
+    plt.tight_layout()
+    plt.savefig(output)
+
+
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
@@ -305,23 +336,17 @@ def subset_matrix_compute(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    df = pd.read_csv(data, index_col=False).sort_values("num_samples")
+    run_subset_matrix_plot(data, output, "n10")
 
-    # TODO set the width properly based on document
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4, 6))
-    plot_subset_time(ax1, df[df.slice == "n10"])
-    plot_subset_time(ax2, df[df.slice == "n/2"], True)
 
-    ax2.set_xlabel("Sample size (diploid)")
-    ax1.set_ylabel("Time (seconds)")
-    ax1.set_ylabel("Time (seconds)")
-
-    ax1.set_title(f"10 samples")
-    ax2.set_title(f"n / 2 samples")
-    ax2.legend()
-
-    plt.tight_layout()
-    plt.savefig(output)
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def subset_matrix_compute_supplemental(data, output):
+    """
+    Plot the figure showing compute performance on subsets of matrix afdist.
+    """
+    run_subset_matrix_plot(data, output, "n/2", True)
 
 
 @click.group()
@@ -333,6 +358,7 @@ cli.add_command(data_scaling)
 cli.add_command(whole_matrix_compute)
 cli.add_command(whole_matrix_decode)
 cli.add_command(subset_matrix_compute)
+cli.add_command(subset_matrix_compute_supplemental)
 
 
 if __name__ == "__main__":
