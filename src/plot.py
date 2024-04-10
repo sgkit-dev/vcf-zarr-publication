@@ -27,16 +27,6 @@ def one_panel_fig(**kwargs):
     return fig, ax
 
 
-# def two_panel_fig(**kwargs):
-#     # The columnwidth of the genetics format is ~250pt, which is
-#     # 3 15/32 inch, = 3.46
-#     width = 3.46
-#     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(width, 4 * width / 3), **kwargs)
-#     ax1.set_title("(A)")
-#     ax2.set_title("(B)")
-#     return fig, (ax1, ax2)
-
-
 def plot_size(ax, df, label_y_offset=None):
     colour_map = {
         "vcf": "tab:pink",
@@ -70,16 +60,9 @@ def plot_size(ax, df, label_y_offset=None):
             xycoords="data",
         )
 
-    num_samples = dfs["num_samples"].values
-    num_sites = dfs["num_sites"].values
 
     ax.legend()
-    ax2 = ax.twiny()
-    ax2.set_xlim(ax.get_xlim())
-    ax2.set_xscale("log")
-    ax2.set_xlabel("Number of variants")
-    ax2.set_xticks(num_samples)
-    ax2.set_xticklabels([humanize.metric(m) for m in num_sites])
+    add_number_of_variants(df, ax)
 
 
 def plot_total_cpu(ax, df, toolname=None):
@@ -156,6 +139,21 @@ def plot_total_cpu(ax, df, toolname=None):
             xycoords="data",
         )
     ax.legend()
+    add_number_of_variants(df, ax)
+
+
+def add_number_of_variants(df, ax):
+
+    dfs = df[df["tool"] == "zarr"]
+    num_samples = dfs["num_samples"].values
+    num_sites = dfs["num_sites"].values
+
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    ax2.set_xscale("log")
+    ax2.set_xlabel("Number of variants")
+    ax2.set_xticks(num_samples)
+    ax2.set_xticklabels([humanize.metric(m) for m in num_sites])
 
 
 @click.command()
@@ -170,7 +168,7 @@ def data_scaling(size_data, output):
     fig, ax1 = one_panel_fig()
     plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
 
-    ax1.set_xlabel("Sample size (diploid)")
+    ax1.set_xlabel("Number of samples")
     ax1.set_ylabel("File size (bytes)")
 
     sav = df1[df1.tool == "sav"]
@@ -203,7 +201,7 @@ def whole_matrix_compute(time_data, output):
     }
     plot_total_cpu(ax1, df, name_map)
 
-    ax1.set_xlabel("Sample size (diploid)")
+    ax1.set_xlabel("Number of samples")
     ax1.set_ylabel("Time (seconds)")
 
     # ax1.set_title(f"af-dist CPU time")
@@ -231,7 +229,7 @@ def whole_matrix_decode(time_data, output):
         max_rate = df[df.tool == tool]["genotypes_per_second"].max()
         print(tool, humanize.naturalsize(max_rate, binary=True))
 
-    ax1.set_xlabel("Sample size (diploid)")
+    ax1.set_xlabel("Number of samples")
     ax1.set_ylabel("Time (seconds)")
     ax1.legend()
 
@@ -313,6 +311,8 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
             xycoords="data",
         )
 
+    add_number_of_variants(df, ax)
+
 
 def run_subset_matrix_plot(data, output, subset, extrapolate_genozip=False):
     df = pd.read_csv(data, index_col=False).sort_values("num_samples")
@@ -321,7 +321,7 @@ def run_subset_matrix_plot(data, output, subset, extrapolate_genozip=False):
         ax1, df[df.slice == subset], extrapolate_genozip=extrapolate_genozip
     )
 
-    ax1.set_xlabel("Sample size (diploid)")
+    ax1.set_xlabel("Number of samples")
     ax1.set_ylabel("Time (seconds)")
     ax1.legend()
 
