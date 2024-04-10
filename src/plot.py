@@ -95,6 +95,8 @@ def plot_total_cpu(ax, df, toolname=None):
     # for tool in df.tool.unique():
     for tool in colours.keys():
         dfs = df[(df.tool == tool)]
+        if dfs.empty:
+            continue
         total_cpu = dfs["user_time"].values + dfs["sys_time"].values
         ax.loglog(
             dfs["num_samples"].values,
@@ -221,15 +223,16 @@ def whole_matrix_decode(time_data, output):
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
     df = df[df.storage == "hdd"]
 
-    # TODO set the width properly based on document
-    fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
+    fig, ax1 = one_panel_fig()
 
     plot_total_cpu(ax1, df)
+    df["genotypes_per_second"] = df["total_genotypes"] / df["wall_time"]
+    for tool in ["zarr", "savvy"]:
+        max_rate = df[df.tool == tool]["genotypes_per_second"].max()
+        print(tool, humanize.naturalsize(max_rate, binary=True))
 
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
-
-    ax1.set_title(f"Genotype decode time")
     ax1.legend()
 
     plt.tight_layout()

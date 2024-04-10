@@ -1,5 +1,6 @@
 FIGURES=figures/data-scaling.pdf\
 	figures/whole-matrix-compute.pdf\
+	figures/whole-matrix-decode.pdf\
 	figures/subset-matrix-compute.pdf\
 	figures/subset-matrix-compute-supplemental.pdf
 
@@ -62,6 +63,10 @@ figures/data-scaling.pdf: plot_data/data-scaling.csv
 figures/whole-matrix-compute.pdf: plot_data/whole-matrix-compute.csv
 	python3 src/plot.py whole-matrix-compute plot_data/whole-matrix-compute.csv  \
 		figures/whole-matrix-compute.pdf
+
+figures/whole-matrix-decode.pdf: plot_data/whole-matrix-decode.csv
+	python3 src/plot.py whole-matrix-decode plot_data/whole-matrix-decode.csv  \
+		figures/whole-matrix-decode.pdf
 
 figures/subset-matrix-compute.pdf: plot_data/subset-matrix-compute.csv
 	python3 src/plot.py subset-matrix-compute plot_data/subset-matrix-compute.csv  \
