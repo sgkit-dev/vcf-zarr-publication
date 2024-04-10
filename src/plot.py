@@ -23,11 +23,18 @@ def one_panel_fig(**kwargs):
     # The columnwidth of the format is ~250pt, which is
     # 3 15/32 inch, = 3.46
     width = 3.46
-    (
-        fig,
-        ax,
-    ) = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
+    fig, ax = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
     return fig, ax
+
+
+# def two_panel_fig(**kwargs):
+#     # The columnwidth of the genetics format is ~250pt, which is
+#     # 3 15/32 inch, = 3.46
+#     width = 3.46
+#     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(width, 4 * width / 3), **kwargs)
+#     ax1.set_title("(A)")
+#     ax2.set_title("(B)")
+#     return fig, (ax1, ax2)
 
 
 def plot_size(ax, df, label_y_offset=None):
@@ -197,7 +204,7 @@ def whole_matrix_compute(time_data, output):
     ax1.set_xlabel("Sample size (diploid)")
     ax1.set_ylabel("Time (seconds)")
 
-    ax1.set_title(f"af-dist CPU time")
+    # ax1.set_title(f"af-dist CPU time")
     ax1.legend()
 
     plt.tight_layout()
@@ -298,6 +305,21 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
         )
 
 
+def run_subset_matrix_plot(data, output, subset, extrapolate_genozip=False):
+    df = pd.read_csv(data, index_col=False).sort_values("num_samples")
+    fig, ax1 = one_panel_fig()
+    plot_subset_time(
+        ax1, df[df.slice == subset], extrapolate_genozip=extrapolate_genozip
+    )
+
+    ax1.set_xlabel("Sample size (diploid)")
+    ax1.set_ylabel("Time (seconds)")
+    ax1.legend()
+
+    plt.tight_layout()
+    plt.savefig(output)
+
+
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
@@ -305,23 +327,17 @@ def subset_matrix_compute(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    df = pd.read_csv(data, index_col=False).sort_values("num_samples")
+    run_subset_matrix_plot(data, output, "n10")
 
-    # TODO set the width properly based on document
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4, 6))
-    plot_subset_time(ax1, df[df.slice == "n10"])
-    plot_subset_time(ax2, df[df.slice == "n/2"], True)
 
-    ax2.set_xlabel("Sample size (diploid)")
-    ax1.set_ylabel("Time (seconds)")
-    ax1.set_ylabel("Time (seconds)")
-
-    ax1.set_title(f"10 samples")
-    ax2.set_title(f"n / 2 samples")
-    ax2.legend()
-
-    plt.tight_layout()
-    plt.savefig(output)
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def subset_matrix_compute_supplemental(data, output):
+    """
+    Plot the figure showing compute performance on subsets of matrix afdist.
+    """
+    run_subset_matrix_plot(data, output, "n/2", True)
 
 
 @click.group()
@@ -333,6 +349,7 @@ cli.add_command(data_scaling)
 cli.add_command(whole_matrix_compute)
 cli.add_command(whole_matrix_decode)
 cli.add_command(subset_matrix_compute)
+cli.add_command(subset_matrix_compute_supplemental)
 
 
 if __name__ == "__main__":
