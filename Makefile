@@ -1,4 +1,9 @@
-all: paper.pdf
+FIGURES=figures/data-scaling.pdf\
+	figures/whole-matrix-compute.pdf\
+	figures/subset-matrix-compute.pdf\
+	figures/subset-matrix-compute-supplemental.pdf
+
+all: paper.pdf 
 
 paper.aux: paper.tex
 	pdflatex -shell-escape paper.tex
@@ -7,7 +12,7 @@ paper.bbl: paper.aux paper.bib
 	bibtex paper
 	pdflatex -shell-escape paper.tex
 
-paper.pdf: paper.bbl
+paper.pdf: $(FIGURES) paper.bbl 
 	pdflatex -shell-escape paper.tex
 
 paper.ps: paper.dvi
@@ -33,10 +38,6 @@ mrproper: clean
 
 
 
-# TODO these rules for creating figures and figure data are out of date.
-# The plan is to systematise things once the basic structure has settled
-# down a bit more
-
 TS_FILES=scaling/data/chr21_10_1.ts\
 	scaling/data/chr21_10_2.ts\
 	scaling/data/chr21_10_3.ts\
@@ -44,6 +45,10 @@ TS_FILES=scaling/data/chr21_10_1.ts\
 	scaling/data/chr21_10_5.ts\
 	scaling/data/chr21_10_6.ts
 
+
+# Should probably add rules for other data collection. However, it 
+# takes a *long* time to do some stuff, and needs to be done in bits
+# in practise.
 plot_data/data-scaling.csv:
 	python3 src/collect_data.py file-size $(TS_FILES) -o $@
 
@@ -61,3 +66,7 @@ figures/whole-matrix-compute.pdf: plot_data/whole-matrix-compute.csv
 figures/subset-matrix-compute.pdf: plot_data/subset-matrix-compute.csv
 	python3 src/plot.py subset-matrix-compute plot_data/subset-matrix-compute.csv  \
 		figures/subset-matrix-compute.pdf
+
+figures/subset-matrix-compute-supplemental.pdf: plot_data/subset-matrix-compute.csv
+	python3 src/plot.py subset-matrix-compute-supplemental plot_data/subset-matrix-compute.csv  \
+		figures/subset-matrix-compute-supplemental.pdf

@@ -239,9 +239,15 @@ def whole_matrix_decode(time_data, output):
 def plot_subset_time(ax, df, extrapolate_genozip=False):
     colours = {
         "bcftools": bcf_colour,
-        "zarr": zarr_colour,
-        # "savvy": sav_colour,
         "genozip": genozip_colour,
+        # "savvy": sav_colour,
+        "zarr": zarr_colour,
+    }
+
+    label_map = {
+        "bcftools": "bcftools pipeline",
+        "genozip": "genozip + bcftools pipeline",
+        "zarr": "zarr-python API",
     }
 
     for tool in colours.keys():
@@ -251,7 +257,7 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
         ax.loglog(
             n,
             total_cpu,
-            label=f"{tool}",
+            label=label_map[tool],
             # linestyle=ls,
             marker=".",
             color=colours[tool],
