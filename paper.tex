@@ -177,7 +177,7 @@ VCF information) have been proposed
 \citep{deorowicz2013genome, %TGC
 deorowicz2019gtshark, %GTShark
 deorowicz2021vcfshark}, % VCFShark
-most notably the highly-influential Positional
+most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
 
 VCF is a text-based format in which each line
@@ -196,20 +196,21 @@ allows data to be easily streamed through Unix pipelines (see Discussion).
 
 Row-wise storage works well when records are relatively small, 
 or when we typically want to analyse each record in its entirity.
-When we want to analyse only a subset of a record 
-row-wise storage can inefficient because we will usually need to
+When we want to analyse only a subset of a record,
+row-wise storage can be inefficient because we will usually need to
 retrieve more information than required from storage. In the case 
 of VCF (and BCF) where records are not of a fixed size and 
 are almost always compressed in blocks, accessing any information
 for all rows means retrieving and decompressing \emph{all} 
 information from all rows.
 The alternative to row-wise storage is \emph{columnar} storage:
-instead of grouping toether all the fields for a record,
+instead of grouping together all the fields for a record,
 we group together all the records for a given field.
+Columnar storage has become standard [very quick summary of columnar
+storage with some refs].
 To our knowledge, the only existing method using columnar 
 storage for genetic variation data is 
-SeqArray~\citep{zheng2017seqarray} built on 
-the GDS container format~\citep{zheng2012high}.
+SeqArray~\citep{zheng2017seqarray,zheng2012high}.
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
@@ -232,7 +233,7 @@ In particular, call-level data is stored as $m \times n$ arrays
 (for $m$ sites and $n$ samples), allowing for efficient 
 retrieval of subsets of those fields along both the 
 variants and samples axis.
-Note that this approach to storing higher dimensional 
+Note that this approach to storing higher dimensional data
 sets Zarr apart from more general columnar formats 
 such as Parquet [TODO more details and citations?].
 See the Methods for more detail on Zarr and the \texttt{vcfzarr}
