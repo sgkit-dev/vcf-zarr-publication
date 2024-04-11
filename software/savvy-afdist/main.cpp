@@ -53,6 +53,9 @@ void decode(const std::string& filename) {
 
     while (f >> var) {
         var.get_format("GT", geno);
+        /* This is just to make sure the compiler doesn't somehow ignore the
+         * get_format bit·
+         */
         if (geno[0] >= 0) {
             count++;
         }
@@ -60,6 +63,16 @@ void decode(const std::string& filename) {
 
     std::cout << "Decoded variants: " << count << std::endl;
 }
+
+void output_pos(const std::string& filename) {
+    savvy::reader f(filename);
+    savvy::variant var;
+
+    while (f >> var) {
+        std::cout << var.position() << std::endl;
+    }
+}
+
 
 // Use a lambda expression for finding the bin index
 auto findBinIndex = [](const std::vector<double>& bins, double value) -> int {
@@ -82,6 +95,7 @@ int main(int argc, char* argv[]) {
     std::string filename;
     std::string samples_file;
     bool decode_only = false;
+    bool pos_only = false;
     int start = -1;
     int end = -1;
 
@@ -89,6 +103,8 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "--decode-only") {
             decode_only = true;
+        } else if (arg == "--pos-only") {
+            pos_only = true;
         } else if (arg == "--start") {
             i++;
             start = std::stoi(argv[i]);
@@ -122,6 +138,8 @@ int main(int argc, char* argv[]) {
 
     if (decode_only) {
         decode(filename);
+    } else if (pos_only) {
+        output_pos(filename);
     } else {
         std::vector<double> af;
         std::vector<int> hets;
