@@ -363,7 +363,7 @@ equivalent compiled C using \texttt{htslib} APIs on BCF (6 hours
 vs 20 hours for 1 million samples). The fastest method is the 
 C++ program written using the Savvy API. This would largely seem
 to be due to Savvy's excellent genotype decoding performance
-(up to 5.7GiB/s vs 1.2GiB/s for Zarr on this dataset;
+(up to 6.5GiB/s vs 1.2GiB/s for Zarr on this dataset;
 Figure~\ref{fig-whole-matrix-decode}). Different choices 
 of compressor and filters (zstandard with bit shuffle, in this case) 
 would likely lead to improved decoding performance in Zarr,

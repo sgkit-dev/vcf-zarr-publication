@@ -65,7 +65,7 @@ def plot_size(ax, df, label_y_offset=None):
     add_number_of_variants(df, ax)
 
 
-def plot_total_cpu(ax, df, toolname=None):
+def plot_total_cpu(ax, df, toolname=None, time_units="h"):
     colours = {
         "bcftools": bcf_colour,
         "genozip": genozip_colour,
@@ -74,6 +74,7 @@ def plot_total_cpu(ax, df, toolname=None):
     }
     have_genozip = False
     toolname = {} if toolname is None else toolname
+    divisors = {"h": 3600, "m": 60}
 
     # for tool in df.tool.unique():
     for tool in colours.keys():
@@ -102,11 +103,11 @@ def plot_total_cpu(ax, df, toolname=None):
         )
         row = dfs.iloc[-1]
 
-        hours = total_cpu[-1] // 3600
+        hours = total_cpu[-1] // divisors[time_units]
 
         if tool != "genozip":
             ax.annotate(
-                f"{hours:.0f}h",
+                f"{hours:.0f}{time_units}",
                 textcoords="offset points",
                 xytext=(15, 0),
                 xy=(row.num_samples, total_cpu[-1]),
@@ -223,7 +224,7 @@ def whole_matrix_decode(time_data, output):
 
     fig, ax1 = one_panel_fig()
 
-    plot_total_cpu(ax1, df)
+    plot_total_cpu(ax1, df, time_units="m")
     df["genotypes_per_second"] = df["total_genotypes"] / df["wall_time"]
     for tool in ["zarr", "savvy"]:
         max_rate = df[df.tool == tool]["genotypes_per_second"].max()
