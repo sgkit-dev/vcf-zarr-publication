@@ -451,7 +451,8 @@ columnar storage excels at these tasks: we only read and decompress
 the information required.
 
 \subsection{Case study: Genomics England 100,000 genomes}
-In this section we demonstrate the utility of vcfzarr on a large human dataset.
+In this section we demonstrate the utility of \texttt{vcfzarr} on a large human dataset
+and the scalability of the \texttt{vcf2zarr} conversion utility.
 Genomics England’s multi-sample VCF dataset (aggV2) is an 
 aggregate of 78,195 gVCFs from rare disease and cancer participants 
 recruited as part of the 100,000 Genomes Project~\cite{turnbull2018100}. 
@@ -464,18 +465,29 @@ imputation~\cite{shi2023genomics} to
 simple queries involving single gene 
 regions~\cite{leggatt2023genotype,lam2023repeat}.
 
-We converted the data to the intermediate columnar format 
-which took X hours with a cluster of Y workers using the 
-distributed explode commands. When then converted to Zarr using 
-SOMETHING which took X hours using [RESOURCES]. In total, this gave 
-X TiB of data, spread across Y thousand files, a compression of 
-X over the original VCFs.
-The detailed breakdown of per-column compression ratios is 
-shown in Table~\ref{tab-genomics-england-data}.
+As described in the Methods, conversion to Zarr using 
+\texttt{vcf2zarr} is a two-step 
+process to limit memory usage and ensure reliability. We 
+first convert the X VCF files (YTiB) for chromosome 2
+into the intermediate columnar format. This task was 
+distributed over a cluster of N workers, using a 
+total of X CPU hours and an elapsed wall-clock time 
+of X hours. When then converted the intermediate 
+column format to Zarr using 
+SOMETHING which took X hours using [RESOURCES]. 
+This produced a dataset with N arrays, consuming a 
+total of Y TiB of storage over X directories and 
+Y files. The top fields in terms 
+of storage are detailed in Table~\ref{tab-genomics-england-data}.
 
 \begin{table}
-\caption{Summary of vcf-zarr performance on the Genomics England 100,000
-genomes VCF dataset.
+\caption{Summary of the top N vcfzarr columns produced for 
+Genomics England aggV2 VCFs on chromosome 20 using \texttt{vcf2zarr}
+default settings. Each field is stored independently 
+as Zarr array with the given type (sufficient to represent all values in the
+data). We show the total storage consumed (reported via \texttt{du}) in 
+power-of-two units, and the compression ratio achieved on that array.
+We also show the percentage of the overall storage that each array consumes.
 \label{tab-genomics-england-data}}
 \begin{tabular}{llS[table-format=3.1]S[table-format=3.2]S[table-format=3.2]}
 \toprule
@@ -500,28 +512,38 @@ variant\_filter & bool & 1.9M & 490 \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab-genomics-england-data} shows that the dataset size is 
-dominated by a few columns. This is well known and has been remarked 
-on several times [e.g. spVCF paper, etc]. [In this paragraph we discuss
-how some of these fields can be considerably compressed with very
-little loss of information. For example, the maximum Allele Depth (AD)
-value seen in this dataset is >3000. However, when we compute the 
-histogram of AD values we can see that something like 0.1\% of 
-AD values are > 127, so we can reasonably store these as 8 bit 
-ints. This reduces storage to X. Finish up by saying that more 
-could be done, but it's beyond the scope of this paper. Maybe note 
-that this kind of per-field analysis is easy now, e.g. computing 
-the hist took X minutes using xarray and Dask on a cluster with
-Y workers..]
+Table~\ref{tab-genomics-england-data} shows that the dataset storage
+size dominated by a few columns, with call\_AD and call\_GQ consuming 
+almost half of total. These fields are much less compressible
+than genotype data (which uses $<1\%$ of the total space here)
+due to their inherent noisiness~\citep{lin2020sparse}. Substantial
+reductions in space can be achieved, however, if we examine the 
+distributions of these fields and truncate some outliers.
+Figure~SX shows the histogram of the XX call\_AD values, and we can
+see that < 0.0X\% of the values are $>127$. Truncating and 
+re-encoding the call\_AD array as an int8 results in a total storage of 
+XX. A substantial advantage of Zarr is that such per-field optimisations
+can be made after conversion, without affecting the rest of the dataset.
+As discussed in Methods, judicious use of additional filters
+and lossy quantizing can result substantial space savings.
 
-To illustrate the difference in query performance we ran some 
-\texttt{bcftools query} commands based on the Genomics England 
-user guides. For example, finding all variants passing 
-quality filters with an allele frequency X takes just 
-x seconds on a single core (y seconds of which is writing the 
-CSV file). The same query took X hours on one chunk, giving a 
-an approximate total time of XX hours over all Y chunks 
-in chromosomes 2.
+Calculating the histogram of call\_AD values at this 
+scale is not a trivial task.
+Taking advantage of the rich software ecosystem growing around Zarr
+(see Discussion) we used xarray~\citep{hoyer2017xarray}
+and Dask~\citep{rocklin2015dask} to transparently distribute the 
+computation over a cluster of X workers. The elapsed time 
+was X minutes, and requires X lines of Python in a 
+Jupyter notebook~\citep{kluyver2016jupyter}. 
+
+One of the key uses of the aggV2 dataset is to enable simple queries 
+of specific regions. For example, in [A PAPER] they [DID SOMETHING].
+We replicated this by running the appropriate bcftools query
+on the VCF chunk (note that the user is responsible for finding 
+the correct chunk file here, limiting the utility of genomic 
+indexes). This took XXX hours.
+The same query implemented with the Zarr-python 
+API required XXX seconds to produce identical output.
 
 \section{Discussion}
 
