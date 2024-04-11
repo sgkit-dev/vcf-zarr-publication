@@ -60,7 +60,6 @@ def plot_size(ax, df, label_y_offset=None):
             xycoords="data",
         )
 
-
     ax.legend()
     add_number_of_variants(df, ax)
 
@@ -144,7 +143,6 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h"):
 
 
 def add_number_of_variants(df, ax):
-
     dfs = df[df["tool"] == "zarr"]
     num_samples = dfs["num_samples"].values
     num_sites = dfs["num_sites"].values
@@ -242,7 +240,7 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
     colours = {
         "bcftools": bcf_colour,
         "genozip": genozip_colour,
-        # "savvy": sav_colour,
+        "savvy": sav_colour,
         "zarr": zarr_colour,
     }
 
@@ -250,10 +248,11 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
         "bcftools": "bcftools pipeline",
         "genozip": "genozip + bcftools pipeline",
         "zarr": "zarr-python API",
+        "savvy": "savvy C++ API",
     }
 
     for tool in colours.keys():
-        dfs = df[(df.threads == 1) & (df.tool == tool)]
+        dfs = df[(df.tool == tool)]
         total_cpu = dfs["user_time"].values + dfs["sys_time"].values
         n = dfs["num_samples"].values
         ax.loglog(
@@ -294,11 +293,11 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
             # Fit a simple exponential function.
             return a * np.power(n, b)
 
-        dfs = df[(df.threads == 1) & (df.tool == "genozip")]
+        dfs = df[(df.tool == "genozip")]
         fit_params, _ = optimize.curve_fit(
             mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
         )
-        num_samples = df[(df.threads == 1) & (df.tool == "bcftools")].num_samples.values
+        num_samples = df[(df.tool == "bcftools")].num_samples.values
         fit = mulplicative_model(num_samples, *fit_params)
         # print(fit)
 

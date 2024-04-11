@@ -1,4 +1,4 @@
-num_samples,num_sites,slice,tool,threads,user_time,sys_time,wall_time
+num_samples,num_sites,slice,tool,user_time,sys_time,wall_time
 10,116230,n10,bcftools,0.13,0.01,0.10558366775512695
 10,116230,n/2,bcftools,0.11,0.01,0.09411430358886719
 100,204714,n10,bcftools,0.11,0.01,0.08767557144165039
