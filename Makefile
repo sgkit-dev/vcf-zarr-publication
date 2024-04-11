@@ -4,7 +4,7 @@ FIGURES=figures/data-scaling.pdf\
 	figures/subset-matrix-compute.pdf\
 	figures/subset-matrix-compute-supplemental.pdf
 
-all: paper.pdf 
+all: paper.pdf
 
 paper.aux: paper.tex
 	pdflatex -shell-escape paper.tex
@@ -13,7 +13,7 @@ paper.bbl: paper.aux paper.bib
 	bibtex paper
 	pdflatex -shell-escape paper.tex
 
-paper.pdf: $(FIGURES) paper.bbl 
+paper.pdf: $(FIGURES) paper.bbl
 	pdflatex -shell-escape paper.tex
 
 paper.ps: paper.dvi
@@ -47,7 +47,7 @@ TS_FILES=scaling/data/chr21_10_1.ts\
 	scaling/data/chr21_10_6.ts
 
 
-# Should probably add rules for other data collection. However, it 
+# Should probably add rules for other data collection. However, it
 # takes a *long* time to do some stuff, and needs to be done in bits
 # in practise.
 plot_data/data-scaling.csv:
@@ -68,10 +68,15 @@ figures/whole-matrix-decode.pdf: plot_data/whole-matrix-decode.csv
 	python3 src/plot.py whole-matrix-decode plot_data/whole-matrix-decode.csv  \
 		figures/whole-matrix-decode.pdf
 
+figures/column-extract.pdf: plot_data/column-extract.csv
+	python3 src/plot.py column-extract plot_data/column-extract.csv  \
+		figures/column-extract.pdf
+
 figures/subset-matrix-compute.pdf: plot_data/subset-matrix-compute.csv
 	python3 src/plot.py subset-matrix-compute plot_data/subset-matrix-compute.csv  \
 		figures/subset-matrix-compute.pdf
 
 figures/subset-matrix-compute-supplemental.pdf: plot_data/subset-matrix-compute.csv
-	python3 src/plot.py subset-matrix-compute-supplemental plot_data/subset-matrix-compute.csv  \
+	python3 src/plot.py subset-matrix-compute-supplemental \
+		plot_data/subset-matrix-compute.csv  \
 		figures/subset-matrix-compute-supplemental.pdf

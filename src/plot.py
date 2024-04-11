@@ -123,7 +123,7 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
         fit_params, _ = optimize.curve_fit(
             multiplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
         )
-        num_samples = df[(df.tool == "bcftools")].num_samples.values
+        num_samples = df[(df.tool == "zarr")].num_samples.values
         fit = multiplicative_model(num_samples, *fit_params)
         # print(fit)
 
@@ -138,6 +138,9 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
         )
     ax.legend()
     add_number_of_variants(df, ax)
+    ax.set_xlabel("Number of samples")
+    ax.set_ylabel("Time (seconds)")
+    plt.tight_layout()
 
 
 def add_number_of_variants(df, ax):
@@ -165,9 +168,6 @@ def data_scaling(size_data, output):
     fig, ax1 = one_panel_fig()
     plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
 
-    ax1.set_xlabel("Number of samples")
-    ax1.set_ylabel("File size (bytes)")
-
     sav = df1[df1.tool == "sav"]
     zarr = df1[df1.tool == "zarr"]
     ratio = sav["size"].values / zarr["size"].values
@@ -175,7 +175,7 @@ def data_scaling(size_data, output):
     # I tried putting an inset axis showing the ratio, but it was too small.
     # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
     # ax_inset.semilogx(sav["num_samples"], ratio)
-    plt.tight_layout()
+
     plt.savefig(output)
 
 
@@ -199,13 +199,6 @@ def whole_matrix_compute(time_data, output):
     }
     plot_total_cpu(ax1, df, name_map, extrapolate=["genozip", "bcftools+vcf"])
 
-    ax1.set_xlabel("Number of samples")
-    ax1.set_ylabel("Time (seconds)")
-
-    # ax1.set_title(f"af-dist CPU time")
-    ax1.legend()
-
-    plt.tight_layout()
     plt.savefig(output)
 
 
@@ -227,11 +220,25 @@ def whole_matrix_decode(time_data, output):
         max_rate = df[df.tool == tool]["genotypes_per_second"].max()
         print(tool, humanize.naturalsize(max_rate, binary=True))
 
-    ax1.set_xlabel("Number of samples")
-    ax1.set_ylabel("Time (seconds)")
-    ax1.legend()
+    plt.savefig(output)
 
-    plt.tight_layout()
+@click.command()
+@click.argument("time_data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def column_extract(time_data, output):
+    """
+    Plot the figure showing time to extract the POS column
+    """
+    df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
+    df = df[df.storage == "hdd"]
+
+    toolname = {
+        "bcftools": "bcftools query",
+        "savvy": "savvy C++",
+        "zarr": "zarr + pandas to_csv",
+    }
+    fig, ax1 = one_panel_fig()
+    plot_total_cpu(ax1, df, toolname=toolname, time_units="s", extrapolate=["bcftools"])
     plt.savefig(output)
 
 
@@ -253,12 +260,6 @@ def run_subset_matrix_plot(data, output, subset, extrapolate):
         time_units="s",
         extrapolate=extrapolate,
     )
-
-    ax1.set_xlabel("Number of samples")
-    ax1.set_ylabel("Time (seconds)")
-    ax1.legend()
-
-    plt.tight_layout()
     plt.savefig(output)
 
 
@@ -290,6 +291,7 @@ def cli():
 cli.add_command(data_scaling)
 cli.add_command(whole_matrix_compute)
 cli.add_command(whole_matrix_decode)
+cli.add_command(column_extract)
 cli.add_command(subset_matrix_compute)
 cli.add_command(subset_matrix_compute_supplemental)
 
