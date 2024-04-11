@@ -455,14 +455,15 @@ In this section we demonstrate the utility of vcfzarr on a large human dataset.
 Genomics England’s multi-sample VCF dataset (aggV2) is an 
 aggregate of 78,195 gVCFs from rare disease and cancer participants 
 recruited as part of the 100,000 Genomes Project~\cite{turnbull2018100}. 
-aggV2 comprises approximately 722 million annotated single-nucleotide 
+The dataset comprises approximately 722 million annotated single-nucleotide 
 variants (SNVs) and small indels split into 1,371 roughly equal chunks and 
-totalling 165.3 Tib of data after \texttt{bgzip} compression. 
+totalling 165.3 TiB of VCF data after \texttt{bgzip} compression. 
 The dataset is used for a variety of research purposes, ranging from 
 genome-wide association studies (GWAS)~\cite{kousathanas2022whole} and 
 imputation~\cite{shi2023genomics} to 
 simple queries involving single gene 
-regions~\cite{leggatt2023genotype}~\cite{lam2023repeat}.
+regions~\cite{leggatt2023genotype,lam2023repeat}.
+
 We converted the data to the intermediate columnar format 
 which took X hours with a cluster of Y workers using the 
 distributed explode commands. When then converted to Zarr using 
@@ -473,12 +474,30 @@ The detailed breakdown of per-column compression ratios is
 shown in Table~\ref{tab-genomics-england-data}.
 
 \begin{table}
-\begin{tabular}{cc}
-Some & data on Genomics England\\
-\end{tabular}
 \caption{Summary of vcf-zarr performance on the Genomics England 100,000
 genomes VCF dataset.
 \label{tab-genomics-england-data}}
+\begin{tabular}{llccc}
+\toprule
+Field & type & storage & compress & \%total \\
+\midrule
+call\_AD &  int16 & 179G & 26 & 24\\
+call\_GQ &  int16 & 171G & 13 & 22 \\
+call\_DP &  int16 & 141G & 20 & 18.8 \\
+call\_FT &  string & 58G & 160 & 7.3 \\
+call\_PL &  int16 & 51G & 140 & 6.8 \\
+call\_GQX &  int16 & 12G & 190 & 1.6 \\
+call\_genotype & int8 & 6.13G & 380 & 0.8 \\
+call\_genotype\_mask & bool & 3.66G  & 630 & 0.48\\
+call\_genotype\_phased & bool & 3.66G  & 630 & 0.48 \\
+variant\_quality & float32 & 22.6M & 2.7 & 0.0003 \\
+variant\_allele & string & 21.5M & 11 \\
+variant\_position & int32 & 12.7M & 4.7 \\
+variant\_ABratio & float32 & 9.6M & 6.3 \\
+variant\_AN & int32 & 9.6M & 6.3 \\
+variant\_filter & bool & 1.96M & 490 \\
+\bottomrule
+\end{tabular}
 \end{table}
 
 Table~\ref{tab-genomics-england-data} shows that the dataset size is 
