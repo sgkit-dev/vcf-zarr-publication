@@ -412,14 +412,43 @@ Figure~\ref{fig-subset-matrix-compute-supplemental} shows performance
 for the same operation when selecting half of the samples in the 
 dataset.
 
-\subsection{Extracting fields}
-
 \begin{figure}
 \includegraphics{figures/column-extract}
-\caption{Time to extract individual columns.
+\caption{Time to extract the genome position and write to a text file.
+Total CPU time required to extract the POS field for BCF,
+sav and Zar formats
 for the data in Figure~\ref{fig-data-storage}.
+For the BCF file we used \texttt{bcftools query -f"\%POS$\backslash$n"}.
+For sav, we used the Savvy C++ API to extract just the position, 
+and output text using the \texttt{std::cout} stream. For Zarr, we read 
+\texttt{variant\_position} into a NumPy array, and then wrote to
+a text file using the Pandas
+\texttt{write\_csv} method. Writing
+text dominates in the case of Zarr: populating the NumPy array 
+in memory takes less than a second in all cases. Genozip does
+not offer an option to extract individual columns, and so would require
+the output to be piped into \texttt{bcftools query} or a
+Unix utility such as \texttt{cut}.
 \label{fig-column-extract}}
 \end{figure}
+
+\subsection{Extracting fields}
+We have focused on the genotype matrix up to this point, contrasting
+Zarr with existing row-wise methods. The genotype matrix, however,
+is only one aspect of VCF data.
+Real-world VCFs encapsulate much more than just the genotype
+matrix, and can contain large numbers of additional fields. Efficient
+extraction of the data from these fields is a key use-case
+and an area where columnar storage has clear benefits.
+Figure~\ref{fig-column-extract} shows the time required to extract 
+the genomic position of each variant in the simulated benchmark 
+dataset, which we can use as an indicative example of a per-variant 
+query. Although Savvy is many times faster than \texttt{bcftools query}
+here, the row-wise storage strategy that they share means that 
+the entire dataset must be read into memory and 
+decompressed to extract just one field from each record. Zarr's
+columnar storage excels at these tasks: we only read and decompress
+the information required.
 
 \subsection{Case study: Genomics England 100,000 genomes}
 In this section we demonstrate the utility of vcfzarr on a large human dataset.
@@ -595,6 +624,9 @@ column. Similarly, these rectangular chunks capture patterns
 both of similarity between samples and linkage disequilibrium~\cite{mcvean2019linkage} 
 between sites, such that conventional compression schemes 
 perform very well~\ref{fig-data-storage}.
+
+
+Reel off Python data science ecosystem: Pandas~\citep{mckinney2010data} etc
 
 \section{Methods}
 
