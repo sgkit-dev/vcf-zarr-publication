@@ -26,3 +26,4 @@ num_samples,num_sites,tool,user_time,sys_time,wall_time,storage
 100,204714,bcftools+vcf,1.23,0.0,1.2580764293670654,hdd
 1000,403989,bcftools+vcf,19.8,0.08,19.969261407852173,hdd
 10000,863998,bcftools+vcf,400.47,0.74,401.5374720096588,hdd
+100000,2365367,bcftools+vcf,11145.7,5.61,11156.32287812233,hdd
