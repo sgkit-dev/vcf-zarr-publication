@@ -477,25 +477,25 @@ shown in Table~\ref{tab-genomics-england-data}.
 \caption{Summary of vcf-zarr performance on the Genomics England 100,000
 genomes VCF dataset.
 \label{tab-genomics-england-data}}
-\begin{tabular}{llccc}
+\begin{tabular}{llS[table-format=3.1]S[table-format=3.2]S[table-format=3.2]}
 \toprule
-Field & type & storage & compress & \%total \\
+{Field} & {type} & {storage} & {compress} & {\%total} \\
 \midrule
-call\_AD &  int16 & 179G & 26 & 24\\
-call\_GQ &  int16 & 171G & 13 & 22 \\
-call\_DP &  int16 & 141G & 20 & 18.8 \\
-call\_FT &  string & 58G & 160 & 7.3 \\
-call\_PL &  int16 & 51G & 140 & 6.8 \\
-call\_GQX &  int16 & 12G & 190 & 1.6 \\
-call\_genotype & int8 & 6.13G & 380 & 0.8 \\
-call\_genotype\_mask & bool & 3.66G  & 630 & 0.48\\
-call\_genotype\_phased & bool & 3.66G  & 630 & 0.48 \\
-variant\_quality & float32 & 22.6M & 2.7 & 0.0003 \\
+call\_AD &  int16 & 179.0G & 26 & 24.1\\
+call\_GQ &  int16 & 171.0G & 13 & 22.2 \\
+call\_DP &  int16 & 141.0G & 20 & 18.8 \\
+call\_FT &  string & 58.0G & 160 & 7.3 \\
+call\_PL &  int16 & 51.0G & 140 & 6.8 \\
+call\_GQX &  int16 & 12.0G & 190 & 1.6 \\
+call\_genotype & int8 & 6.1G & 380 & 0.8 \\
+call\_genotype\_mask & bool & 3.6G  & 630 & 0.48\\
+call\_genotype\_phased & bool & 3.6G  & 1700 & 0.48 \\
+variant\_quality & float32 & 22.6M & 2.7 & <0.01 \\
 variant\_allele & string & 21.5M & 11 \\
 variant\_position & int32 & 12.7M & 4.7 \\
 variant\_ABratio & float32 & 9.6M & 6.3 \\
 variant\_AN & int32 & 9.6M & 6.3 \\
-variant\_filter & bool & 1.96M & 490 \\
+variant\_filter & bool & 1.9M & 490 \\
 \bottomrule
 \end{tabular}
 \end{table}
