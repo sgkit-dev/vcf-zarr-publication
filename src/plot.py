@@ -12,8 +12,8 @@ plt.rcParams.update({"legend.fontsize": 6})
 plt.rcParams.update({"lines.markersize": 4})
 
 
-sgkit_colour = "tab:blue"
 bcf_colour = "tab:orange"
+vcf_colour = "tab:pink"
 sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
@@ -29,7 +29,7 @@ def one_panel_fig(**kwargs):
 
 def plot_size(ax, df, label_y_offset=None):
     colour_map = {
-        "vcf": "tab:pink",
+        "vcf": vcf_colour,
         "bcf": bcf_colour,
         "zarr": zarr_colour,
         "sav": sav_colour,
@@ -64,8 +64,9 @@ def plot_size(ax, df, label_y_offset=None):
     add_number_of_variants(df, ax)
 
 
-def plot_total_cpu(ax, df, toolname=None, time_units="h"):
+def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
     colours = {
+        "bcftools+vcf": vcf_colour,
         "bcftools": bcf_colour,
         "genozip": genozip_colour,
         "zarr": zarr_colour,
@@ -73,7 +74,8 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h"):
     }
     have_genozip = False
     toolname = {} if toolname is None else toolname
-    divisors = {"h": 3600, "m": 60}
+    divisors = {"s": 1, "h": 3600, "m": 60}
+    extrapolate = [] if extrapolate is None else extrapolate
 
     # for tool in df.tool.unique():
     for tool in colours.keys():
@@ -102,37 +104,33 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h"):
         )
         row = dfs.iloc[-1]
 
-        hours = total_cpu[-1] // divisors[time_units]
-
-        if tool != "genozip":
+        if tool not in extrapolate:
+            time = total_cpu[-1] / divisors[time_units]
             ax.annotate(
-                f"{hours:.0f}{time_units}",
+                f"{time:.0f}{time_units}",
                 textcoords="offset points",
                 xytext=(15, 0),
                 xy=(row.num_samples, total_cpu[-1]),
                 xycoords="data",
             )
-        else:
-            have_genozip = True
 
-    # Extrapolate for genozip
-    def mulplicative_model(n, a, b):
+    def multiplicative_model(n, a, b):
         # Fit a simple exponential function.
         return a * np.power(n, b)
 
-    if have_genozip:
-        dfs = df[(df.tool == "genozip")]
+    for tool in extrapolate:
+        dfs = df[(df.tool == tool)]
         fit_params, _ = optimize.curve_fit(
-            mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
+            multiplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
         )
         num_samples = df[(df.tool == "bcftools")].num_samples.values
-        fit = mulplicative_model(num_samples, *fit_params)
+        fit = multiplicative_model(num_samples, *fit_params)
         # print(fit)
 
-        ax.loglog(num_samples[4:], fit[4:], linestyle=":", color="lightgray")
-        hours = fit[-1] // 3600
+        ax.loglog(num_samples[3:], fit[3:], linestyle=":", color="lightgray")
+        time = fit[-1] / divisors[time_units]
         ax.annotate(
-            f"{hours:.0f}h*",
+            f"{time:.0f}{time_units}*",
             textcoords="offset points",
             xytext=(15, 0),
             xy=(num_samples[-1], fit[-1]),
@@ -194,11 +192,12 @@ def whole_matrix_compute(time_data, output):
     fig, ax1 = one_panel_fig()
     name_map = {
         "bcftools": "bcftools +af-dist <BCF_FILE>",
+        "bcftools+vcf": "bcftools +af-dist <VCF_FILE>",
         "genozip": "genozip <FILE> | bcftools +af-dist",
         "zarr": "zarr-python API",
         "savvy": "savvy C++ API",
     }
-    plot_total_cpu(ax1, df, name_map)
+    plot_total_cpu(ax1, df, name_map, extrapolate=["genozip", "bcftools+vcf"])
 
     ax1.set_xlabel("Number of samples")
     ax1.set_ylabel("Time (seconds)")
@@ -236,13 +235,9 @@ def whole_matrix_decode(time_data, output):
     plt.savefig(output)
 
 
-def plot_subset_time(ax, df, extrapolate_genozip=False):
-    colours = {
-        "bcftools": bcf_colour,
-        "genozip": genozip_colour,
-        "savvy": sav_colour,
-        "zarr": zarr_colour,
-    }
+def run_subset_matrix_plot(data, output, subset, extrapolate):
+    df = pd.read_csv(data, index_col=False).sort_values("num_samples")
+    fig, ax1 = one_panel_fig()
 
     label_map = {
         "bcftools": "bcftools pipeline",
@@ -251,74 +246,12 @@ def plot_subset_time(ax, df, extrapolate_genozip=False):
         "savvy": "savvy C++ API",
     }
 
-    for tool in colours.keys():
-        dfs = df[(df.tool == tool)]
-        total_cpu = dfs["user_time"].values + dfs["sys_time"].values
-        n = dfs["num_samples"].values
-        ax.loglog(
-            n,
-            total_cpu,
-            label=label_map[tool],
-            # linestyle=ls,
-            marker=".",
-            color=colours[tool],
-        )
-
-        # Show wall-time too. Pipeline nature of the bcftools and genozip
-        # commands means that it automatically threads, even if we don't
-        # really want it to.
-        ax.loglog(
-            n,
-            dfs["wall_time"].values,
-            # label=f"{tool}",
-            linestyle=":",
-            # marker=".",
-            color=colours[tool],
-        )
-        row = dfs.iloc[-1]
-
-        hours = total_cpu[-1]  # // 60
-
-        ax.annotate(
-            f"{hours:.0f}s",
-            textcoords="offset points",
-            xytext=(15, 0),
-            xy=(row.num_samples, total_cpu[-1]),
-            xycoords="data",
-        )
-
-    if extrapolate_genozip:
-        # Extrapolate for genozip
-        def mulplicative_model(n, a, b):
-            # Fit a simple exponential function.
-            return a * np.power(n, b)
-
-        dfs = df[(df.tool == "genozip")]
-        fit_params, _ = optimize.curve_fit(
-            mulplicative_model, dfs.num_samples[2:], dfs.wall_time[2:]
-        )
-        num_samples = df[(df.tool == "bcftools")].num_samples.values
-        fit = mulplicative_model(num_samples, *fit_params)
-        # print(fit)
-
-        ax.loglog(num_samples[3:], fit[3:], linestyle=":", color="lightgray")
-        t = fit[-1]
-        ax.annotate(
-            f"{t:.0f}s*",
-            textcoords="offset points",
-            xytext=(15, 0),
-            xy=(num_samples[-1], fit[-1]),
-            xycoords="data",
-        )
-
-    add_number_of_variants(df, ax)
-
-
-def run_subset_matrix_plot(data, output, subset, extrapolate_genozip=False):
-    df = pd.read_csv(data, index_col=False).sort_values("num_samples")
-    fig, ax1 = one_panel_fig()
-    plot_subset_time(
-        ax1, df[df.slice == subset], extrapolate_genozip=extrapolate_genozip
+    plot_total_cpu(
+        ax1,
+        df[df.slice == subset],
+        toolname=label_map,
+        time_units="s",
+        extrapolate=extrapolate,
     )
 
     ax1.set_xlabel("Number of samples")
@@ -336,7 +269,7 @@ def subset_matrix_compute(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n10")
+    run_subset_matrix_plot(data, output, "n10", extrapolate=[])
 
 
 @click.command()
@@ -346,7 +279,7 @@ def subset_matrix_compute_supplemental(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n/2", True)
+    run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"])
 
 
 @click.group()
