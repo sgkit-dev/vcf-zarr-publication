@@ -391,8 +391,8 @@ we must still read in and decompress the entire dataset.
 Total CPU time required to run the af-dist calculation for
 a subset of 10000 variants $\times$ 10 samples from the middle of the matrix
 for the data in Figure~\ref{fig-data-storage}.
-The \texttt{bcftools} and \texttt{bcftools} pipelines involve
-multiple commands required to correctly calculate the AF INFO tag
+The \texttt{genozip} and \texttt{bcftools} pipelines involve
+multiple commands required to correctly calculate the AF INFO field
 required by \texttt{bcftools +af-dist}. See the Methods for full details
 on the steps performed.
 \label{fig-subset-matrix-compute}}
@@ -405,8 +405,9 @@ Figure~\ref{fig-data-storage}. The two-dimensional chunking of Zarr
 means that this small subset of the overall matrix can be efficiently
 extracted, and therefore the execution time depends very weakly on 
 the overall dataset size, with the overall computation requiring around
-1 second for 1 million samples. CPU time, for this simple calculation
-on a fixed size sub-matrix scales, with the dataset size.
+1 second for 1 million samples. Because of their 
+row-wise encoding for all the other methods CPU time
+scales with the number of samples.
 Figure~\ref{fig-subset-matrix-compute-supplemental} shows performance
 for the same operation when selecting half of the samples in the 
 dataset.
