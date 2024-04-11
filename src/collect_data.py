@@ -324,17 +324,28 @@ all_tools = [
     ),
 ]
 
+all_tools_vcf = all_tools + [
+    Tool(
+        "bcftools+vcf",
+        ".tags.vcf.gz",
+        run_bcftools_afdist,
+        run_bcftools_afdist_subset,
+        bcftools_version,
+    ),
+]
+
 
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
 @click.option("-o", "--output", type=click.Path(), default=None)
-@click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools])
+@click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools_vcf])
 @click.option("-s", "--storage", default="hdd")
 @click.option("--debug", is_flag=True)
 def whole_matrix_compute(src, output, tool, storage, debug):
     if len(src) == 0:
         raise ValueError("Need at least one input file!")
-    tool_map = {t.name: t for t in all_tools}
+
+    tool_map = {t.name: t for t in all_tools_vcf}
     tools = [tool_map[tool_name] for tool_name in tool]
 
     data = []
