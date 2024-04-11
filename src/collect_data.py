@@ -148,6 +148,18 @@ def run_bcftools_afdist(path, *, num_threads=1, debug=False):
     return time_cli_command(cmd, debug)
 
 
+def run_bcftools_pos_extract(path, *, debug=False):
+    with tempfile.NamedTemporaryFile("w") as f:
+        cmd = (
+            "/usr/bin/time -f'%S %U' "
+            f'./software/bcftools query --format "%POS\\n" {path} > {f.name}'
+        )
+        result = time_cli_command(cmd, debug)
+        if debug:
+            summarise_pos_file(f.name)
+        return result
+
+
 def run_genozip_afdist(path, *, num_threads=1, debug=False):
     cmd = (
         "export BCFTOOLS_PLUGINS=software/bcftools-1.18/plugins; "
@@ -199,6 +211,28 @@ def run_savvy_decode(path, *, debug=False):
     return time_cli_command(cmd, debug)
 
 
+def summarise_pos_file(path):
+    with open(path) as f:
+        num_lines = 0
+        for line in f:
+            num_lines += 1
+            if num_lines < 5:
+                print(line.strip())
+        print("Total rows:", num_lines)
+
+
+def run_savvy_pos_extract(path, *, debug=False):
+    with tempfile.NamedTemporaryFile("w") as f:
+        cmd = (
+            "/usr/bin/time -f'%S %U' "
+            f"software/savvy-afdist/sav-afdist {path} --pos-only > {f.name}"
+        )
+        result = time_cli_command(cmd, debug)
+        if debug:
+            summarise_pos_file(f.name)
+        return result
+
+
 def run_savvy_afdist_subset(
     path, ds, variant_slice, sample_slice, *, num_threads=1, debug=False
 ):
@@ -239,8 +273,27 @@ def zarr_decode_worker(ds_path, debug, conn):
     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
 
 
+def zarr_pos_extract_worker(ds_path, debug, conn):
+    with tempfile.NamedTemporaryFile("w") as f:
+        before = time.time()
+        root = zarr.open(ds_path)
+        pos = root["variant_position"][:]
+        # Write the array to a text file to make the comparison fair
+        np.savetxt(f, pos, fmt="%d")
+        f.flush()
+        if debug:
+            summarise_pos_file(f.name)
+
+    wall_time = time.time() - before
+    cpu_times = psutil.Process().cpu_times()
+    conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
+
+
 def zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn):
     return _zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn)
+
+
+# TODO refactor this stuff for running Zarr - lots of ugly duplication
 
 
 def run_zarr_afdist(ds_path, *, debug=False):
@@ -259,6 +312,21 @@ def run_zarr_afdist(ds_path, *, debug=False):
 def run_zarr_decode(ds_path, *, debug=False):
     conn1, conn2 = multiprocessing.Pipe()
     p = multiprocessing.Process(target=zarr_decode_worker, args=(ds_path, debug, conn2))
+    p.start()
+    value = conn1.recv()
+    wall_time, user_time, sys_time = map(float, value.split())
+    p.join()
+    if p.exitcode != 0:
+        raise ValueError()
+    p.close()
+    return ProcessTimeResult(wall_time, sys_time, user_time)
+
+
+def run_zarr_pos_extract(ds_path, *, debug=False):
+    conn1, conn2 = multiprocessing.Pipe()
+    p = multiprocessing.Process(
+        target=zarr_pos_extract_worker, args=(ds_path, debug, conn2)
+    )
     p.start()
     value = conn1.recv()
     wall_time, user_time, sys_time = map(float, value.split())
@@ -293,6 +361,7 @@ class Tool:
     afdist_subset_func: None
     version_func: None
     decode_func: None = None
+    column_extract_func: None = None
 
 
 all_tools = [
@@ -303,9 +372,16 @@ all_tools = [
         run_savvy_afdist_subset,
         savvy_version,
         run_savvy_decode,
+        run_savvy_pos_extract,
     ),
     Tool(
-        "zarr", ".zarr", run_zarr_afdist, run_zarr_afdist_subset, None, run_zarr_decode
+        "zarr",
+        ".zarr",
+        run_zarr_afdist,
+        run_zarr_afdist_subset,
+        None,
+        run_zarr_decode,
+        run_zarr_pos_extract,
     ),
     # Making sure we run on the output of bcftools fill-tags
     Tool(
@@ -314,6 +390,8 @@ all_tools = [
         run_bcftools_afdist,
         run_bcftools_afdist_subset,
         bcftools_version,
+        None,
+        run_bcftools_pos_extract,
     ),
     Tool(
         "genozip",
@@ -491,6 +569,48 @@ def whole_matrix_decode(src, output, tool, storage, debug):
             print(df)
 
 
+extract_tools = ["savvy", "bcftools", "zarr"]
+
+
+@click.command()
+@click.argument("src", type=click.Path(), nargs=-1)
+@click.option("-o", "--output", type=click.Path(), default=None)
+@click.option("-t", "--tool", multiple=True, default=extract_tools)
+@click.option("-s", "--storage", default="hdd")
+@click.option("--debug", is_flag=True)
+def column_extract(src, output, tool, storage, debug):
+    if len(src) == 0:
+        raise ValueError("Need at least one input file!")
+    tool_map = {t.name: t for t in all_tools}
+    tools = [tool_map[tool_name] for tool_name in tool]
+
+    data = []
+    paths = [pathlib.Path(p) for p in sorted(src)]
+    for ts_path in paths:
+        ts = tskit.load(ts_path)
+        click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
+
+        for tool in tools:
+            tool_path = ts_path.with_suffix(tool.suffix)
+            if debug:
+                print("Running:", tool)
+            result = tool.column_extract_func(tool_path, debug=debug)
+            data.append(
+                {
+                    "num_samples": ts.num_samples // 2,
+                    "num_sites": ts.num_sites,
+                    "tool": tool.name,
+                    "user_time": result.user,
+                    "sys_time": result.system,
+                    "wall_time": result.wall,
+                    "storage": storage,
+                }
+            )
+            df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
+            df.to_csv(output, index=False)
+            print(df)
+
+
 def midslice(n, k):
     """
     Return a slice of size k from the middle of an array of size n.
@@ -615,6 +735,7 @@ cli.add_command(file_size)
 cli.add_command(whole_matrix_compute)
 cli.add_command(whole_matrix_decode)
 cli.add_command(subset_matrix_compute)
+cli.add_command(column_extract)
 cli.add_command(genotype_filtering_processing_time)
 cli.add_command(site_filtering_processing_time)
 cli.add_command(report_versions)
