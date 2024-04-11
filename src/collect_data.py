@@ -279,7 +279,10 @@ def zarr_pos_extract_worker(ds_path, debug, conn):
         root = zarr.open(ds_path)
         pos = root["variant_position"][:]
         # Write the array to a text file to make the comparison fair
-        np.savetxt(f, pos, fmt="%d")
+        # np.savetxt(f, pos, fmt="%d")
+        # make a pandas dataframe because np.savetxt is too slow
+        df = pd.DataFrame(pos)
+        df.to_csv(f, header=False, index=False)
         f.flush()
         if debug:
             summarise_pos_file(f.name)
