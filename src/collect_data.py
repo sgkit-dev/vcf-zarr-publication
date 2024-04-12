@@ -18,6 +18,7 @@ import click
 import sgkit as sg
 
 
+
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
 from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter, zarr_decode
@@ -728,6 +729,19 @@ def report_versions():
         print(tool.name)
         print(tool.version_func())
 
+@click.command()
+@click.argument("path", type=click.Path())
+def benchmark_zarr_decode(path):
+    before = time.time()
+    bytes_decoded = zarr_decode(path)
+    wall_time = time.time() - before
+
+    print(
+        "time = ", wall_time, " s ",
+        "rate = ",
+        humanize.naturalsize(bytes_decoded / wall_time, format="%.1f"),
+        "/ s",
+    )
 
 @click.group()
 def cli():
@@ -742,6 +756,7 @@ cli.add_command(column_extract)
 cli.add_command(genotype_filtering_processing_time)
 cli.add_command(site_filtering_processing_time)
 cli.add_command(report_versions)
+cli.add_command(benchmark_zarr_decode)
 
 
 if __name__ == "__main__":
