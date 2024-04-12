@@ -476,8 +476,9 @@ wall-clock time of about 2 hours. The ICF representation uses a total
 of XTiB over XX files and YY directories. We then encoded this intermediate
 columnar format to Zarr using 8 cores and XX GB of RAM in about 12 hours.
 This produced a dataset with 43 arrays, consuming a 
-total of Y TiB of storage over X directories and 
-Y files. The top fields in terms 
+total of Y GiB of storage over X directories and 
+Y files. This is about a 4.8X reduction over the original VCF. 
+The top fields in terms 
 of storage are detailed in Table~\ref{tab-genomics-england-data}.
 
 \begin{table}
@@ -574,6 +575,9 @@ Similarly, the vast majority of call\_GQ values (xx\%) are less than
 128 (corresponding to a conditional probability that the genotype call is 
 wrong of $10^{-128}$ [TODO CHECK THIS]), and can also reasonably
 be truncated. Here, this results in a reduction of x\% (XX GiB).
+Combined, truncating these top four fields to 8 bits reduces the 
+overall storage of the dataset to XXGiB, corresponding to a 
+X-fold compression of the VCF.
 
 % and can reasonably be truncated (a 
 % much information would be lost if we used 8 bit
