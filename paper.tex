@@ -712,6 +712,7 @@ used by most large-scale variation datasets, Zarr provides
 an excellent basis for building a new generation of tools 
 that compute \emph{directly} on the data, efficiently
 accessing data by variant and by sample.
+[Mention ``Cloud native data repositories''~\cite{abernathey2021cloud}]
 The vcfzarr specification and scalable vcf2zarr conversion utility
 that we have provided here are the starting points of such 
 an ecosystem, but much more would be needed to make a viable 
@@ -871,6 +872,17 @@ methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
 
 % Zarr was originally developed as a simpler version of 
 % HDF5~\citep{folk2011overview}
+
+Zarr is now widely used.
+
+Multi terabyte numerical weather prediction models~\citep{gowan2022using}
+Petabyte scale geoscience datasets in the Pangeo project
+
+OME-Zarr~\cite{rzepka2023toward}
+ITS\_LIVE ice velocity dataset~\citep{fahnestock2023mappin} using 
+the Zarr.js Javascript interface to visualise the ``massive''
+dataset [how big is it?]
+
 
 \subsection{The vcfzarr specification}
 The vcfzarr specification is a direct mapping from the VCF data model 
