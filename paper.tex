@@ -619,90 +619,128 @@ API required XXX seconds to produce identical output.
 \section{Discussion}
 The introduction of VCF as part of the work of the 1000 Genomes
 project~\cite{10002015global} has transformed a fragmented 
+landscape of mutually incompatible per-program file formats
+into an ecosystem of tools that largely
+interoperate~\cite{garrison2022spectrum}. In this 
+sense VCF has been a huge success, and the underlying data model
+is now deeply embedded in bioinformatics practice. As we have 
+illustrated here, the shortcomings of the VCF and BCF file
+formats (and more generally \emph{any} row-wise encoding of the 
+data model) in terms of computational accessibility are severe,
+and there can be little doubt that these file formats 
+are incurring a large economic cost and 
+holding back progress. 
+As we have illustrated in the Genomics England
+example here, these shortcomings are most acutely felt in 
+large-scale data human datasets but any setting in which we 
+wish to extract columns of the data from a row-wise 
+VCF format will be inefficient 
+when datasets are larger than a few hundred megabytes.
+
+As we have demonstrated, the columnar approach, based on the 
+popular Zarr standard and widely used compression libraries, 
+can support many different types of data access
+patterm efficiently, and has excellent computational accessibility.
+In this approach there are some significant departures from 
+standard practise, which warrant some discussion here.
+
+Perhaps the largest deviation in the approach that we advocate here 
+from standard practise is to decouple our concept of a dataset from
+a file. Each VCF is broken up into a set of Zarr arrays, each 
+corresponding to a large number of chunks stored in a directory
+hierarchy (Zarr also supports other forms of chunk storage 
+including single files and key-value stores however; see Methods).
+While there are some disadvantages to large numbers of small files,
+we argue that the benefits greatly outweigh them, particularly 
+in the large, centrally controlled dataset setting. 
+Firstly, this approach is inherently parallelisable, and chunks across the 
+dataset written and read in parallel without needing complex 
+synchronisation and prior layout planning. 
+Such parallel write access is very difficult 
+in the single-file setting, and one of the key weaknesses 
+of the HDF5 format~\citep{folk2011overview} [CITATION with 
+parallel troubles from HDF5?]
+Secondly, mapping chunks in arrays to individually addressed
+keys maps well to large-scale cloud object storage. Indeed,
+Zarr is specifically designed for such usage, and 
+several petabyte scale datasets have been successfully deployed
+and used [citations?].
+We have focused here on the classical single-server and 
+HPC cluster settings, but a major advantage of Zarr is 
+its cloud readiness.
+% Probably getting into the weeds too much.
+% Some large cloud-hosted VCF datasets are currently stored in 
+% filesystems that emulate POSIX semantics on top of such object 
+% stores, at a substantial cost in performance. Directly hosting 
+% these datasets in object stores would have substantial 
+% benefits, both in terms of storage costs and performance.
+Thirdly, breaking up fields into different directories (or 
+cloud buckets) enables fine-grained access control to the 
+dataset. For example, all users may be allowed access to
+variant-level data, but only a subset permitted to access
+call-level individual data. Such access controls can be 
+straightforwardly applied using file or cloud-hosting 
+methods on the relevant directores/buckets. Such concerns
+are entirely decoupled from the file format.
+
+% This is poorly explained
+Along with the move away from the single-file-storage paradigm,
+the approach we outline here also suggests a shift from 
+the classical Unix pipeline-based processing approach 
+(but see below for a discussion of how existing pipelines can
+be supported). Datasets flowing through pipelines inherently 
+implies creating muliple copies of the data, and when 
+multiple terabytes of either unrelated or unchanged data 
+get copied several times through these pipes large inefficiencies 
+are incurred (see Fig~\ref{fig-whole-matrix-compute}). 
+We may think of this strategy as ``copy-oriented'' workflows.
+A more efficient way to structure such multilayered computations
+is in a  ``mask-oriented'' way. For example, to implement some
+complex multilayered call filtering strategy we could imagine sequentially
+updating a given per-call mask. Masks are cheap (e.g., the 
+standard genotype missingness mask in~\ref{tab-genomics-england-data}
+uses less than 1\% of the overall storage).
+
+Zarr provides pragmatic solutions to some of the more pressing 
+problems facing the analysis of large-scale genetic variation
+data, but it is not a solution to all problems. [large number
+of alleles, dataset is basically static, ragged arrays,
+strings ... any others? Zarr v3 on the way.]
+
+Nonetheless, at least in the single-shared-copy model currently
+used by most large-scale variation datasets, Zarr provides
+an excellent basis for building a new generation of tools 
+that compute \emph{directly} on the data, efficiently
+accessing data by variant and by sample.
+The vcfzarr specification and scalable vcf2zarr conversion utility
+that we have provided here are the starting points of such 
+an ecosystem, but much more would be needed to make a viable 
+alternative for everyday bioinformatics workflows. However, a few key
+pieces of infrastructure would provide a starting point, and would 
+be sufficient to greatly improve researcher productivity on 
+large, centrally managed datasets such as Genomics England.
+Firstly, a \texttt{vcfzarrtools} command line utility which 
+implements a subset of \texttt{bcftools} functionality (such as 
+\texttt{view} and \texttt{query}) would immediately speed up 
+limited region and field specific queries by orders of magnitude,
+and would provide compatibility with existing workflows.
+Developing such a utility would be a non-trivial but routine
+engineering task.
+
+The second key piece of infrastructure required at this large 
+scale concerns distributed computation. Even with more efficient
+columnar data representations, computations that required examing 
+large volumes of per-call data must be distributed to complete 
+in a reasonable amount of time. [Dask, Xarray, sgkit?]
+Currently users are responsible for orchestrating such calculations
+on clusters, and automation would be a significant boon
+for reasearcher productivity. [Hail has demonstrated the value of this?]
 
 
-% A computational format, on the other hand, is optimised
-% for calculations, for \emph{using} the data, today. A computational format
-% is designed with particular data access patterns in mind, ultimately
-% to make a broad range of queries and downstream computations as efficient as
-% possible.
-
-
-% Outline of a possible narrative by paragraph:
-% \begin{itemize}
-% \item When VCF was introduced as part of the work of the 1000 Genomes
-% project the software landscape was a real mess. It has entirely
-% succeeded in standardising the output of variant callers, and methods
-% have interoperated well for the past decade. As a method of interchange
-% following classical file-oriented paradigms it works well enough.
-% It is also a good archival format: when compressed with a well established
-% method like gzip and combined with the well-documented description of
-% the text, we can be sure that files will still be readable decades
-% from now.
-
-
-% \item VCF is holding back large-scale genomics, however, and in particular the
-% analysis of population scale genetic variation datasets like UKB and GeL.
-% Describe the current state of affairs. Variant datasets are chunked up
-% into reasonable sized bits (10s of gigabytes) so that they can be processed
-% in parallel. Doing anything with them requires interacting with workflow
-% managers. In practise, it is not possible to directly write programs to
-% work across multiple large-scale datasets: although the chunks of data
-% are given in VCF, orchestrating how the chunks are processed and
-% the results combined involves substantial work, involving the workflow
-% manager, and the details of how chromosomes are split into chunks.
-% Cite examples like the phasing pipelines for UKB from Brownings etc.
-
-% \item Distributed computing is the reality, and increasingly datasets
-% are being mandatorily stored in public clouds as part of
-% Trusted Research Environments. Cloud object stores are the reality
-% because it is much cheaper. POSIX file systems are emulated on top of
-% this. Benefits of breaking up data into manageable pieces are that
-% compute resources can be localised to the data. Compute resources are
-% most effectively obtained as short-lived, small VMs that operate
-% as part of a large cluster. Large vertically scaled ``pet'' servers
-% are much more expensive, and just not feasible for the current
-% scale of data. Lots of other architectural
-% benefits from the new reality of cloud-based storage.
-
-% \item Classical methods based around Unix pipelines and streaming
-% files between processes on a single machine are therefore a
-% significant mismatch to the reality of large-scale genetic variation
-% datasets. The majority of methods suggested to make working
-% with VCF data more efficient are based on these ideas: they all
-% create a single large file and regard distribution of work
-% in a cluster as extrinsic. Most output VCF as the result of queries,
-% which also assumes that the VCF data can be efficiently processed.
-% This is a reasonable assumption for thousands of samples, but not
-% for larger datasets.
-
-% \item The key issue here is that VCF is not a \emph{computational}
-% format. Contrast VCF with plink, which stores data on disk in a
-% form that can be computed on directly. Plink is limited in what
-% can be descibed though, does not compress, and is not designed
-% to distributed.
-
-% \item The large-scale analysis of genetic variation data does not
-% need a more efficient file format, which allows files to be downloaded
-% somewhat more quickly, and subsets extracted somewhat more efficiently
-% as VCF. It needs a standard storage platform that allows data to be
-% processed directly without conversion, subsetted efficiently across
-% both the variant and sample dimensions, with first-class support
-% for all the necessary additional information (GT values etc),
-% and that is suited to the realities of today's cloud-based
-% storage and processing facilities.
-
-% \item We suggest that the model used by Zarr is a good choice for this.
-% We have shown that chunks of the genotype matrix compressed with standard
-% methods are competitive with highly specialised methods for
-% genotype data. In reality most of the storage is for non-genotype
-% data anyway, where everyone is essentially doing the same thing.
-% Columnar storage allows getting just (e.g.) the variant positions
-% without reading everything. Another benefit is that by storing
-% fields separately in different cloud objects, they can have
-% different permissions. So, users can be given differential access
-% to read parts of the dataset, and this is managed directly
-% by the cloud storage. Give example.
+% We suggest that the future of VCF is to explicitly define the underlying
+% data model, and to decouple it from the current row-wise encodings 
+% of the VCF text and BCF binary file formats. This will enable data 
+% to flow more freely, and provide scope for much-needed innovation.
 
 % \item A major strong point of Zarr is its simplicity. All it's doing
 % is compressing n-dimensional chunks of numerical data and storing
@@ -716,12 +754,6 @@ project~\cite{10002015global} has transformed a fragmented
 % Zarr is cloud native.
 % Zarr is an open specification, built on standard components (contrast
 % with Hail).
-
-% \item Zarr is not perfect. Discuss limitations around ragged arrays,
-% etc. Forthcoming improvements in zarr v3. The whole genotype matrix
-% paradigm is challenged by graph genomes as well. While this is
-% being worked out, there is still plenty of data to analyse as a
-% genotype matrix.
 
 % \item Vision. An ecosystem of tools that interoperate
 % based on an open, cloud-based format where distribution is naturally
@@ -753,45 +785,45 @@ Reel off Python data science ecosystem: Pandas~\citep{mckinney2010data} etc
 [ Things to cite: pandas~\citep{mckinney2010data},
 BioNumpy~\citep{rand2022bionumpy}, OME-Zarr~\citep{moore2023ome}]
 
-Although the Hadoop ecosystem has been hugely successful
-in many domains, it has had a limited impact in genomics.
-[List some things that have been tried for e.g variant calling
-, like ADAM~\citep{nothaft2015rethinking}].
-[Briefly mention two approaches using Hadoop clusters
-~\citep{boufea2017managing,fan2020variant}, to not very
-exiting results].
-Distributed analytics for large-scale data is a mature
-techology, with many different approaches. Hadoop~\citep{white2012hadoop}
-is the original method, and remains the basis of the
-dominant ecosystem. HDFS. Spark [CITATION?] lets us
-do more complex analytics. Parquet [CITATION?]
-Distributed computation has been the reality in the analysis
-of genetic variation for many years,
-where data is most often provided as per-chromosome VCFs.
-This chunking provides a fairly straightforward way to parallelise
-computations, using HPC schedulers to split work per-file.
-When more fine-grained parallelism is required, users must
-provide exact genome coordinates of the genome regions
-as part of their submission scripts. Combining results
-is a manual operation.
-Workflow engines such as
-Snakemake~\cite{koster2012snakemake,molder2021sustainable}
-and [TODO mention WDL, Cromwell, etc?] make such analyses
-much easier, but there is still a great deal of room for
-mistakes.
-Per-chromosome VCFs are not practical for biobank scale
-projects, however, and variant call data tends to be split
-into many (still large) files.
-For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
-are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
-hundreds of files per chromosome.
-% This is horrible writing, but the point is important.
-While these files provide a natural
-unit for distributing work, the details of how they
-are split differ and essentially there is
-no interoperability among large-scale datasets because the VCFs are
-so cumbersome that a separate orchestration layer is required to
-access the data in parallel.
+% Although the Hadoop ecosystem has been hugely successful
+% in many domains, it has had a limited impact in genomics.
+% [List some things that have been tried for e.g variant calling
+% , like ADAM~\citep{nothaft2015rethinking}].
+% [Briefly mention two approaches using Hadoop clusters
+% ~\citep{boufea2017managing,fan2020variant}, to not very
+% exiting results].
+% Distributed analytics for large-scale data is a mature
+% techology, with many different approaches. Hadoop~\citep{white2012hadoop}
+% is the original method, and remains the basis of the
+% dominant ecosystem. HDFS. Spark [CITATION?] lets us
+% do more complex analytics. Parquet [CITATION?]
+% Distributed computation has been the reality in the analysis
+% of genetic variation for many years,
+% where data is most often provided as per-chromosome VCFs.
+% This chunking provides a fairly straightforward way to parallelise
+% computations, using HPC schedulers to split work per-file.
+% When more fine-grained parallelism is required, users must
+% provide exact genome coordinates of the genome regions
+% as part of their submission scripts. Combining results
+% is a manual operation.
+% Workflow engines such as
+% Snakemake~\cite{koster2012snakemake,molder2021sustainable}
+% and [TODO mention WDL, Cromwell, etc?] make such analyses
+% much easier, but there is still a great deal of room for
+% mistakes.
+% Per-chromosome VCFs are not practical for biobank scale
+% projects, however, and variant call data tends to be split
+% into many (still large) files.
+% For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
+% are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
+% hundreds of files per chromosome.
+% % This is horrible writing, but the point is important.
+% While these files provide a natural
+% unit for distributing work, the details of how they
+% are split differ and essentially there is
+% no interoperability among large-scale datasets because the VCFs are
+% so cumbersome that a separate orchestration layer is required to
+% access the data in parallel.
 
 \section{Methods}
 
