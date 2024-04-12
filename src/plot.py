@@ -62,6 +62,7 @@ def plot_size(ax, df, label_y_offset=None):
 
     ax.legend()
     add_number_of_variants(df, ax)
+    plt.tight_layout()
 
 
 def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
