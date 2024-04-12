@@ -179,6 +179,8 @@ deorowicz2019gtshark, %GTShark
 deorowicz2021vcfshark}, % VCFShark
 most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
+See~\citep{mcvean2019linkage} for a review of the techniques
+employed in genetic data compression.
 
 VCF is a text-based format in which each line
 describes observations
@@ -205,9 +207,12 @@ instead of grouping together all the fields for a record,
 we group together all the records for a given field.
 Columnar storage has become standard [very quick summary of columnar
 storage with some refs].
-To our knowledge, the only existing method using columnar 
+Although columnar methods have been successfully used in alignment 
+% TODO check
+storage~\citep{bonfield2014scramble,bonfield2022cram},
+the only existing method using columnar 
 storage for genetic variation data is 
-SeqArray~\citep{zheng2017seqarray,zheng2012high}.
+SeqArray~\citep{zheng2017seqarray,zheng2012high} to our knowledge.
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
@@ -612,113 +617,156 @@ The same query implemented with the Zarr-python
 API required XXX seconds to produce identical output.
 
 \section{Discussion}
+The introduction of VCF as part of the work of the 1000 Genomes
+project~\cite{10002015global} has transformed a fragmented 
+landscape of mutually incompatible per-program file formats
+into an ecosystem of tools that largely
+interoperate~\cite{garrison2022spectrum}. In this 
+sense VCF has been a huge success, and the underlying data model
+is now deeply embedded in bioinformatics practice. As we have 
+illustrated here, the shortcomings of the VCF and BCF file
+formats (and more generally \emph{any} row-wise encoding of the 
+data model) in terms of computational accessibility are severe,
+and there can be little doubt that these file formats 
+are incurring a large economic cost and 
+holding back progress. 
+As we have illustrated in the Genomics England
+example here, these shortcomings are most acutely felt in 
+large-scale data human datasets but any setting in which we 
+wish to extract columns of the data from a row-wise 
+VCF format will be inefficient 
+when datasets are larger than a few hundred megabytes.
 
-Outline of a possible narrative by paragraph:
-\begin{itemize}
-\item When VCF was introduced as part of the work of the 1000 Genomes
-project the software landscape was a real mess. It has entirely
-succeeded in standardising the output of variant callers, and methods
-have interoperated well for the past decade. As a method of interchange
-following classical file-oriented paradigms it works well enough.
-It is also a good archival format: when compressed with a well established
-method like gzip and combined with the well-documented description of
-the text, we can be sure that files will still be readable decades
-from now.
+As we have demonstrated, the columnar approach, based on the 
+popular Zarr standard and widely used compression libraries, 
+can support many different types of data access
+patterm efficiently, and has excellent computational accessibility.
+In this approach there are some significant departures from 
+standard practise, which warrant some discussion here.
+
+Perhaps the largest deviation in the approach that we advocate here 
+from standard practise is to decouple our concept of a dataset from
+a file. Each VCF is broken up into a set of Zarr arrays, each 
+corresponding to a large number of chunks stored in a directory
+hierarchy (Zarr also supports other forms of chunk storage 
+including single files and key-value stores however; see Methods).
+While there are some disadvantages to large numbers of small files,
+we argue that the benefits greatly outweigh them, particularly 
+in the large, centrally controlled dataset setting. 
+Firstly, this approach is inherently parallelisable, and chunks across the 
+dataset written and read in parallel without needing complex 
+synchronisation and prior layout planning. 
+Such parallel write access is very difficult 
+in the single-file setting, and one of the key weaknesses 
+of the HDF5 format~\citep{folk2011overview} [CITATION with 
+parallel troubles from HDF5?]
+Secondly, mapping chunks in arrays to individually addressed
+keys maps well to large-scale cloud object storage. Indeed,
+Zarr is specifically designed for such usage, and 
+several petabyte scale datasets have been successfully deployed
+and used [citations?].
+We have focused here on the classical single-server and 
+HPC cluster settings, but a major advantage of Zarr is 
+its cloud readiness.
+% Probably getting into the weeds too much.
+% Some large cloud-hosted VCF datasets are currently stored in 
+% filesystems that emulate POSIX semantics on top of such object 
+% stores, at a substantial cost in performance. Directly hosting 
+% these datasets in object stores would have substantial 
+% benefits, both in terms of storage costs and performance.
+Thirdly, breaking up fields into different directories (or 
+cloud buckets) enables fine-grained access control to the 
+dataset. For example, all users may be allowed access to
+variant-level data, but only a subset permitted to access
+call-level individual data. Such access controls can be 
+straightforwardly applied using file or cloud-hosting 
+methods on the relevant directores/buckets. Such concerns
+are entirely decoupled from the file format.
+
+% This is poorly explained
+Along with the move away from the single-file-storage paradigm,
+the approach we outline here also suggests a shift from 
+the classical Unix pipeline-based processing approach 
+(but see below for a discussion of how existing pipelines can
+be supported). Datasets flowing through pipelines inherently 
+implies creating muliple copies of the data, and when 
+multiple terabytes of either unrelated or unchanged data 
+get copied several times through these pipes large inefficiencies 
+are incurred (see Fig~\ref{fig-whole-matrix-compute}). 
+We may think of this strategy as ``copy-oriented'' workflows.
+A more efficient way to structure such multilayered computations
+is in a  ``mask-oriented'' way. For example, to implement some
+complex multilayered call filtering strategy we could imagine sequentially
+updating a given per-call mask. Masks are cheap (e.g., the 
+standard genotype missingness mask in~\ref{tab-genomics-england-data}
+uses less than 1\% of the overall storage).
+
+Zarr provides pragmatic solutions to some of the more pressing 
+problems facing the analysis of large-scale genetic variation
+data, but it is not a solution to all problems. [large number
+of alleles, dataset is basically static, ragged arrays,
+strings ... any others? Zarr v3 on the way.]
+
+Nonetheless, at least in the single-shared-copy model currently
+used by most large-scale variation datasets, Zarr provides
+an excellent basis for building a new generation of tools 
+that compute \emph{directly} on the data, efficiently
+accessing data by variant and by sample.
+The vcfzarr specification and scalable vcf2zarr conversion utility
+that we have provided here are the starting points of such 
+an ecosystem, but much more would be needed to make a viable 
+alternative for everyday bioinformatics workflows. However, a few key
+pieces of infrastructure would provide a starting point, and would 
+be sufficient to greatly improve researcher productivity on 
+large, centrally managed datasets such as Genomics England.
+Firstly, a \texttt{vcfzarrtools} command line utility which 
+implements a subset of \texttt{bcftools} functionality (such as 
+\texttt{view} and \texttt{query}) would immediately speed up 
+limited region and field specific queries by orders of magnitude,
+and would provide compatibility with existing workflows.
+Developing such a utility would be a non-trivial but routine
+engineering task.
+
+The second key piece of infrastructure required at this large 
+scale concerns distributed computation. Even with more efficient
+columnar data representations, computations that required examing 
+large volumes of per-call data must be distributed to complete 
+in a reasonable amount of time. [Dask, Xarray, sgkit?]
+Currently users are responsible for orchestrating such calculations
+on clusters, and automation would be a significant boon
+for reasearcher productivity. [Hail has demonstrated the value of this?]
 
 
-\item VCF is holding back large-scale genomics, however, and in particular the
-analysis of population scale genetic variation datasets like UKB and GeL.
-Describe the current state of affairs. Variant datasets are chunked up
-into reasonable sized bits (10s of gigabytes) so that they can be processed
-in parallel. Doing anything with them requires interacting with workflow
-managers. In practise, it is not possible to directly write programs to
-work across multiple large-scale datasets: although the chunks of data
-are given in VCF, orchestrating how the chunks are processed and
-the results combined involves substantial work, involving the workflow
-manager, and the details of how chromosomes are split into chunks.
-Cite examples like the phasing pipelines for UKB from Brownings etc.
+% We suggest that the future of VCF is to explicitly define the underlying
+% data model, and to decouple it from the current row-wise encodings 
+% of the VCF text and BCF binary file formats. This will enable data 
+% to flow more freely, and provide scope for much-needed innovation.
 
-\item Distributed computing is the reality, and increasingly datasets
-are being mandatorily stored in public clouds as part of
-Trusted Research Environments. Cloud object stores are the reality
-because it is much cheaper. POSIX file systems are emulated on top of
-this. Benefits of breaking up data into manageable pieces are that
-compute resources can be localised to the data. Compute resources are
-most effectively obtained as short-lived, small VMs that operate
-as part of a large cluster. Large vertically scaled ``pet'' servers
-are much more expensive, and just not feasible for the current
-scale of data. Lots of other architectural
-benefits from the new reality of cloud-based storage.
+% \item A major strong point of Zarr is its simplicity. All it's doing
+% is compressing n-dimensional chunks of numerical data and storing
+% them using fixed address keys. This key-value approach means that storage
+% is very flexible and implementation is straightforward. There
+% are several implementations of the Zarr protocol, and while some of these
+% are rudimentary, they could be improved or replaced with relatively
+% little effort. Zarr has been successfully used to store petabytes
+% of data across different sciences --- genetic variation data is largely
+% arrays of numerical data, and not really that different ultimately.
+% Zarr is cloud native.
+% Zarr is an open specification, built on standard components (contrast
+% with Hail).
 
-\item Classical methods based around Unix pipelines and streaming
-files between processes on a single machine are therefore a
-significant mismatch to the reality of large-scale genetic variation
-datasets. The majority of methods suggested to make working
-with VCF data more efficient are based on these ideas: they all
-create a single large file and regard distribution of work
-in a cluster as extrinsic. Most output VCF as the result of queries,
-which also assumes that the VCF data can be efficiently processed.
-This is a reasonable assumption for thousands of samples, but not
-for larger datasets.
+% \item Vision. An ecosystem of tools that interoperate
+% based on an open, cloud-based format where distribution is naturally
+% managed by the stored chunks. Tools can be run on different datasets
+% with minimal tuning, not by writing a full layer of orchestration.
+% Tools read the data they need, not the entire dataset. Users read
+% directly from a single canonical dataset, and do not maintain
+% their own filtered copies. We suggest that the Zarr VCF approach
+% we have provided would be a good starting point for designing
+% such a compute platform.
 
-\item The key issue here is that VCF is not a \emph{computational}
-format. Contrast VCF with plink, which stores data on disk in a
-form that can be computed on directly. Plink is limited in what
-can be descibed though, does not compress, and is not designed
-to distributed.
+% \end{itemize}
 
-\item The large-scale analysis of genetic variation data does not
-need a more efficient file format, which allows files to be downloaded
-somewhat more quickly, and subsets extracted somewhat more efficiently
-as VCF. It needs a standard storage platform that allows data to be
-processed directly without conversion, subsetted efficiently across
-both the variant and sample dimensions, with first-class support
-for all the necessary additional information (GT values etc),
-and that is suited to the realities of today's cloud-based
-storage and processing facilities.
-
-\item We suggest that the model used by Zarr is a good choice for this.
-We have shown that chunks of the genotype matrix compressed with standard
-methods are competitive with highly specialised methods for
-genotype data. In reality most of the storage is for non-genotype
-data anyway, where everyone is essentially doing the same thing.
-Columnar storage allows getting just (e.g.) the variant positions
-without reading everything. Another benefit is that by storing
-fields separately in different cloud objects, they can have
-different permissions. So, users can be given differential access
-to read parts of the dataset, and this is managed directly
-by the cloud storage. Give example.
-
-\item A major strong point of Zarr is its simplicity. All it's doing
-is compressing n-dimensional chunks of numerical data and storing
-them using fixed address keys. This key-value approach means that storage
-is very flexible and implementation is straightforward. There
-are several implementations of the Zarr protocol, and while some of these
-are rudimentary, they could be improved or replaced with relatively
-little effort. Zarr has been successfully used to store petabytes
-of data across different sciences --- genetic variation data is largely
-arrays of numerical data, and not really that different ultimately.
-Zarr is cloud native.
-Zarr is an open specification, built on standard components (contrast
-with Hail).
-
-\item Zarr is not perfect. Discuss limitations around ragged arrays,
-etc. Forthcoming improvements in zarr v3. The whole genotype matrix
-paradigm is challenged by graph genomes as well. While this is
-being worked out, there is still plenty of data to analyse as a
-genotype matrix.
-
-\item Vision. An ecosystem of tools that interoperate
-based on an open, cloud-based format where distribution is naturally
-managed by the stored chunks. Tools can be run on different datasets
-with minimal tuning, not by writing a full layer of orchestration.
-Tools read the data they need, not the entire dataset. Users read
-directly from a single canonical dataset, and do not maintain
-their own filtered copies. We suggest that the Zarr VCF approach
-we have provided would be a good starting point for designing
-such a compute platform.
-
-\end{itemize}
 [Random fragment to include somewhere]
 Row-wise storage of the genotype matrix makes accessing 
 sample haplotypes (i.e. the columns),
@@ -734,6 +782,48 @@ perform very well~\ref{fig-data-storage}.
 
 
 Reel off Python data science ecosystem: Pandas~\citep{mckinney2010data} etc
+[ Things to cite: pandas~\citep{mckinney2010data},
+BioNumpy~\citep{rand2022bionumpy}, OME-Zarr~\citep{moore2023ome}]
+
+% Although the Hadoop ecosystem has been hugely successful
+% in many domains, it has had a limited impact in genomics.
+% [List some things that have been tried for e.g variant calling
+% , like ADAM~\citep{nothaft2015rethinking}].
+% [Briefly mention two approaches using Hadoop clusters
+% ~\citep{boufea2017managing,fan2020variant}, to not very
+% exiting results].
+% Distributed analytics for large-scale data is a mature
+% techology, with many different approaches. Hadoop~\citep{white2012hadoop}
+% is the original method, and remains the basis of the
+% dominant ecosystem. HDFS. Spark [CITATION?] lets us
+% do more complex analytics. Parquet [CITATION?]
+% Distributed computation has been the reality in the analysis
+% of genetic variation for many years,
+% where data is most often provided as per-chromosome VCFs.
+% This chunking provides a fairly straightforward way to parallelise
+% computations, using HPC schedulers to split work per-file.
+% When more fine-grained parallelism is required, users must
+% provide exact genome coordinates of the genome regions
+% as part of their submission scripts. Combining results
+% is a manual operation.
+% Workflow engines such as
+% Snakemake~\cite{koster2012snakemake,molder2021sustainable}
+% and [TODO mention WDL, Cromwell, etc?] make such analyses
+% much easier, but there is still a great deal of room for
+% mistakes.
+% Per-chromosome VCFs are not practical for biobank scale
+% projects, however, and variant call data tends to be split
+% into many (still large) files.
+% For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
+% are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
+% hundreds of files per chromosome.
+% % This is horrible writing, but the point is important.
+% While these files provide a natural
+% unit for distributing work, the details of how they
+% are split differ and essentially there is
+% no interoperability among large-scale datasets because the VCFs are
+% so cumbersome that a separate orchestration layer is required to
+% access the data in parallel.
 
 \section{Methods}
 
@@ -779,6 +869,9 @@ Zstandard is also used in several recent VCF compression
 methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
 % LZ4 is also notable - any citations for this?
 
+% Zarr was originally developed as a simpler version of 
+% HDF5~\citep{folk2011overview}
+
 \subsection{The vcfzarr specification}
 The vcfzarr specification is a direct mapping from the VCF data model 
 to a columnar binary format, expressed using Zarr. [A HIGH LEVEL 
@@ -795,6 +888,11 @@ cannot be stored. In practise this doesn't seem to be much of
 an issue (we have not found a real VCF that contains negative 
 integers). If -1 and -2 need to be stored, a float field
 can be used without issues.
+
+The vcfzarr specification is general and can be mapped to 
+file formats such as \toolname{plink}~\citep{purcell2007plink,chang2015second}
+and BGEN~\citep{band2018bgen} with some minor extensions.
+
 
 \subsection{vcf2zarr}
 Converting VCF to Zarr format at Biobank scale is challenging. This main issue is 
@@ -844,6 +942,11 @@ array in question, and then sequentially filling this buffer with
 values read from the intermediate columnar format. Once the buffer 
 is full, the chunks in the samples dimension are compressed
 and written to file. [Something about parallelism and distributing]
+
+Fields such as PL are currently problematic when there are large 
+numbers of alleles. However, we plan on implementing the 
+local alleles strategy~\citep{poterba2024scalable,danecek2021twelve}
+which will likely become part of the VCF specification.
 
 \section{Choosing default compressor settings}
 To inform the choice of compression settings across different fields 
@@ -939,385 +1042,4 @@ to execute.
 \label{fig-subset-matrix-compute-supplemental}}
 \end{figure}
 
-
-\clearpage
-\section*{Text graveyard}
-
-Here's a bunch of text that contains bits that might be useful and readapted.
-
-
-\subsection{Chunked storage and distributed computation}
-How we store genetic data fundamentally affects how computation
-can be structured, and ultimately the scalability of the calculations
-we wish to perform. Classically, genetic variation data is stored via one
-of two strategies. The first strategy, epitomised by
-VCF~\citep{danecek2011variant} encodes all the data for a given
-variant in a record, and then stores these records consecutively on file
-(optionally compressed). This record-oriented approach maps well to the
-powerful Unix pipelines abstraction and
-has proven to be very successful.
-The second classical strategy, epitomised
-by the \texttt{plink} BED format~\citep{purcell2007plink}, is to
-store genotype data in a structured binary format that can be
-accessed directly. This memory-map approach tends to
-be much faster to access, but leads to larger files and is more
-limited in what can be represented. There are advantages and
-disadvantages to both approaches, but one problem fundamentally
-limits their utility for modern datasets: neither is well suited to
-scaling-out across multiple machines.
-
-[Probably need a paragraph here on what we've done classically
-by splitting by variant. This was the dominant dimension, so that
-worked fine. Now we need to also think about access-by-sample]
-
-Given the scale of modern datasets, the ability to perform
-calculations in parallel on multiple CPU cores
-is now a basic prerequisite, and
-running concurrently on multiple computers in a cluster
-is increasingly becoming necessary. [For interactive analysis? People have
-been doing concurrent computing with HPC clusters forever.]
-Record-oriented variant storage such as VCF is not suitable
-for  distributed computing because although it is relatively
-straightforward to break workloads up by variant, we cannot efficiently
-split by sample (see the section on Columnar Data below for details).
-Storing data in a memory-mapped manner, where the genotypes
-for each variant are written consecutive consecutively to a file,
-suffers from the same problem. Although it is useful to conceptualise
-the genotype matrix as two-dimensional, it is important to remember
-that computer memory and file storage is ultimately one-dimensonal.
-For example, plink's memory-mapped data layout linearises the 2D
-genotype matrix by writing [TODO check] $n$ bytes representing
-the genotypes for all samples at a variant position consecutively.
-Because the genotypes for a given variant index can be found
-in contiguous blocks at easily computable offsets from
-this initial location in memory,
-accessing the genotypes for a given variant is very efficient.
-However, accessing the genotypes for a given sample at every
-variant position is much less efficient because each of the $m$ bytes we
-must read are $n$ bytes apart in the file.
-In the distributed context, this often means
-that each compute node  in a
-cluster must effectively read the entire file in order to obtain the
-data for a subset of samples. In practise, this means that calculations
-are limited by I/0 bandwidth.
-
-
-A simple and elegant solution to providing efficient access to such
-large matrices across multiple dimensions is to store rectangular
-\emph{chunks} rather than entire rows or columns. This is illustrated
-in Fig~\ref{fig-data-storage}, where we show the basic approach
-used by sgkit. By storing data in these regular chunks, we
-can efficiently access data for both specific variants \emph{and}
-samples.
-
-Additionally, we can compress the individual chunks [more details].
-
-This general strategy for storing multidimensional numerical data
-has been in use for many years~\citep{folk2011overview}
-
-This maps well to distributed computing because Zarr provides a
-very flexible approach to storing the chunks. By using a native cloud store
-for these chunks, compute nodes can directly access the chunks that
-are needed, and not read irrelevant data.
-[TODO flesh out and more stuff.]
-
-
-\subsubsection{Array oriented computing}
-
-NumPy~\citep{harris2020array} has been transformational, and provides
-the basic framework for scientific computing in Python.
-
-[ Things to cite: pandas~\citep{mckinney2010data},
-BioNumpy~\citep{rand2022bionumpy}, OME-Zarr~\citep{moore2023ome}]
-
-[NOTE: we may also want a section discussing the n-dimensional array model,
-but I think this section is the right place to discuss that?]
-
-\subsubsection{Columnar binary data}
-
-Perhaps the most important factor limiting scalability in contemporary genomics
-is the continued reliance on row-wise storage of data---most often
-encoded as blockwise-compressed text.
-[Explain why row-wise is bad without reference to specific genomics applications.]
-
-The Variant Call Format (VCF) is the standard method for interchanging
-genomics data~\citep{danecek2011variant}.
-In VCF each row describes the observations for a set of samples
-at a given position along the genome, and consists of fixed columns such as the
-genome position as well as per-sample columns. [More info]
-VCF was introduced as part of the 1000 Genomes project, and works reasonably
-well at the scale of 1000s of samples. However, when we have hundreds of
-thousands of samples it becomes extremely unwieldy
-. For example, the
-phased genotypes for 200K samples in UK Biobank produced by Browning [cite]
-require X GB of space.
-(Note that this file contains no extra INFO keys; in practice a great deal
-more information is stored in the VCF leading to files that are orders of
-magnitude larger, and requiring them to be split into chunks, further
-increasing their unwieldiness.)
-Running [a simple query that requires only looking at
-one column] on this file like X required Y minutes.
-
-[TODO be more concrete here; what is the thing we're summarising?]
-This slow response time to a simple query is primarily caused by the row-wise
-nature of VCF (and BCF), because in order to read a single piece of
-information about a particular variant site we must read \emph{all}
-the information
-about that site. Then, if we wish to summarise that information over
-all sites, then we must read the entire dataset.
-
-A lesser but still significant cause of inefficiency is the use of
-text to store the data. [More info]
-
-These issues are of course well known, and there are numerous projects
-that seek to alleviate them. [Discuss] They're all quite bespoke to genomics data
-through.
-
-In sgkit we use Zarr which although initially introduced to store
-genomics data, has now been adopted widely in [X, Y and Z].
-Zarr is [description] and has [advantages]
-
-Also to discuss (not sure how these fit in to this specific sectio
-on background technologies vs existing genomics infrastructure; can
-sort out later):
-
-\begin{itemize}
-\item columnar (with small records) good for I/O elimination + sequential access.
-Classical locality of reference stuff as well.
-\item What does this mean with ND arrays? Slippery concept. Discuss.
-\item Compression improvements from columnar.
-\item Poor performance of text-based VCF has been noted many times,
-and lots of prior work in this space e.g. \citep{kelleher2013processing}
-\item Honourable mentions for bcftools~\citep{danecek2021twelve},
-htslib~\citep{bonfield2021htslib}, CRAM~\citep{bonfield2014scramble,bonfield2022cram}
-which uses a columnar approach
-\end{itemize}
-
-
-\subsection{Storing genetic variation data}
-
-It is important to note that the example in Fig.~\ref{fig-data-storage}
-is something of a best-base
-scenario in terms genomic dataset storage, in that we are only
-storing genotype data (per sample, per variant),
-and, because it is error-free, is very
-highly compressible. Noisier genotypes will not compress quite
-so well, and storing less compressible data (such as genotype
-quality values) results in a large increase in the overall
-storage size. This is essentially unavoidable, but the Zarr-based
-approach still has some significant advantages over VCF/BCF
-[basically we can store separately and come up with distinct
-compression strategies based on the data type. Dunno if we
-want to get into this here. This is a complex topic with
-a lot of existing work which we should review and reference,
-and this is maybe not the place to do it.].
-
-[SpVCF has some good text on high-entropy QC measures. We have to
-reduce this entropy or we just can't store the data]
-
-
-[Why are we reviewing all this? Well, we want to make the point
-that people have been trying hard to address the problem of
-how to deal with large-scale genomic data for quite a while,
-and have come up with lots of specialised methods. There
-are a few things to keep in mind. Our approach is to use
-standard methods just on the "rectangles" of variant data
-and it's already quite good. You could imagine writing specialised
-compression filters for genotypes, if you wanted (maybe a
-discussion item though). The key thing is the \emph{interface}.
-They're all tying to the command line and to classical
-sequential workflows. We have Python, and distributed compute. ]
-
-Storage is the foundation on which any large-scale data-driven computation
-rests: how we encode and organise data on persistent storage (the format)
-fundamentally affects and limits the efficiencies of downstream calculations.
-Different formats are optimised for different purposes, and there are
-often many competing requirements when designing a data storage format.
-% TODO is there some literature we could cite on this? I'm making up the
-% term "computational format" here, presumably there is lots  prior thought
-% on these ideas?
-For our  purposes here, it is important to distinguish between \emph{archival}
-and \emph{computational} formats. An archival format is optimised for
-maximum interoperability and future-proofing, and uses the simplest and
-most robust technologies to ensure the long-term usability of the data.
-Reasonable compression levels are important because
-of storage and transfer costs, but the efficiency of data access is a
-secondary concern.
-A computational format, on the other hand, is optimised
-for calculations, for \emph{using} the data, today. A computational format
-is designed with particular data access patterns in mind, ultimately
-to make a broad range of queries and downstream computations as efficient as
-possible.
-
-% Note: a quick explanation of VCF for CS people coming in fresh
-VCF~\citep{danecek2011variant} is a text-based format in which each line
-describes observations
-and metadata for a single variant (a position on the genome at which
-variation occurs in the sample). The first eight tab-delimited
-columns are mandatory, and subsequent columns describe the per-sample
-genotype calls and quality control data.
-
-[WIP: currently working on weaving together the stuff below into
-some sort of narrative]
-
-
-SeqArray~\citep{zheng2017seqarray} and the GDS format~\citep{zheng2012high}
-provide efficient storage and programmatic access in R.
-
-
-The approach taken by \toolname{plink}~\citep{purcell2007plink,chang2015second} is to
-store data in an uncompressed binary format. This has some major
-advantages.
-
-BGEN \citep{band2018bgen} is optimised for storing large-scale
-genotype array data and stores probabilities, and is used
-in particular by UK Biobank~\citep{bycroft2018genome}
-[Should consider the "hard-call" nature of most of these formats]
-
-Many methods working with large scale genetic
-data now use the PBWT or variants of
-it~\citep[e.g.][]{li2016bgt,lefaive2021sparse,wertenbroek2022xsi}. PBWTs have
-disadvantages, however: data must be phased, and compression level
-is quite sensitive to the presence of errors [citation? people have
-worked around this]
-
-Several tools provide querying interfaces in their CLIs
-(reminiscent of SQL) to provide easy access to particular samples, or
-variants~\cite{li2016bgt,layer2016efficient}.
-
-More recently XSI~\citep{wertenbroek2022xsi} is an file format that
-uses a combination of strategies to achieve excellent compression
-performance, and can support some calculations directly on the
-compressed format. It provides a command line interface and a
-C API.
-
-The SAV format is an extension of BCF that takes advantage
-of the sparseness of large scale genomic datasets~\citep{lefaive2021sparse}.
-They provide a command line interface and a C++ API.
-% TEXT from HSG chapter section on compressing data
-
-% The simplest approach to compressing such data is to organise it in a
-% `variant-centric' fashion, such that all observed genotypes for a given variant
-% are stored in a contiguous block. Because most variants are rare, this will
-% result in long runs of identical values that compress well using standard
-% methods. This is the approach taken by the Variant Call
-% Format~\citep{danecek2011variant}, and its more efficient binary encoding, BCF.
-% The compression levels achieved by this straightforward approach are good, and
-% quite competitive with more sophisticated methods. The disadvantage
-% is that many queries require full decompression of the data, which can be
-% prohibitively time-consuming. The SpeedGene data format and software
-% library~\citep{qiao2012handling} chooses from one of three encoding methods for
-% each SNP determined by the allele frequency; \cite{sambo2014compression} extend
-% this idea by identifying blocks of SNPs in LD, and adding two additional
-% potential encodings utilising this information.
-
-% An alternative to this variant-centric approach is to store genotypes in a
-% `sample-centric' fashion. Here, all genotypes for a particular sample are
-% stored consecutively. While this breaks the simple repetition structure of data
-% stored in variant-centric form, other methods can be employed to find
-% compressible structure. For example, TGC~\citep{deorowicz2013genome} compresses
-% sample genotypes using a custom Lempel-Ziv style approach on runs of identity
-% among samples. This explicit use of LD structure results in excellent
-% compression performance (for example, 32MB for all SNPs in 1000 Genomes
-% chromosome 1); unfortunately, querying a dataset requires full decompression,
-% making the format unsuitable for online analysis. The GQT
-% toolkit~\citep{layer2016efficient} also uses the sample-centric organisation of
-% genotype data, but takes a different approach to compression. Variants are
-% sorted by allele frequency (resulting in longer runs of identical values within
-% samples) and then compressed using an efficient bit-vector
-% representation~\citep{wu2002compressing}. The resulting file-sizes are similar to
-% compressed BCF, but many queries can be performed directly on the compressed
-% representation and are therefore many times faster.
-
-% The positional Burrows-Wheeler transform~\citep{durbin2014efficient}, or PBWT,
-% is another sample-centric method. Building on the success of Burrows-Wheeler
-% transform applications in
-% genomics~\citep{langmead2009ultrafast,li2009fast,li2009soap2}, PBWT provides
-% very good compression performance and efficient algorithms for finding
-% haplotype matches. The algorithm builds a representation of the data based
-% on sorted haplotype prefixes in linear time, and the LD structure of the data
-% ensures that the sorting orders between adjacent sites change very little
-% on average. The method has been successfully applied
-% to phasing~\citep{loh2016reference}, detection of IBD
-% segments~\citep{naseri2017ultra}, improving the performance of the Li and
-% Stephens model~\citep{lunter2016fast}, and a general query engine for genotype
-% data~\citep{li2016bgt}. Recent extensions include privacy preserving
-% search~\citep{shimizu2016efficient} and generalisation to the setting of graph
-% genomes~\citep{novak2017graph}.
-
-
-\subsection{Distributed computation}
-Distributed computation has been the reality in the analysis
-of genetic variation for many years,
-where data is most often provided as per-chromosome VCFs.
-This chunking provides a fairly straightforward way to parallelise
-computations, using HPC schedulers to split work per-file.
-When more fine-grained parallelism is required, users must
-provide exact genome coordinates of the genome regions
-as part of their submission scripts. Combining results
-is a manual operation.
-Workflow engines such as
-Snakemake~\cite{koster2012snakemake,molder2021sustainable}
-and [TODO mention WDL, Cromwell, etc?] make such analyses
-much easier, but there is still a great deal of room for
-mistakes.
-Per-chromosome VCFs are not practical for biobank scale
-projects, however, and variant call data tends to be split
-into many (still large) files.
-For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
-are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
-hundreds of files per chromosome.
-% This is horrible writing, but the point is important.
-While these files provide a natural
-unit for distributing work, the details of how they
-are split differ and essentially there is
-no interoperability among large-scale datasets because the VCFs are
-so cumbersome that a separate orchestration layer is required to
-access the data in parallel.
-
-Despite this long history of de-facto distributed computation
-and the clear need for better methods of accessing genetic
-variation data in a distributed fashion, there is almost
-no scientific literature on the topic (in stark contrast to the
-study of methods to compress a VCF into a single file,
-as discussed in section XXX).
-
-[This is a really rough outline, also not sure how exactly
-we sequence the ideas here. Just getting paragraph fragments
-on paper. We do need to explain something of the hadoop ecosystem
-to readers who are not familiar, though.]
-Distributed analytics for large-scale data is a mature
-techology, with many different approaches. Hadoop~\citep{white2012hadoop}
-is the original method, and remains the basis of the
-dominant ecosystem. HDFS. Spark [CITATION?] lets us
-do more complex analytics. Parquet [CITATION?]
-
-Although the Hadoop ecosystem has been hugely successful
-in many domains, it has had a limited impact in genomics.
-[List some things that have been tried for e.g variant calling
-, like ADAM~\citep{nothaft2015rethinking}].
-[Briefly mention two approaches using Hadoop clusters
-~\citep{boufea2017managing,fan2020variant}, to not very
-exiting results].
-
-[Hadoop/Spark/Parquet are fundamentally unsuited to genetic
-variation data [WHY]?]
-
-Discuss Hail. It's awesome, has enabled current
-generation of mega-scale projects. Drawbacks are the
-architecture has emphasised performance etc over adaptability
-and simplicity. Uses bits of Spark for X, but custom YZ .
-File format is undocumented, etc.
-
-Discuss why the sgkit architecture is suited to distributed
-computation. Discuss Zarr's use in cloud stores, and existing
-deployments. Discuss Dask.
-We do not attempt a head-to-head performance comparison with
-Hail here, but defer to Liangde's thesis~\citep{li2022efficient}
-with brief summary.
-Forward ref to following sections on applications to demonstate
-sgkit in a distributed context.
-
-
 \end{document}
-
