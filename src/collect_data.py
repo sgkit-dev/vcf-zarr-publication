@@ -18,7 +18,6 @@ import click
 import sgkit as sg
 
 
-
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
 from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter, zarr_decode
@@ -480,7 +479,6 @@ def file_size(src, output, debug):
         click.echo(f"{ts_path} n={ts.num_samples // 2}, m={ts.num_sites}")
         bcf_path = ts_path.with_suffix(".bcf")
         vcf_path = ts_path.with_suffix(".vcf.gz")
-        # FIXME
         zarr_path = ts_path.with_suffix(".zarr")
         sav_path = ts_path.with_suffix(".sav")
         genozip_path = ts_path.with_suffix(".genozip")
@@ -496,6 +494,7 @@ def file_size(src, output, debug):
             "vcf": vcf_path,
             "bcf": bcf_path,
             "zarr": zarr_path,
+            "zarr_nshf": ts_path.with_suffix(".noshuffle.zarr"),
             "sav": sav_path,
             "genozip": genozip_path,
         }
@@ -515,16 +514,29 @@ def file_size(src, output, debug):
         print(df)
 
 
+decode_tools = all_tools[:2] + [
+    Tool(
+        "zarr_nshf",
+        ".noshuffle.zarr",
+        run_zarr_afdist,
+        run_zarr_afdist_subset,
+        None,
+        run_zarr_decode,
+        run_zarr_pos_extract,
+    )
+]
+
+
 @click.command()
 @click.argument("src", type=click.Path(), nargs=-1)
 @click.option("-o", "--output", type=click.Path(), default=None)
-@click.option("-t", "--tool", multiple=True, default=[t.name for t in all_tools[:2]])
+@click.option("-t", "--tool", multiple=True, default=[t.name for t in decode_tools])
 @click.option("-s", "--storage", default="hdd")
 @click.option("--debug", is_flag=True)
 def whole_matrix_decode(src, output, tool, storage, debug):
     if len(src) == 0:
         raise ValueError("Need at least one input file!")
-    tool_map = {t.name: t for t in all_tools[:2]}
+    tool_map = {t.name: t for t in decode_tools}
     tools = [tool_map[tool_name] for tool_name in tool]
 
     data = []
@@ -729,6 +741,7 @@ def report_versions():
         print(tool.name)
         print(tool.version_func())
 
+
 @click.command()
 @click.argument("path", type=click.Path())
 def benchmark_zarr_decode(path):
@@ -737,11 +750,14 @@ def benchmark_zarr_decode(path):
     wall_time = time.time() - before
 
     print(
-        "time = ", wall_time, " s ",
+        "time = ",
+        wall_time,
+        " s ",
         "rate = ",
         humanize.naturalsize(bytes_decoded / wall_time, format="%.1f"),
         "/ s",
     )
+
 
 @click.group()
 def cli():
