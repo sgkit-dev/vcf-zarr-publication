@@ -895,27 +895,71 @@ the scikit-allel \texttt{vcf\_to\_zarr} function, (produces
 a precursor to the VCF-Zarr specification here). It's a 
 browser, using Zarr as the storage backend.
 
-\subsection{The vcfzarr specification}
-The vcfzarr specification is a direct mapping from the VCF data model 
-to a columnar binary format, expressed using Zarr. [A HIGH LEVEL 
-DESCRIPTION OF THE SPEC, FOCUSING ON RATIONALE BEHIND DECISIONS]
+\subsection{The VCF Zarr specification}
+The VCF Zarr specification is a direct mapping from the VCF data model
+to a chunked binary array format using Zarr. VCF Zarr takes advantage
+of Zarr's hierarchical structure by representing a VCF file as a top-level
+Zarr group containing Zarr arrays. Each VCF field (fixed fields, INFO fields,
+and FORMAT fields) is represented as a separate array in the Zarr hierarchy.
+Some of the structures from the VCF header are also represented as arrays,
+including contigs, filters, and samples. Making every item in VCF Zarr an
+array means that the data can be accessed via a uniform API.
 
-The vcfzarr specification can represent anything described by BCF
+% Do we need to say that VCF Zarr is an evolution of the Zarr format in scikit-allel?
+
+The specification defines the name, shape, dimension names, and data type
+for each array in the Zarr store. These ``logical'' properties are mandated,
+in contrast to ``physical'' Zarr array properties such as chunk sizes and
+compression, which can be freely chosen by the implementation. This
+separation makes it straightforward for tools and applications to consume
+VCF Zarr data since the data has a well-defined structure, while allowing
+implementations enough room to optimise chunk sizes and compression
+according to the application's needs.
+
+The specification defines a clear mapping of VCF field names (keys) to
+array names, VCF Number to array shape, and VCF Type to array data type.
+To take one example, consider the VCF AD genotype field defined by the
+following VCF header: \texttt{\#\#FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">}
+
+The FORMAT key \texttt{ID} maps to an array name of \texttt{call\_AD}
+(FORMAT fields have a \texttt{call\_} prefix, while INFO fields have a
+\texttt{variant\_} prefix; both are followed by the key name). Arrays
+corresponding to FORMAT fields are 3-dimensional with shapes that look
+like \texttt{(variants, samples, <Number>)} in general. In this case, the
+Number A entry indicates that the field has one value per alternate allele,
+which in VCF Zarr is represented as the \texttt{alt\_alleles} dimension name,
+so the shape of this array is \texttt{(variants, samples, alt\_alleles)}.
+The VCF Integer type can be represented as any Zarr integer type, and in
+fact the specification doesn't mandate a particular integer width, so it
+could be encoded as a 16 bit integer for example.
+% Refer to GeL case study section?
+
+VCF Zarr uses special sentinel values to encode missing values to indicate
+that a value is not present, and fill values to pad variable length fields.
+The latter is necessary since Zarr arrays have fixed size dimensions. The
+specification also permits extra boolean arrays to accompany a field array
+to redundantly encode the missing and fill status, which can be useful for
+efficiently masking out values that shouldn't be processed, at the cost of
+a small amount of extra storage.
+
+The VCF Zarr specification can represent anything described by BCF
 (which is somewhat more restrictive than BCF) except for two corner
-cases related to the encoding of missing data. Firstly, vcfzarr does
+cases related to the encoding of missing data. Firstly, VCF Zarr does
 not distinguish between a field that is not present and one that 
-is present but contains missing data. [FOR EXAMPLE...]
-Because of the use of -1 to represent missing data and -2 to 
-represent dimension padding for integers, these values 
-cannot be stored. In practise this doesn't seem to be much of 
+is present but contains missing data. For example, a variant with an
+INFO field \texttt{NS=.} is represented in the same way in VCF Zarr
+as an INFO field with no \texttt{NS} key. Secondly, because of the use
+of sentinel values to represent missing and fill values for integers
+(-1 and -2, respectively), a field containing these original values
+cannot be stored. In practice this doesn't seem to be much of 
 an issue (we have not found a real VCF that contains negative 
-integers). If -1 and -2 need to be stored, a float field
-can be used without issues.
+integers). However, if -1 and -2 need to be stored, a float field
+can be used without issues (since the float sentinel is a special NaN
+value).
 
-The vcfzarr specification is general and can be mapped to 
+The VCF Zarr specification is general and can be mapped to 
 file formats such as \toolname{plink}~\citep{purcell2007plink,chang2015second}
 and BGEN~\citep{band2018bgen} with some minor extensions.
-
 
 \subsection{vcf2zarr}
 Converting VCF to Zarr format at Biobank scale is challenging. This main issue is 
