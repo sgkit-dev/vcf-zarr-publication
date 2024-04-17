@@ -6,7 +6,7 @@ import numba
 import zarr
 import numcodecs
 
-numcodecs.nthreads = 1
+numcodecs.blosc.set_nthreads(1)
 
 
 @numba.njit("void(int64, int8[:], int32[:], int32[:], int32[:], int32[:])")
