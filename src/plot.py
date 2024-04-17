@@ -17,6 +17,7 @@ vcf_colour = "tab:pink"
 sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
+zarr_nshf_colour = "tab:cyan"
 
 
 def one_panel_fig(**kwargs):
@@ -32,6 +33,7 @@ def plot_size(ax, df, label_y_offset=None):
         "vcf": vcf_colour,
         "bcf": bcf_colour,
         "zarr": zarr_colour,
+        # "zarr_nshf": zarr_nshf_colour,
         "sav": sav_colour,
         "genozip": genozip_colour,
     }
@@ -51,7 +53,6 @@ def plot_size(ax, df, label_y_offset=None):
         )
         row = dfs.iloc[-1]
         size = row["size"] / GB
-        print(f"{tool} : {size:.2f}")
         ax.annotate(
             f"{size:.0f}G",
             textcoords="offset points",
@@ -59,6 +60,10 @@ def plot_size(ax, df, label_y_offset=None):
             xy=(row.num_samples, row["size"]),
             xycoords="data",
         )
+
+    df_large = df[df.num_samples == 10**6]
+    df_large["size"] /= GB
+    print(df_large)
 
     ax.legend()
     add_number_of_variants(df, ax)
@@ -71,6 +76,7 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
         "bcftools": bcf_colour,
         "genozip": genozip_colour,
         "zarr": zarr_colour,
+        "zarr_nshf": zarr_nshf_colour,
         "savvy": sav_colour,
     }
     have_genozip = False
@@ -211,13 +217,19 @@ def whole_matrix_decode(time_data, output):
     Plot the figure showing raw decode performance on whole-matrix afdist.
     """
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
+    print(df)
     df = df[df.storage == "hdd"]
 
     fig, ax1 = one_panel_fig()
 
-    plot_total_cpu(ax1, df, time_units="m")
-    df["genotypes_per_second"] = df["total_genotypes"] / df["wall_time"]
-    for tool in ["zarr", "savvy"]:
+    name_map = {
+        "zarr": "Zarr (Zstd + bit shuffle)",
+        "savvy": "Savvy",
+        "zarr_nshf": "Zarr (Zstd)",
+    }
+    plot_total_cpu(ax1, df, toolname=name_map, time_units="m")
+    df["genotypes_per_second"] = df["total_genotypes"] / df["user_time"]
+    for tool in name_map.keys():
         max_rate = df[df.tool == tool]["genotypes_per_second"].max()
         print(tool, humanize.naturalsize(max_rate, binary=True))
 
