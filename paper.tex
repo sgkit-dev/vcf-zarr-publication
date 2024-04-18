@@ -364,15 +364,41 @@ The allele frequencies and genotype counts are then analysed to produce
 the final counts within the allele frequency bins with 9 lines of 
 Python using NumPy~\cite{harris2020array} functions. Remarkably, this 
 short and simple Python program is substantially faster than the 
-equivalent compiled C using \texttt{htslib} APIs on BCF (6 hours
-vs 20 hours for 1 million samples). The fastest method is the 
+equivalent compiled C using \texttt{htslib} APIs on BCF (6.9 hours
+vs 20.6 hours for 1 million samples). 
+% num_samples  num_sites      tool  user_time  sys_time     wall_time  total_time
+%     1000000    7254858     savvy    8371.07      4.16   8377.718136  2.326453
+%     1000000    7254858  bcftools   73939.32     46.09  74023.083678  20.551503
+%     1000000    7254858      zarr   24709.64     29.32  24750.704171  6.871933
+The fastest method is the 
 C++ program written using the Savvy API. This would largely seem
 to be due to Savvy's excellent genotype decoding performance
-(up to 6.5GiB/s vs 1.2GiB/s for Zarr on this dataset;
-Figure~\ref{fig-whole-matrix-decode}). Different choices 
-of compressor and filters (zstandard with bit shuffle, in this case) 
-would likely lead to improved decoding performance in Zarr,
-at the expense of somewhat larger files.
+% zarr 1.2 GiB
+% savvy 6.6 GiB
+% zarr_nshf 3.9 GiB
+(up to 6.6GiB/s vs 1.2GiB/s for Zarr on this dataset;
+Figure~\ref{fig-whole-matrix-decode}).
+% sequence_length  num_samples  num_sites       tool       size
+% 40         48129895      1000000    7254858       zarr  22.071687
+% 35         48129895      1000000    7254858        bcf  51.749294
+% 36         48129895      1000000    7254858    genozip  10.691384
+% 37         48129895      1000000    7254858        sav  21.249436
+% 38         48129895      1000000    7254858        tsk   1.802636
+% 39         48129895      1000000    7254858        vcf  81.375831
+% 41         48129895      1000000    7254858  zarr_nshf  29.897540
+Turning off the BitShuffle filter for the Zarr dataset,
+however, leads to a substantial increase in decoding speed
+(3.9GiB/s) at the cost of a roughly 25\% increase in storage
+space (29.9GiB up from 22.1GiB for 1 million samples; data not
+shown). Given the relatively small contribution of genotypes to the
+overall storage of real datasets (see the Genomics England example)
+and the frequency that they are likely to be accessed, this
+would seem like a good tradeoff in most cases.
+This ability to easily tune compression performance
+and decoding speed on a field-by-field basis is a major strong
+point of Zarr. The \texttt{vcf2zarr} utility also provides
+functionality to aid with such storage schema tuning.
+
 
 \subsection{Subsetting the genotype matrix}
 As datasets grow ever larger, the ability to efficiently access subsets 
