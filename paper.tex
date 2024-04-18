@@ -364,8 +364,13 @@ The allele frequencies and genotype counts are then analysed to produce
 the final counts within the allele frequency bins with 9 lines of 
 Python using NumPy~\cite{harris2020array} functions. Remarkably, this 
 short and simple Python program is substantially faster than the 
-equivalent compiled C using \texttt{htslib} APIs on BCF (6 hours
-vs 20 hours for 1 million samples). The fastest method is the 
+equivalent compiled C using \texttt{htslib} APIs on BCF (6.9 hours
+vs 20.6 hours for 1 million samples). 
+% num_samples  num_sites      tool  user_time  sys_time     wall_time  total_time
+%     1000000    7254858     savvy    8371.07      4.16   8377.718136  2.326453
+%     1000000    7254858  bcftools   73939.32     46.09  74023.083678  20.551503
+%     1000000    7254858      zarr   24709.64     29.32  24750.704171  6.871933
+The fastest method is the 
 C++ program written using the Savvy API. This would largely seem
 to be due to Savvy's excellent genotype decoding performance
 % zarr 1.2 GiB

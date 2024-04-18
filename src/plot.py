@@ -61,7 +61,7 @@ def plot_size(ax, df, label_y_offset=None):
             xycoords="data",
         )
 
-    df_large = df[df.num_samples == 10**6]
+    df_large = df[df.num_samples == 10**6].copy()
     df_large["size"] /= GB
     print(df_large)
 
@@ -120,6 +120,10 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
                 xy=(row.num_samples, total_cpu[-1]),
                 xycoords="data",
             )
+
+    df_large = df[df.num_samples == 10**6].copy()
+    df_large["total_time"] = (df["user_time"] + df["sys_time"]) / 3600
+    print(df_large)
 
     def multiplicative_model(n, a, b):
         # Fit a simple exponential function.
@@ -234,6 +238,7 @@ def whole_matrix_decode(time_data, output):
         print(tool, humanize.naturalsize(max_rate, binary=True))
 
     plt.savefig(output)
+
 
 @click.command()
 @click.argument("time_data", type=click.File("r"))
