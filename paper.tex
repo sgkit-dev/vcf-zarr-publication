@@ -137,12 +137,82 @@ Keyword1; keyword 2; keyword 3 (Three to ten keywords representing the main cont
 \end{keypoints*}
 
 \section{Background}
-[Four paragraphs. (1) What is VCF, and the good things it has done. 
-(2) Explosion in dataset size. Summary of where we're at in terms of biobanks
-etc. (3) We have a problem. Existing solutions like TileDB etc
-are either proprietary, or tightly coupled to one specific software stack
-(Hail, e.g.).
-(4) We present the VCF Zarr spec and the vcf2zarr conversion utility.]
+Variant Call Format (VCF) is the standard format for interchanging genetic
+variation data~\citep{danecek2011variant}, storing information about 
+DNA sequence polymorphisms among a set of samples with associated 
+quality control metrics and metadata. 
+Originally defined specifically as a text file,
+it has been refined and standardised~\citep{rehm2021ga4gh} and the 
+underlying data-model is now deeply embedded in bioinformatics practice.
+Dataset sizes have grown explosively since the introduction of 
+VCF as part of 1000 Genomes project~\citep{10002015global},
+with Biobank-scale projects such as 
+Genomics England~\cite{turnbull2018100},
+UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
+and the All of Us research program~\citep{all2024genomic}
+collecting genome sequence data for hundreds of thousands of humans.
+While there are many advantages to encoding data in text files,
+VCF is simply not fit for purpose as part of computational workflows 
+at this scale. [A sentence somehow establishing that methods analysing 
+large-scale genomic data are held back by VCF, needing to first 
+convert to intermediate formats like tsinfer.]
+
+The main solution that has emerged to these problems of 
+computation on genetic variation data at scale is Hail~\cite{ganna2016ultra,hail2024}.
+Building on components from the Hadoop ecosytem~\citep{white2012hadoop},
+Hail distributes computations transparently over a cluster, enabling
+interactive analysis of very large datasets. It has been successfully used 
+in many studies, and instrumental in generating datasets such as 
+gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
+While Hail is powerful software, it is not a suitable platform for 
+developing inference or performing complex analysis. It is complex,
+vertically integrated software, with an undocumented file format
+[say this better]. 
+Similarly, commerical solutions that have emerged to facilitate
+the analysis of large-scale genetic variation data are either
+based on proprietary~[Terra? BigQuery?]
+or single-vendor technologies~\cite[e.g.][]{tiledb2024}.
+
+VCF has enabled a vibrant ecosystem of interoperating
+utilities~\cite{danecek2021twelve,garrison2022spectrum}, but these tools
+are fundamentally scale-limited by the format. 
+The most intrinsically limiting aspect of VCF's design is its 
+row-wise layout of data within a file, which means that (for example)
+data for a particular sample cannot be efficiently retrieved.
+The file-oriented paradigm is also unsuited to the realities 
+of modern datasets, which are too large to download and 
+often required to stay in-situ by data-access agreements.
+Large files are stored in cloud environments, where the 
+file systems that are required by file-oriented tools
+are expensively emulated on the basic building blocks
+of object storage. 
+These multiple layers of inefficiences around processing
+VCF data at scale in the cloud mean that it is 
+time-consuming and expensive, effectively making 
+% Dunno if we want to get into this, but it's true
+analysis of these datasets the preserve of a well-funded elite.
+
+Here, we decouple the VCF data model from its row-oriented
+file definition, and show how the corresponding data model can be 
+efficiently stored and analysed in a cloud-native manner.
+We do this by translating VCF data into Zarr format,
+a popular method of storing compressed N-dimensional arrays
+used to store petabyte-scale datasets across the sciences [citations].
+We present the VCF Zarr specification which formalises this 
+mapping, and and the \texttt{vcf2zarr} 
+utility which reliably converts large-scale VCFs into Zarr 
+format. We show that VCF Zarr is much more compact than 
+VCF (and BCF), and it competitive with state-of-the-art
+VCF compression tools. Moreover, we show that Zarr's 
+storage of data in an analysis-ready 
+format~\cite{abernathey2021cloud} greatly facilitates computation,
+with various benchmarks being substantially faster than
+\texttt{bcftools} based pipelines, and again competetive
+with state-of-the-art methods. Finally, we show the 
+utility of VCF Zarr on the Genomics England aggV2 dataset,
+demonstrating that common queries can be performed orders
+of magnitude more quickly based on simple Python scripts.
+
 
 \section{Results}
 
@@ -273,6 +343,14 @@ benchmark against, and why there's no point in
 a major benchmarkathon. Some recent papers 
 have good benchmarks which the interested 
 reader can cross-reference]
+
+Although Zarr is optimised for cloud settings, it also
+works very well in the classical (shared) file-system setting
+and we therefore focus on benchmarks in this setting
+to allow us to compare with existing tools.
+Those seeking benchmarks of Zarr in cloud deployments are 
+directed to [citations].
+
 
 \subsection{Calculating with the genotype matrix}
 Storing genetic variation data compactly is important, but it is also
