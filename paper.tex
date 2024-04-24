@@ -16,11 +16,6 @@
 \usepackage{graphicx}
 \usepackage{siunitx}
 
-% Additional packages used for code formatting
-\usepackage{minted}
-\usepackage{tcolorbox}
-\usepackage{etoolbox}
-
 % Additional packages for data model figure
 \usepackage{forest}
 \usepackage{tikz}
@@ -102,7 +97,7 @@ Row-based data storage is fundamentally unsuited to such datasets
 and these large VCFs represent a major computational bottleneck.
 
 \textbf{Results:}
-We present the vcfzarr specification, a columnar encoding of the 
+We present the VCF Zarr specification, a columnar encoding of the 
 VCF data model using Zarr which makes retrieving subsets of the 
 data much more efficient. Zarr is a cloud-native format for storing 
 multi-dimensional numerical data, widely used in scientific computing.
@@ -113,7 +108,7 @@ tend to dominate. We show that performing calculations on the genotype
 matrix is much more efficient than standard
 approaches based on VCF, and is comparable with state-of-the-art methods
 using compiled languages. We demonstrate 
-the vcfzarr format (and the vcf2zarr conversion utility) 
+the VCF Zarr format (and the vcf2zarr conversion utility) 
 on the Genomics England dataset of XX,XXX,XXX samples, showing
 an overall reduction in storage of XX, and a reduction in processing 
 time of common queries of up to XX fold.
@@ -121,7 +116,7 @@ time of common queries of up to XX fold.
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and 
 processing these files incurs a substantial economic cost.
-The vcfzarr specification, building on widely-used, open-source technologies
+The VCF Zarr specification, building on widely-used, open-source technologies
 has the potential to greatly reduce these costs,
 and may enable a diverse ecosystem of next-generation tools for analysing 
 genetic variation data.
@@ -147,7 +142,7 @@ Keyword1; keyword 2; keyword 3 (Three to ten keywords representing the main cont
 etc. (3) We have a problem. Existing solutions like TileDB etc
 are either proprietary, or tightly coupled to one specific software stack
 (Hail, e.g.).
-(4) We present the vcfzarr spec and the vcf2zarr conversion utility.]
+(4) We present the VCF Zarr spec and the vcf2zarr conversion utility.]
 
 \section{Results}
 
@@ -218,17 +213,17 @@ SeqArray~\citep{zheng2017seqarray,zheng2012high} to our knowledge.
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
 \caption{Columnar storage of VCF data in chunked, compressed form using Zarr.
 [TODO more detail, including brief overview of how data maps from 
-VCF to vcfzarr in the examples]
+VCF to VCF Zarr in the examples]
 \label{fig-data-model}}
 \end{figure}
 
-We propose the \texttt{vcfzarr} specification which maps the 
+We propose the VCF Zarr specification which maps the 
 VCF data model into a columnar layout using the
 widely-used Zarr format (Fig~\ref{fig-data-model}). 
 Briefly, Zarr is a format 
 % FIXME two different uses of $n$ here in a paragraph
 for storing $n$-dimensional arrays of a fixed datatype, stored as 
-compressed chunks. In the \texttt{vcfzarr} specification, 
+compressed chunks. In the VCF Zarr specification, 
 each field in a VCF is mapped to an array, which is compressed 
 and stored individually allowing for efficient retrieval. 
 In particular, call-level data is stored as $m \times n$ arrays
@@ -238,7 +233,7 @@ variants and samples axis.
 Note that this approach to storing higher dimensional data
 sets Zarr apart from more general columnar formats 
 such as Parquet [TODO more details and citations?].
-See the Methods for more detail on Zarr and the \texttt{vcfzarr}
+See the Methods for more detail on Zarr and the VCF Zarr
 specification.
 
 \begin{figure}
@@ -482,7 +477,7 @@ columnar storage excels at these tasks: we only read and decompress
 the information required.
 
 \subsection{Case study: Genomics England 100,000 genomes}
-In this section we demonstrate the utility of \texttt{vcfzarr} on a large human dataset
+In this section we demonstrate the utility of VCF Zarr on a large human dataset
 and the scalability of the \texttt{vcf2zarr} conversion utility.
 Genomics England’s multi-sample VCF dataset (aggV2) is an 
 aggregate of 78,195 gVCFs from rare disease and cancer participants 
@@ -513,7 +508,7 @@ The top fields in terms
 of storage are detailed in Table~\ref{tab-genomics-england-data}.
 
 \begin{table}
-\caption{Summary for a selection of the largest vcfzarr columns produced for 
+\caption{Summary for a selection of the largest VCF Zarr columns produced for 
 Genomics England aggV2 VCFs on chromosome 20 using \texttt{vcf2zarr}
 default settings. Each field is stored independently 
 as a Zarr array with the given type (sufficient to represent all values in the
@@ -739,7 +734,7 @@ an excellent basis for building a new generation of tools
 that compute \emph{directly} on the data, efficiently
 accessing data by variant and by sample.
 [Mention ``Cloud native data repositories''~\cite{abernathey2021cloud}]
-The vcfzarr specification and scalable vcf2zarr conversion utility
+The VCF Zarr specification and scalable vcf2zarr conversion utility
 that we have provided here are the starting points of such 
 an ecosystem, but much more would be needed to make a viable 
 alternative for everyday bioinformatics workflows. However, a few key
