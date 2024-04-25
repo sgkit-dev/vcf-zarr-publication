@@ -17,6 +17,9 @@ import tskit
 import click
 import sgkit as sg
 
+# Note: benchmarks here should mostly be run with a cold disk cache to
+# correctly factor in I/0 behaviour. Do this with:
+# echo 3 | sudo tee /proc/sys/vm/drop_caches
 
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
