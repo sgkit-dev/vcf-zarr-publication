@@ -36,24 +36,44 @@
 % tentative
 \title{Columnar VCF for Biobank scale datasets using Zarr}
 
-%%% Use the \authfn to add symbols for additional footnotes, if any. 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
-\author[1,\authfn{1},\authfn{2}]{First Author}
-\author[2,\authfn{1},\authfn{2}]{Second Author}
-\author[2]{Third Author}
-\author[2,\authfn{1}]{Fourth Author}
+%%% Use the \authfn to add symbols for additional footnotes, if any. 
+% 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
+% First author
+\author[1,\authfn{1}]{Eric Czech}
+\author[2,\authfn{1}]{Tim Millar}
+\author[3,\authfn{1}]{Tom White}
 
-\affil[1]{First Institution}
-\affil[2]{Second Institution}
+% Middle
+\author[4]{Ben Jeffery}
+\author[5]{Alistair Miles}
+\author[6]{Sam Tallman}
+\author[1]{Rafal Wojdyla}
+\author[7]{Shadi Zabad}
+ 
+% Senior 
+\author[8,\authfn{2}]{Jeff Hammerbacher}
+\author[4,\authfn{2},\authfn{3}]{Jerome Kelleher}
+
+\affil[1]{Related Sciences}
+\affil[2]{Tim's Institute}
+\affil[3]{Tom's Institute}
+\affil[4]{Big Data Institute, Li Ka Shing Centre for Health Information and Discovery, 
+University of Oxford, UK}
+\affil[5]{Wellcome Sanger Institute}
+\affil[6]{Genomics England}
+\affil[7]{School of Computer Science, McGill University, Montreal, QC, Canada}
+\affil[8]{Jeff's Institute}
 
 %%% Author Notes
-\authnote{\authfn{1}abc@uni.edu; alphbeta@lab.edu}
-\authnote{\authfn{2}Contributed equally.}
+\authnote{\authfn{1}Joint first author.}
+\authnote{\authfn{2}Joint senior author.}
+\authnote{\authfn{3}jerome.kelleher@bdi.ox.ac.uk}
 
 %%% Paper category
 \papercat{Paper}
 
 %%% "Short" author for running page header
-\runningauthor{First et al.}
+\runningauthor{Czech et al.}
 
 %%% Should only be set by an editor
 \jvolume{00}
@@ -123,16 +143,19 @@ genetic variation data.
 \end{abstract}
 
 \begin{keywords}
-Keyword1; keyword 2; keyword 3 (Three to ten keywords representing the main content of the article)
+Variant Call Format; Zarr; Analysis ready data.
 \end{keywords}
 \end{frontmatter}
 
 %%% Key points will be printed at top of second page
 \begin{keypoints*}
 \begin{itemize}
-\item This is the first point
-\item This is the second point
-\item One last point.
+\item VCF is widely supported, and the underlying data model entrenched 
+in Bioinformatics pipelines.
+\item The standard row-wise encoding as text (or binary) is inherently
+inefficient for large-scale data processing.
+\item The Zarr format provides an efficient solution, by encoding fields
+in the VCF separately in chunk-compressed binary format.
 \end{itemize}
 \end{keypoints*}
 
