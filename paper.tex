@@ -153,9 +153,32 @@ and the All of Us research program~\citep{all2024genomic}
 collecting genome sequence data for hundreds of thousands of humans.
 While there are many advantages to encoding data in text files,
 VCF is simply not fit for purpose as part of computational workflows 
-at this scale. [A sentence somehow establishing that methods analysing 
-large-scale genomic data are held back by VCF, needing to first 
-convert to intermediate formats like tsinfer.]
+at this scale. 
+Methods that require efficient access to data
+either require VCF data to be converted into 
+PLINK~\cite{purcell2007plink,chang2015second} 
+or BGEN~\citep{band2018bgen} 
+format~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
+or use 
+custom binary formats~\citep[e.g.][]{
+% Uses custom "bref3" format,
+% https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
+browning2018one, 
+% .samples Zarr format
+kelleher2019inferring,
+% Has a "xcftools" package, but it still looks pretty experimental
+hofmeister2023accurate} 
+that support the required access patterns.
+While PLINK and BGEN support efficient access to genotype data, neither
+can accommodate the full flexibility of the VCF data model and conversion
+is lossy. PLINK's approach of storing the genotype matrix in uncompressed
+packed-binary format also leads to large files, particularly for recent
+whole-genome sequence datasets. For example, at two bits 
+per genotype, the full matrix for the GraphTyper SNP dataset in the UKB
+WGS data~\citep{uk2023whole} is 116 TiB.
+% 1,037,556,156 SNPs x  490,640 samples
+% humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
+% '115.7 TiB'
 
 The main solution that has emerged to these problems of 
 computation on genetic variation data at scale is Hail~\cite{ganna2016ultra,hail2024}.
@@ -1164,10 +1187,13 @@ it directly, only VCF (supports BCF by pipeing through bcftools).
 % first use, and a list of abbreviations should be provided in alphabetical
 % order.
 
-VCF: Variant Call Format;
+\begin{itemize}
+    \item VCF: Variant Call Format;
+    \item UKB: UK Biobank
+    \item WGS: Whole Genome Sequence
+\end{itemize}
 
 \subsection{Competing Interests}
-
 \subsection{Funding}
 
 \subsection{Author's Contributions}
