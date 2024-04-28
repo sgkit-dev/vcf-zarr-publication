@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import seaborn as sns
 import humanize
 import pandas as pd
 import click
@@ -301,6 +302,78 @@ def subset_matrix_compute_supplemental(data, output):
     run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"])
 
 
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def plot_compression_ratio_grid(data, output):
+
+    df = pd.read_csv(data)
+    
+    # Filter to only arrays in the same dim order as the original:
+    df_plot = df.loc[df.dim_order.isin(['(0, 1)', '(0, 1, 2)'])]
+
+    # Filter out results with Quantize / PackBits:
+    df_plot = df_plot.loc[df_plot.cname == 'zstd']
+
+    g = sns.catplot(df_plot, kind='bar', 
+                    row='ArrayName', col='shuffle', 
+                    x='named_chunksize', y='CompressionRatio', 
+                    sharex=False, sharey='row')
+    
+    for i, ax in enumerate(g.fig.axes):   ## getting all axes of the fig object
+         ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
+    
+    plt.subplots_adjust(hspace = 1.)
+    plt.savefig(output)
+
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def plot_compression_dim_shuffle(data, output):
+
+    df = pd.read_csv(data)
+    # Effect was mainly on `call_AD`, so we filter here?
+    df_plot = df.loc[df.ArrayName == 'call_AD']
+
+    g = sns.catplot(df_plot, kind='bar',
+                    col='shuffle',
+                    x='named_chunksize', y='CompressionRatio',
+                    sharex=False, sharey='row')
+
+    for i, ax in enumerate(g.fig.axes):   ## getting all axes of the fig object
+         ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
+
+    plt.subplots_adjust(hspace = 1.)
+    plt.savefig(output)
+
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def plot_compression_packbits(data, output):
+
+    df = pd.read_csv(data)
+    df_plot = df.loc[df.ArrayName == 'call_genotype_mask']
+
+    if len(df_plot) < 1:
+        raise ValueError("Information about call_genotype_mask isn't present.")
+    
+    g = sns.catplot(df_plot, kind='bar',
+                    col='shuffle', row='cname',
+                    x='named_chunksize', y='CompressionRatio',
+                    sharex=False, sharey='row')
+
+    for i, ax in enumerate(g.fig.axes):   ## getting all axes of the fig object
+         ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
+
+    plt.subplots_adjust(hspace = 1.)
+    plt.savefig(output)
+
+
+
+
+
 @click.group()
 def cli():
     pass
@@ -312,7 +385,9 @@ cli.add_command(whole_matrix_decode)
 cli.add_command(column_extract)
 cli.add_command(subset_matrix_compute)
 cli.add_command(subset_matrix_compute_supplemental)
-
+cli.add_command(plot_compression_ratio_grid)
+cli.add_command(plot_compression_dim_shuffle)
+cli.add_command(plot_compression_packbits)
 
 if __name__ == "__main__":
     cli()
