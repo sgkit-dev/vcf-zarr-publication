@@ -986,11 +986,41 @@ addressed by their indexes along the dimensions of the array, and the
 compressed data associated with this key. Chunks are
 are often stored in individual files, but a wide array of different
 stores are supported including cloud buckets and NoSQL databases. 
+In principle, Zarr can store data into any key-value store.
 Metadata describing the array and its properties is then stored 
 in JSON format along with the chunks. Zarr is best seen as a 
 \emph{specification} that describes the details of how chunks are 
 addressed and stored: there are multiple implementations across
 different languages.
+
+% Good points from  the new Horizons technical paper:
+
+% From a technical standpoint, a standout feature of Zarr is its simplicity.
+% The format is easy for developers to
+% understand because the internals are exposed transparently. Consequently, Zarr
+% is considered easy to “hack,”
+% i.e. to adapt to new use cases and scenarios, such as implementing a reader
+% from a new programming language
+% or creating a new backend storage layer. (This is a significant contrast from
+% NetCDF4 / HDF5, whose internal file
+% format is relatively opaque, and for which all access must go through the
+% official C library.)
+
+% The Zarr project is governed by a steering council of contributors from
+% different institutions. No single company or institution controls the
+% specification and its implementations.
+% Second, although Zarr is relatively new, it is currently being evaluated by the
+% Open Geospatial Consortium (
+
+The Open GeoSpatial consortium has formally recognised Zarr as a community
+standard~\cite{ogc_zarr2_standard}
+and has formed
+a new GeoZarr Standards Working Group to establish a Zarr encoding for
+geospatial data~\cite{ogc_geozarr_news}.
+
+Zarr is being considered a potential format for migrating the 
+Copernicus global land service to the cloud~\citep{abernathey2021opening}
+
 
 Zarr is flexible in allowing different compression codecs and 
 pre-compression filters to be specified on a per-array basis.
@@ -1031,6 +1061,9 @@ Zarr is now widely used.
 
 Multi terabyte numerical weather prediction models~\citep{gowan2022using}
 Petabyte scale geoscience datasets in the Pangeo project
+
+CMIP6 dataset in Google Cloud~\cite{cmip6_dataset}
+
 
 ITS\_LIVE ice velocity dataset~\citep{fahnestock2023mappin} using 
 the Zarr.js Javascript interface to visualise the ``massive''
