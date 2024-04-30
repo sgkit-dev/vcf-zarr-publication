@@ -1003,9 +1003,9 @@ as well as  standalone libraries for JavaScript~\cite{zarrjs},
 Julia~\cite{zarrjl}, Rust~\citep{zarrs}
 and R~\cite{pizzarr}.
 
-
 Zarr is flexible in allowing different compression codecs and 
-pre-compression filters to be specified on a per-array basis.
+pre-compression filters to be specified on a per-array basis
+(see section XXX).
 Two key technologies used by Zarr are the Blosc
 % This seems like the best citation for Blosc? It is mentioned here
 meta-compressor~\cite{alted2010modern}
@@ -1029,28 +1029,22 @@ Zstandard is also used in several recent VCF compression
 methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
 % LZ4 is also notable - any citations for this?
 
-This combination of Zarr's simple and cloud-friendly storage 
+Scientific datasets are increasingly overwhelming the classical
+model of downloading and analysing locally, and are migrating to 
+centralised cloud repositories \citep{abernathey2021cloud}.
+The combination of Zarr's simple and cloud-friendly storage 
 of data chunks with state-of-the-art compression methods has 
-led to Zarr gaining significant traction in large-scale 
-scientific computing, in particular in the geosciences.
-
-
-Multi terabyte numerical weather prediction models~\citep{gowan2022using}
-
-CMIP6 dataset in Google Cloud~\cite{cmip6_dataset}
-
+led to Zarr gaining significant traction in these settings.
+Multiple petabyte-scale datasets are now stored using 
+Zarr~\cite[e.g.][]{gowan2022using, % weather model data
+fahnestock2023mappin, % ITS_LIVE dataset
+cmip6_dataset}
+or under active consideration for migration~\citep{abernathey2021opening}.
 The Open GeoSpatial consortium has formally recognised Zarr as a community
 standard~\cite{ogc_zarr2_standard}
 and has formed
 a new GeoZarr Standards Working Group to establish a Zarr encoding for
 geospatial data~\cite{ogc_geozarr_news}.
-
-Zarr is being considered a potential format for migrating the 
-Copernicus global land service to the cloud~\citep{abernathey2021opening}
-
-ITS\_LIVE ice velocity dataset~\citep{fahnestock2023mappin} using 
-the Zarr.js Javascript interface to visualise the ``massive''
-dataset [how big is it?]
 
 Zarr has recently been gaining traction in biological applications
 also. EUGENe~\citep{klie2023predictive} is a toolkit for 
