@@ -980,17 +980,29 @@ BioNumpy~\citep{rand2022bionumpy}, OME-Zarr~\citep{moore2023ome}]
 % Zarr is a simple layer on top of best-in-class, modern components
 In the interest of completeness it is useful to provide a high-level overview
 of Zarr and the techologies that it depends upon. Zarr is a specialised format
-for storing large-scale $n$-dimensional numerical data (arrays). Arrays
+for storing large-scale $n$-dimensional data (arrays). Arrays
 are split into chunks, which are compressed and stored separately. Chunks are 
 addressed by their indexes along the dimensions of the array, and the 
 compressed data associated with this key. Chunks are
 are often stored in individual files, but a wide array of different
-stores are supported including cloud buckets and NoSQL databases. 
+stores are supported including cloud buckets and NoSQL databases;
+in principle, Zarr can store data in any key-value store.
 Metadata describing the array and its properties is then stored 
-in JSON format along with the chunks. Zarr is best seen as a 
-\emph{specification} that describes the details of how chunks are 
-addressed and stored: there are multiple implementations across
-different languages.
+in JSON format along with the chunks. The simplicity and transparency
+of this design has substantial advantages over other technologies
+such as HDF5~\citep{folk2011overview} which are relatively complex and opaque.
+This simplicity has led to numerous implementations of the Zarr specification
+being developed, ranging from the mature Zarr-Python~\citep{zarrpython}
+and TensorStore~\citep{tensorstore} implementations
+to more experimental extensions to packages like
+GDAL~\citep{gdal_zarr},
+NetCDF~\citep{netcfd_c},
+N5~\citep{n5zarr}
+and xtensor~\citep{xtensor_zarr}
+as well as  standalone libraries for JavaScript~\cite{zarrjs},
+Julia~\cite{zarrjl}, Rust~\citep{zarrs}
+and R~\cite{pizzarr}.
+
 
 Zarr is flexible in allowing different compression codecs and 
 pre-compression filters to be specified on a per-array basis.
@@ -1006,7 +1018,6 @@ compressible datasets, Blosc decompression can be faster
 than \texttt{memcpy}.
 Blosc is written in C, with APIs for C, Python, Julia, Rust
 and others.
-
 Blosc is a ``meta-compressor'' because it provides different 
 access to several different compression codecs. The 
 Zstandard compressor~\citep{collet2021rfc} is of particular 
@@ -1018,19 +1029,24 @@ Zstandard is also used in several recent VCF compression
 methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
 % LZ4 is also notable - any citations for this?
 
-% Zarr was originally developed as a simpler version of 
-% HDF5~\citep{folk2011overview}
+This combination of Zarr's simple and cloud-friendly storage 
+of data chunks with state-of-the-art compression methods has 
+led to Zarr gaining significant traction in large-scale 
+scientific computing, in particular in the geosciences.
 
-Mature zarr implementations: Zarr-Python~\citep{zarrpython},
-TensorStore~\citep{tensorstore}
-
-and more experimental~\citep[e.g.][]{xtensor_zarr}
-
-
-Zarr is now widely used.
 
 Multi terabyte numerical weather prediction models~\citep{gowan2022using}
-Petabyte scale geoscience datasets in the Pangeo project
+
+CMIP6 dataset in Google Cloud~\cite{cmip6_dataset}
+
+The Open GeoSpatial consortium has formally recognised Zarr as a community
+standard~\cite{ogc_zarr2_standard}
+and has formed
+a new GeoZarr Standards Working Group to establish a Zarr encoding for
+geospatial data~\cite{ogc_geozarr_news}.
+
+Zarr is being considered a potential format for migrating the 
+Copernicus global land service to the cloud~\citep{abernathey2021opening}
 
 ITS\_LIVE ice velocity dataset~\citep{fahnestock2023mappin} using 
 the Zarr.js Javascript interface to visualise the ``massive''
