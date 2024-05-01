@@ -1021,9 +1021,12 @@ optimise CPU-cache access patterns, as well as highly optimised
 bit and byte shuffle filters.  Remarkably, on highly 
 compressible datasets, Blosc decompression can be faster 
 than \texttt{memcpy}.
+% Mentioning this detail to reassure readers who might be thinking
+% "how would this be implemented and what kind of horrible dependencies
+% would I need?"
 Blosc is written in C, with APIs for C, Python, Julia, Rust
 and others.
-Blosc is a ``meta-compressor'' because it provides different 
+Blosc is a ``meta-compressor'' because it provides 
 access to several different compression codecs. The 
 Zstandard compressor~\citep{collet2021rfc} is of particular 
 interest here as it achieves very high compression ratios
@@ -1060,26 +1063,11 @@ Zarr has also seen recent uptake
 in single-scell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
 and multimodal spatial omics
 data~\citep{marconato2024spatialdata,baker2023emobject}.
-
-
-
-
-
-EUGENe~\citep{klie2023predictive} is a toolkit for 
-for applying deep-learning methods to genomic sequence data,
-integrating with PyTorch [citation?].
-
-
-
-
-DivBrowse~\citep{konig2023divbrowse}. Works with VCF data using 
-the scikit-allel \texttt{vcf\_to\_zarr} function, (produces 
-a precursor to the VCF-Zarr specification here). It's a 
-browser, using Zarr as the storage backend.
-
-Zarr was originally developed as a means efficiently accessing VCF data,
- and has been in use within the MalariaGEN project for XX years. [
-ALISTAIR - details and citations here!]
+Recent additions using Zarr include the application of deep learning
+models to genomic sequence data~\citep{klie2023predictive} 
+and a browser for genetic variation data~\citep{konig2023divbrowse}.
+Zarr has in fact been in use in genomics for many years, and was originally 
+developed to [ALISTAIR - details and citations here!]
 
 \subsection{The VCF Zarr specification}
 The VCF Zarr specification is a direct mapping from the VCF data model
@@ -1106,7 +1094,6 @@ The specification defines a clear mapping of VCF field names (keys) to
 array names, VCF Number to array shape, and VCF Type to array data type.
 To take one example, consider the VCF AD genotype field defined by the
 following VCF header: \texttt{\#\#FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">}
-
 The FORMAT key \texttt{ID} maps to an array name of \texttt{call\_AD}
 (FORMAT fields have a \texttt{call\_} prefix, while INFO fields have a
 \texttt{variant\_} prefix; both are followed by the key name). Arrays
