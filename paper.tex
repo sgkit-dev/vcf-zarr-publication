@@ -398,7 +398,7 @@ works very well in the classical (shared) file-system setting
 and we therefore focus on benchmarks in this setting
 to allow us to compare with existing tools.
 Those seeking benchmarks of Zarr in cloud deployments are 
-directed to [citations].
+directed to~\citep{durbin2020task,moore2021ome,gowan2022using} [ANY OTHERS?]
 
 
 \subsection{Calculating with the genotype matrix}
@@ -930,9 +930,14 @@ between sites, such that conventional compression schemes
 perform very well~\ref{fig-data-storage}.
 
 
-Reel off Python data science ecosystem: Pandas~\citep{mckinney2010data} etc
-[ Things to cite: pandas~\citep{mckinney2010data},
-BioNumpy~\citep{rand2022bionumpy}, OME-Zarr~\citep{moore2023ome}]
+The Python data science ecosystem is increasingly popular, 
+with packages such as NumPy~\citep{harris2020array},
+SciPy~\citep{virtanen2020scipy},
+Pandas~\citep{mckinney2010data},
+Jupyter~\citep{kluyver2016jupyter}
+enabling much of contemporary science.
+
+BioNumpy~\citep{rand2022bionumpy}, 
 
 % Although the Hadoop ecosystem has been hugely successful
 % in many domains, it has had a limited impact in genomics.
@@ -1031,7 +1036,7 @@ methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
 
 Scientific datasets are increasingly overwhelming the classical
 model of downloading and analysing locally, and are migrating to 
-centralised cloud repositories \citep{abernathey2021cloud}.
+centralised cloud repositories \citep{abernathey2021cloud,moore2021ome}.
 The combination of Zarr's simple and cloud-friendly storage 
 of data chunks with state-of-the-art compression methods has 
 led to Zarr gaining significant traction in these settings.
@@ -1039,25 +1044,42 @@ Multiple petabyte-scale datasets are now stored using
 Zarr~\cite[e.g.][]{gowan2022using, % weather model data
 fahnestock2023mappin, % ITS_LIVE dataset
 cmip6_dataset}
-or under active consideration for migration~\citep{abernathey2021opening}.
+or under active consideration for migration~\citep{durbin2020task,abernathey2021opening}.
 The Open GeoSpatial consortium has formally recognised Zarr as a community
 standard~\cite{ogc_zarr2_standard}
 and has formed
 a new GeoZarr Standards Working Group to establish a Zarr encoding for
 geospatial data~\cite{ogc_geozarr_news}.
 
-Zarr has recently been gaining traction in biological applications
-also. EUGENe~\citep{klie2023predictive} is a toolkit for 
+Zarr has recently been gaining popularity in biological applications.
+The Open Microscopy Environment has developed OME-Zarr~\cite{moore2023ome} as one 
+of its ``next generation'' cloud ready file formats~\citep{moore2021ome}.
+OME-Zarr already has a rich suite of supporting
+tools~\cite{moore2023ome,rzepka2023toward}. 
+Zarr has also seen recent uptake 
+in single-scell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
+and multimodal spatial omics
+data~\citep{marconato2024spatialdata,baker2023emobject}.
+
+
+
+
+
+EUGENe~\citep{klie2023predictive} is a toolkit for 
 for applying deep-learning methods to genomic sequence data,
 integrating with PyTorch [citation?].
 
-Spatially resolved omics data~\citep{baker2023emobject,marconato2024spatialdata}
-building on the Zarr-based OME-NGFF format~\citep{moore2023ome,rzepka2023toward}
+
+
 
 DivBrowse~\citep{konig2023divbrowse}. Works with VCF data using 
 the scikit-allel \texttt{vcf\_to\_zarr} function, (produces 
 a precursor to the VCF-Zarr specification here). It's a 
 browser, using Zarr as the storage backend.
+
+Zarr was originally developed as a means efficiently accessing VCF data,
+ and has been in use within the MalariaGEN project for XX years. [
+ALISTAIR - details and citations here!]
 
 \subsection{The VCF Zarr specification}
 The VCF Zarr specification is a direct mapping from the VCF data model
