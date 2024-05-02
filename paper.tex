@@ -108,13 +108,13 @@ University of Oxford, UK}
 Variant Call Format (VCF) is the standard file format for interchanging
 genetic variation data and associated quality control metrics.
 It provides a well-defined data model and is central to a large ecosystem
-of tools interoperating through this format.
-The standard row-based encoding of the VCF data model (either as text
+of interoperating tools.
+The standard row-wise encoding of the VCF data model (either as text
 or packed binary) emphasises efficient retrieval of all data for a given
 variant, but accessing subsets of the data within rows is inefficient.
 Biobank-scale datasets currently available 
-consist of hundreds of thousands of whole genomes with tens of terabytes
-of compressed VCF per chromosome.
+consist of hundreds of thousands of whole genomes 
+and hundreds of terabytes of compressed VCF.
 Row-based data storage is fundamentally unsuited to such datasets
 and these large VCFs represent a major computational bottleneck.
 
@@ -176,16 +176,16 @@ Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 and the All of Us research program~\citep{all2024genomic}
 collecting genome sequence data for hundreds of thousands of humans.
-While there are many advantages to encoding data in text files,
-VCF is simply not fit for purpose as part of computational workflows 
-at this scale. 
-Methods that require efficient access to data
-either require VCF data to be converted into 
+
+VCF's simple text-based design and widespread support makes it an 
+excellent archival format, but it is a poor basis for computational
+workflows. Methods that require efficient access to genotype data
+either require convertion to the
 PLINK~\cite{purcell2007plink,chang2015second} 
 or BGEN~\citep{band2018bgen} 
-format~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
+formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
 or use 
-custom binary formats~\citep[e.g.][]{
+bespoke binary formats~\citep[e.g.][]{
 % Uses custom "bref3" format,
 % https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
 browning2018one, 
@@ -205,13 +205,37 @@ WGS data~\citep{uk2023whole} is 116 TiB.
 % humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
 % '115.7 TiB'
 
-The main solution that has emerged to these problems of 
-computation on genetic variation data at scale is Hail~\cite{ganna2016ultra,hail2024}.
+Downstream processing of these datasets can be split into a 
+few broad categories. The first level of analysis that is 
+done is quality control (QC). Variant calling QC is an 
+involved and multi-faceted 
+task [CITATIONS?], requiring analysis of many different metrics
+and properties of the data and substantial computation.
+Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
+for quality control of large-scale variation datasets.
 Building on components from the Hadoop ecosytem~\citep{white2012hadoop},
-Hail distributes computations transparently over a cluster, enabling
+Hail distributes calculations and data transparently over a cluster, enabling
 interactive analysis of very large datasets. It has been successfully used 
-in many studies, and instrumental in generating datasets such as 
+in many studies, and instrumental in datasets such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
+After QC, a common task is to perform a genome wide association study
+(GWAS)~\cite{uffelmann2021genome}. The majority of tools for 
+performing GWAS and associated tasks require
+data to be in PLINK format~\cite[e.g][]{chang2015second} [MORE],
+and so data must be ``hard-called'' according to some QC criteria
+and exported to additional (large) files.
+Many applications examine data on a variant-by-variant
+basis, but others,
+e.g.\ reference-panel based phasing and imputation 
+methods~\citep[e.g.][MORE and CHECK]{browning2021fast,browning2023statistical}
+and Ancestral Recombination Graph 
+(ARG) inference~\cite{brandt2024promise,lewanski2024era,wong2024general}
+require access on a sample-by-sample basis.
+Finally, variation datasets are often queried in exploratory
+analyses, to find regions or variants of interest for a particular 
+study (see section XXX).
+
+
 While Hail is powerful software, it is not a suitable platform for 
 developing inference or performing complex analysis. It is complex,
 vertically integrated software, with an undocumented file format
