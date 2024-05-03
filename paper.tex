@@ -35,7 +35,7 @@
 
 % See https://github.com/sgkit-dev/vcf-zarr-publication/issues/87
 % for discussion
-\title{Analysis-ready VCF at Biobank scale using Zarr}
+\title{Analysis-ready VCF at Biobank-scale using Zarr}
 
 %%% Use the \authfn to add symbols for additional footnotes, if any. 
 % 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
@@ -122,26 +122,24 @@ and these large VCFs represent a major computational bottleneck.
 We present the VCF Zarr specification, a columnar encoding of the 
 VCF data model using Zarr which makes retrieving subsets of the 
 data much more efficient. Zarr is a cloud-native format for storing 
-multi-dimensional numerical data, widely used in scientific computing.
-We show how this format is competitive with specialised methods for 
-storing genotype data in terms of compression ratios, and also performs
-well on compressing the high-entropy quality-control fields that 
-tend to dominate. We show that performing calculations on the genotype
-matrix is much more efficient than standard
-approaches based on VCF, and is comparable with state-of-the-art methods
-using compiled languages. We demonstrate 
-the VCF Zarr format (and the vcf2zarr conversion utility) 
+multi-dimensional data, widely used in scientific computing.
+We show how this format is far more efficient than
+standard VCF based approaches,
+and competitive with specialised methods for 
+storing genotype data in terms of compression ratios
+and calculation performance.
+We demonstrate the VCF Zarr format (and the vcf2zarr conversion utility) 
 on the Genomics England dataset of XX,XXX,XXX samples, showing
 an overall reduction in storage of XX, and a reduction in processing 
 time of common queries of up to XX fold.
 
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and 
-processing these files incurs a substantial economic cost.
+storing and processing these files incurs a substantial economic cost.
 The VCF Zarr specification, building on widely-used, open-source technologies
-has the potential to greatly reduce these costs,
+has the potential to greatly reduce these costs, 
 and may enable a diverse ecosystem of next-generation tools for analysing 
-genetic variation data.
+genetic variation data directly from cloud-based object stores.
 \end{abstract}
 
 \begin{keywords}
@@ -171,7 +169,7 @@ it has been refined and standardised~\citep{rehm2021ga4gh} and the
 underlying data-model is now deeply embedded in bioinformatics practice.
 Dataset sizes have grown explosively since the introduction of 
 VCF as part of 1000 Genomes project~\citep{10002015global},
-with Biobank-scale projects such as 
+with Biobank-scale initiatives such as 
 Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 and the All of Us research program~\citep{all2024genomic}
@@ -179,42 +177,35 @@ collecting genome sequence data for hundreds of thousands of humans.
 
 VCF's simple text-based design and widespread support makes it an 
 excellent archival format, but it is a poor basis for computational
-workflows. Methods that require efficient access to genotype data
-either require convertion to the
-PLINK~\cite{purcell2007plink,chang2015second} 
-or BGEN~\citep{band2018bgen} 
-formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
-or use 
-bespoke binary formats~\citep[e.g.][]{
-% Uses custom "bref3" format,
-% https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
-browning2018one, 
-% .samples Zarr format
-kelleher2019inferring,
-% Has a "xcftools" package, but it still looks pretty experimental
-hofmeister2023accurate} 
-that support the required access patterns.
-While PLINK and BGEN support efficient access to genotype data, neither
-can accommodate the full flexibility of the VCF data model and conversion
-is lossy. PLINK's approach of storing the genotype matrix in uncompressed
-packed-binary format also leads to large files, particularly for recent
-whole-genome sequence datasets. For example, at two bits 
-per genotype, the full matrix for the GraphTyper SNP dataset in the UKB
-WGS data~\citep{uk2023whole} is 116 TiB.
-% 1,037,556,156 SNPs x  490,640 samples
-% humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
-% '115.7 TiB'
-
-Downstream processing of these datasets can be split into a 
+workflows. 
+% Methods that require efficient access to genotype data
+% either require convertion to the
+% PLINK~\cite{purcell2007plink,chang2015second} 
+% or BGEN~\citep{band2018bgen} 
+% formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
+% or use 
+% bespoke binary formats~\citep[e.g.][]{
+% % Uses custom "bref3" format,
+% % https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
+% browning2018one, 
+% % .samples Zarr format
+% kelleher2019inferring,
+% % Has a "xcftools" package, but it still looks pretty experimental
+% hofmeister2023accurate} 
+% that support the required access patterns.
+% While PLINK and BGEN support efficient access to genotype data, neither
+% can accommodate the full flexibility of the VCF data model and conversion
+% is lossy.
+Processing of Biobank-scale datasets can be split into a 
 few broad categories. The first level of analysis that is 
 done is quality control (QC). Variant calling QC is an 
 involved and multi-faceted 
 task [CITATIONS?], requiring analysis of many different metrics
-and properties of the data and substantial computation.
+and incurring substantial computation.
 Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
 for quality control of large-scale variation datasets.
 Building on components from the Hadoop ecosytem~\citep{white2012hadoop},
-Hail distributes calculations and data transparently over a cluster, enabling
+Hail distributes data and calculations over a cluster, enabling
 interactive analysis of very large datasets. It has been successfully used 
 in many studies, and instrumental in datasets such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
@@ -223,31 +214,32 @@ After QC, a common task is to perform a genome wide association study
 performing GWAS and associated tasks require
 data to be in PLINK format~\cite[e.g][]{chang2015second} [MORE],
 and so data must be ``hard-called'' according to some QC criteria
-and exported to additional (large) files.
+and exported to additional files.
+PLINK's approach of storing the genotype matrix in uncompressed
+packed-binary format provides efficient access to genotype 
+data, but file sizes are substantially larger than 
+the equivalent compressed VCF. 
+For example, at two bits 
+per genotype, the full matrix for the GraphTyper SNP dataset in the UKB
+WGS data~\citep{uk2023whole} is 116 TiB.
+% 1,037,556,156 SNPs x  490,640 samples
+% humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
+% '115.7 TiB'
 Many applications examine data on a variant-by-variant
 basis, but others,
 e.g.\ reference-panel based phasing and imputation 
 methods~\citep[e.g.][MORE and CHECK]{browning2021fast,browning2023statistical}
-and Ancestral Recombination Graph 
-(ARG) inference~\cite{brandt2024promise,lewanski2024era,wong2024general}
+% and Ancestral Recombination Graph 
+% (ARG) inference~\cite{brandt2024promise,lewanski2024era,wong2024general}
 require access on a sample-by-sample basis.
 Finally, variation datasets are often queried in exploratory
-analyses, to find regions or variants of interest for a particular 
+analyses, to find regions or samples of interest for a particular 
 study (see section XXX).
 
-
-While Hail is powerful software, it is not a suitable platform for 
-developing inference or performing complex analysis. It is complex,
-vertically integrated software, with an undocumented file format
-[say this better]. 
-Similarly, commerical solutions that have emerged to facilitate
-the analysis of large-scale genetic variation data are either
-based on proprietary~[Terra? BigQuery?]
-or single-vendor technologies~\cite[e.g.][]{tiledb2024}.
-
-VCF has enabled a vibrant ecosystem of interoperating
-utilities~\cite{danecek2021twelve,garrison2022spectrum}, but these tools
-are fundamentally scale-limited by the format. 
+VCF (and BCF) cannot support any of these workflows efficiently
+at the Biobank scale, and workarounds of creating subsets 
+of data (i.e., discarding QC metrics in VCF) or copying to 
+PLINK format are becoming less effective.
 The most intrinsically limiting aspect of VCF's design is its 
 row-wise layout of data within a file, which means that (for example)
 data for a particular sample cannot be efficiently retrieved.
@@ -255,7 +247,7 @@ The file-oriented paradigm is also unsuited to the realities
 of modern datasets, which are too large to download and 
 often required to stay in-situ by data-access agreements.
 Large files are stored in cloud environments, where the 
-file systems that are required by file-oriented tools
+file systems that are required by classical file-oriented tools
 are expensively emulated on the basic building blocks
 of object storage. 
 These multiple layers of inefficiences around processing
@@ -264,27 +256,53 @@ time-consuming and expensive, effectively making
 % Dunno if we want to get into this, but it's true
 analysis of these datasets the preserve of a well-funded elite.
 
+The analysis of Biobank-scale variation 
+datasets requires a primary data representation that can 
+efficiently support different types of query without 
+conversion or intermediate copies, and operate 
+directly from cloud object stores. Such a representation
+can be termed ``analysis-ready''
+and ``cloud-native''~\citep{abernathey2021cloud}.
+For such a representation to be FAIR~\citep{wilkinson2016fair},
+it must also \emph{accessible}: ``open, free, and universally
+implementable''.
+There is no currently no efficient, FAIR representation of genetic variation
+data suitable for cloud deployments.
+While Hail is powerful software its file formats are not documented or 
+designed for reuse.
+Similarly, commerical solutions that have emerged to facilitate
+the analysis of large-scale genetic variation data are either
+based on proprietary~[Terra? BigQuery?]
+or single-vendor technologies~\cite[e.g.][]{tiledb2024}.
+The next generation of VCF analysis methods requires
+an open, free and transparent data representation 
+with multiple independent implementations.
+
 Here, we decouple the VCF data model from its row-oriented
-file definition, and show how the corresponding data model can be 
-efficiently stored and analysed in a cloud-native manner.
+file definition, and show how the data can be 
+efficiently stored and analysed in a cloud-native, FAIR manner.
 We do this by translating VCF data into Zarr format,
-a popular method of storing compressed N-dimensional arrays
-used to store petabyte-scale datasets across the sciences [citations].
+a method of storing large multidimensional data as a regular
+grid of compressed chunks. 
+Zarr's simplicity and its direct mapping of chunks to 
+keys in an object store have lead to 
+it gaining substantial traction
+across the sciences, and it is now used in multiple petabyte-scale
+datasets in cloud deployments (see Methods for details).
 We present the VCF Zarr specification which formalises this 
-mapping, and and the \texttt{vcf2zarr} 
+mapping, and the \texttt{vcf2zarr} 
 utility which reliably converts large-scale VCFs into Zarr 
 format. We show that VCF Zarr is much more compact than 
-VCF (and BCF), and it competitive with state-of-the-art
-VCF compression tools. Moreover, we show that Zarr's 
-storage of data in an analysis-ready 
-format~\cite{abernathey2021cloud} greatly facilitates computation,
+VCF (and BCF), and is competitive with state-of-the-art
+VCF compression tools. 
+Moreover, we show that Zarr's storage of data in an analysis-ready 
+format greatly facilitates computation,
 with various benchmarks being substantially faster than
 \texttt{bcftools} based pipelines, and again competetive
-with state-of-the-art methods. Finally, we show the 
+with state-of-the-art file-oriented methods. Finally, we show the 
 utility of VCF Zarr on the Genomics England aggV2 dataset,
-demonstrating that common queries can be performed orders
-of magnitude more quickly based on simple Python scripts.
-
+demonstrating that common \texttt{bcftools} queries can be performed orders
+of magnitude more quickly using simple Python scripts.
 
 \section{Results}
 
@@ -319,13 +337,15 @@ most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
 See~\citep{mcvean2019linkage} for a review of the techniques
 employed in genetic data compression.
+[FIXME need to work SeqArray~\citep{zheng2017seqarray,zheng2012high}
+in here.]
 
 VCF is a text-based format in which each line
 describes observations
-and metadata for a single variant (usually a position on the genome
-where variation occurs in the samples)~\citep{danecek2011variant}. 
+and metadata for a single variant~\citep{danecek2011variant}. 
 VCF is therefore a \emph{row-wise} format, i.e., where all of the 
-data for a record is stored continguously. BCF is similarly 
+data for a record is stored continguously. BCF (a packed binary 
+representation) is similarly 
 row-wise, as are the majority of proposed alternative storage formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient, and 
@@ -338,19 +358,31 @@ row-wise storage can be inefficient because we will usually need to
 retrieve more information than required from storage. In the case 
 of VCF (and BCF) where records are not of a fixed size and 
 are almost always compressed in blocks, accessing any information
-for all rows means retrieving and decompressing \emph{all} 
-information from all rows.
+for a set of rows means retrieving and decompressing \emph{all} 
+information from these rows.
 The alternative to row-wise storage is \emph{columnar} storage:
 instead of grouping together all the fields for a record,
 we group together all the records for a given field.
-Columnar storage has become standard [very quick summary of columnar
-storage with some refs].
-Although columnar methods have been successfully used in alignment 
+Columnar storage formats such as Parquet~\citep{parquet2024},
+makes retrieving particular columns much 
+more efficient and can lead to substantially better compression.
+While columnar techniques have been successfully applied 
+alignment
 % TODO check
-storage~\citep{bonfield2014scramble,bonfield2022cram},
-the only existing method using columnar 
-storage for genetic variation data is 
-SeqArray~\citep{zheng2017seqarray,zheng2012high} to our knowledge.
+% Jeff: OK with the ADAM reference in here? You did some parquet based
+% alignment storage, right?
+storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
+use of technologies such as Parquet for 
+storing and analysing variation data have had limited
+success~\citep{boufea2017managing,fan2020variant}.
+Directly mapping VCF data to a columnar layout, in which there is a 
+a column for the genotypes (and other per-sample QC metrics) 
+for each sample, scales poorly. Firstly, it leads to a large number 
+of columns (millions, at Biobank scale), which techologies such 
+as Parquet are not designed for. Secondly, compression performance 
+within columns is poor because there is much less similarity among
+the genotypes for a given sample than there is among the genotypes
+for a given variant. [TODO check this - reference?]
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
@@ -359,6 +391,10 @@ SeqArray~\citep{zheng2017seqarray,zheng2012high} to our knowledge.
 VCF to VCF Zarr in the examples]
 \label{fig-data-model}}
 \end{figure}
+
+[TODO intro passage here on array-based or ``tensor'' storage. Separate
+out the different interleaved matrices with the VCF, and store them
+in regular chunked grids.]
 
 We propose the VCF Zarr specification which maps the 
 VCF data model into a columnar layout using the
