@@ -54,7 +54,7 @@ plot_data/data-scaling.csv:
 	python3 src/collect_data.py file-size $(TS_FILES) -o $@
 
 plot_data/compression_benchmarks.csv:
-	python3 src/compression_benchmarks.py --input data/WGS/chr22.zarr
+	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr
 
 # TODO make rule for time-scaling
 
@@ -85,17 +85,17 @@ figures/subset-matrix-compute-supplemental.pdf: plot_data/subset-matrix-compute.
 		figures/subset-matrix-compute-supplemental.pdf
 
 figures/compression_ratio_grid.pdf: plot_data/compression_benchmarks.csv
-	python3 src/plot.py plot_compression_ratio_grid \
+	python3 src/plot.py plot-compression-ratio-grid \
 		plot_data/compression_benchmarks.csv \
 		figures/compression_ratio_grid.pdf
 
 figures/compression_dim_shuffle.pdf: plot_data/compression_benchmarks.csv
-        python3 src/plot.py plot_compression_dim_shuffle \
+	python3 src/plot.py plot-compression-dim-shuffle \
                 plot_data/compression_benchmarks.csv \
                 figures/compression_dim_shuffle.pdf
 
 figures/compression_packbits.pdf: plot_data/compression_benchmarks.csv
-        python3 src/plot.py plot_compression_packbits \
+	python3 src/plot.py plot-compression-packbits \
                 plot_data/compression_benchmarks.csv \
                 figures/compression_packbits.pdf
 

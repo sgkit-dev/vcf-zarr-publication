@@ -324,6 +324,7 @@ def plot_compression_ratio_grid(data, output):
          ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
     
     plt.subplots_adjust(hspace = 1.)
+    plt.tight_layout()
     plt.savefig(output)
 
 
@@ -333,18 +334,21 @@ def plot_compression_ratio_grid(data, output):
 def plot_compression_dim_shuffle(data, output):
 
     df = pd.read_csv(data)
+
     # Effect was mainly on `call_AD`, so we filter here?
     df_plot = df.loc[df.ArrayName == 'call_AD']
 
     g = sns.catplot(df_plot, kind='bar',
                     col='shuffle',
                     x='named_chunksize', y='CompressionRatio',
-                    sharex=False, sharey='row')
+                    sharex=True, sharey=True)
 
     for i, ax in enumerate(g.fig.axes):   ## getting all axes of the fig object
          ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
 
-    plt.subplots_adjust(hspace = 1.)
+    plt.suptitle("Compression Ratios for call_AD across dimension shuffles")
+
+    plt.tight_layout()
     plt.savefig(output)
 
 
@@ -354,7 +358,8 @@ def plot_compression_dim_shuffle(data, output):
 def plot_compression_packbits(data, output):
 
     df = pd.read_csv(data)
-    df_plot = df.loc[df.ArrayName == 'call_genotype_mask']
+    df_plot = df.loc[(df.ArrayName == 'call_genotype_mask') & 
+                     df.dim_order.isin(['(0, 1)', '(0, 1, 2)'])]
 
     if len(df_plot) < 1:
         raise ValueError("Information about call_genotype_mask isn't present.")
@@ -362,12 +367,13 @@ def plot_compression_packbits(data, output):
     g = sns.catplot(df_plot, kind='bar',
                     col='shuffle', row='cname',
                     x='named_chunksize', y='CompressionRatio',
-                    sharex=False, sharey='row')
+                    sharex=False, sharey=True)
 
     for i, ax in enumerate(g.fig.axes):   ## getting all axes of the fig object
          ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
 
     plt.subplots_adjust(hspace = 1.)
+    plt.tight_layout()
     plt.savefig(output)
 
 

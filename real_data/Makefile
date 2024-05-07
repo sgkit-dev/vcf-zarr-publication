@@ -17,9 +17,13 @@
 # 	 	by setting the WORKERS argument. The default is 8 workers.
 
 
+# Required software:
+BCFTOOLS=../software/bcftools
+
+
 # Flags / commandline arguments:
 CHROMOSOME ?= 22
-WGS ?= 0
+WGS ?= 1
 WORKERS ?= 8
 
 # If WGS is set to 1, use URL for WGS data:
@@ -36,9 +40,11 @@ all: $(OUTPUT_DIR)/chr$(CHROMOSOME).zarr
 
 %.vcf.gz:
 	@echo "> Downloading VCF file from: $(TGP_URL)"
-	mkdir -p $(OUTPUT_DIR) && wget -O "$(OUTPUT_DIR)/chr$(CHROMOSOME).vcf.gz" "$(TGP_URL)"
-	wget -O "$(OUTPUT_DIR)/chr$(CHROMOSOME).vcf.gz.tbi" "$(TGP_URL).tbi"
+	mkdir -p $(OUTPUT_DIR) # && wget -O "$(OUTPUT_DIR)/chr$(CHROMOSOME).vcf.gz" "$(TGP_URL)"
+	${BCFTOOLS} view "$(TGP_URL)" | head -n 100000 | ${BCFTOOLS} view -O z -o "$(OUTPUT_DIR)/chr$(CHROMOSOME).vcf.gz"
 	@echo "---------------------- Downloading completed ----------------------"
+	@echo "> Indexing the VCF file..."
+	${BCFTOOLS} index "$(OUTPUT_DIR)/chr$(CHROMOSOME).vcf.gz"
 
 .PRECIOUS: %.vcf.gz %.icf %.vcf.gz.tbi
 
@@ -49,6 +55,6 @@ all: $(OUTPUT_DIR)/chr$(CHROMOSOME).zarr
 
 %.zarr: %.icf
 	@echo "> Encoding the exploded VCF: $< to $@"
-	vcf2zarr encode $< $@ -p$(WORKERS) --max-memory=200GiB -v
+	vcf2zarr encode $< $@ -p$(WORKERS) --max-memory=10GiB -v
 	@echo "---------------------- Encoding completed ----------------------"
 

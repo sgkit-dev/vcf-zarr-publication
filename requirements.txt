@@ -1,0 +1,9 @@
+zarr
+bio2zarr>=0.0.6
+seaborn
+matplotlib
+pandas
+numpy
+scipy
+humanize
+
