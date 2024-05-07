@@ -341,18 +341,16 @@ employed in genetic data compression.
 [FIXME need to work SeqArray~\citep{zheng2017seqarray,zheng2012high}
 in here.]
 
-VCF is a text-based format in which each line
+VCF is row-wise format in which 
 describes observations
-and metadata for a single variant~\citep{danecek2011variant}. 
-VCF is therefore a \emph{row-wise} format, i.e., where all of the 
-data for a record is stored continguously. BCF (a packed binary 
-representation) is similarly 
+and metadata for a single variant~\citep{danecek2011variant} are
+encoded as a line of text.
+BCF (a packed binary representation) is similarly 
 row-wise, as are the majority of proposed alternative storage formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient, and 
 allows data to be easily streamed through Unix pipelines (see Discussion).
-
-Row-wise storage works well when records are relatively small, 
+The row-wise approach works well when records are relatively small, 
 or when we typically want to analyse each record in its entirity.
 When we want to analyse only a subset of a record,
 row-wise storage can be inefficient because we will usually need to
@@ -361,27 +359,30 @@ of VCF (and BCF) where records are not of a fixed size and
 are almost always compressed in blocks, accessing any information
 for a set of rows means retrieving and decompressing \emph{all} 
 information from these rows.
-The alternative to row-wise storage is \emph{columnar} storage:
+
+The usual alternative to row-wise storage is \emph{columnar} storage:
 instead of grouping together all the fields for a record,
 we group together all the records for a given field.
 Columnar storage formats such as Parquet~\citep{parquet2024},
-makes retrieving particular columns much 
+make retrieving particular columns much 
 more efficient and can lead to substantially better compression.
 While columnar techniques have been successfully applied 
-alignment
+in alignment
 % TODO check
 % Jeff: OK with the ADAM reference in here? You did some parquet based
 % alignment storage, right?
 storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
-use of technologies such as Parquet for 
+the use of technologies such as Parquet for 
 storing and analysing variation data have had limited
 success~\citep{boufea2017managing,fan2020variant}.
-Directly mapping VCF data to a columnar layout, in which there is a 
+Columnar techologies tend to be 
+optimised for ``tall and narrow'' data there is a large number of records
+for a relatively small number of columns. 
+Mapping VCF directly to a columnar layout, in which there is a 
 a column for the genotypes (and other per-sample QC metrics) 
-for each sample, scales poorly. Firstly, it leads to a large number 
-of columns (millions, at Biobank scale), which techologies such 
-as Parquet are not designed for. Secondly, compression performance 
-within columns is poor because there is much less similarity among
+leads to millions of columns, and substantial technical challenges.
+Additionally, compression performance within columns is poor 
+because there is much less similarity among
 the genotypes for a given sample than there is among the genotypes
 for a given variant. [TODO check this - reference?]
 
@@ -392,6 +393,13 @@ for a given variant. [TODO check this - reference?]
 VCF to VCF Zarr in the examples]
 \label{fig-data-model}}
 \end{figure}
+
+VCF is at its core an encoding of the genotype matrix $G$, where each entry
+encodes the observed genotypes for a given sample at a give variant site,
+interleaved with per-variant information
+and other matrices (e.g., GQ or AD).
+The data is largely numerical and of a fixed dimension, and is therefore a 
+natural mapping to an array-oriented approach [PICK UP HERE]
 
 [TODO intro passage here on array-based or ``tensor'' storage. Separate
 out the different interleaved matrices with the VCF, and store them
