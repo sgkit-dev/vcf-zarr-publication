@@ -161,7 +161,7 @@ in the VCF separately in chunk-compressed binary format.
 
 \section{Background}
 Variant Call Format (VCF) is the standard format for interchanging genetic
-variation data~\citep{danecek2011variant}, storing information about 
+variation data~\citep{danecek2011variant}, encoding information about 
 DNA sequence polymorphisms among a set of samples with associated 
 quality control metrics and metadata. 
 Originally defined specifically as a text file,
@@ -178,27 +178,38 @@ collecting genome sequence data for hundreds of thousands of humans.
 VCF's simple text-based design and widespread support makes it an 
 excellent archival format, but it is a poor basis for computational
 workflows. 
-% Methods that require efficient access to genotype data
-% either require convertion to the
-% PLINK~\cite{purcell2007plink,chang2015second} 
-% or BGEN~\citep{band2018bgen} 
-% formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
-% or use 
-% bespoke binary formats~\citep[e.g.][]{
-% % Uses custom "bref3" format,
-% % https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
-% browning2018one, 
-% % .samples Zarr format
-% kelleher2019inferring,
-% % Has a "xcftools" package, but it still looks pretty experimental
-% hofmeister2023accurate} 
-% that support the required access patterns.
-% While PLINK and BGEN support efficient access to genotype data, neither
-% can accommodate the full flexibility of the VCF data model and conversion
-% is lossy.
+Methods that require efficient access to genotype data
+either require convertion to the
+PLINK~\cite{purcell2007plink,chang2015second} 
+or BGEN~\citep{band2018bgen} 
+formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
+or use 
+bespoke binary formats~\citep[e.g.][]{
+% Uses custom "bref3" format,
+% https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
+browning2018one, 
+% .samples Zarr format
+kelleher2019inferring,
+% Has a "xcftools" package, but it still looks pretty experimental
+hofmeister2023accurate} 
+that support the required access patterns.
+While PLINK and BGEN support efficient access to genotype data, neither
+can accommodate the full flexibility of the VCF data model and conversion
+is lossy.
+PLINK's approach of storing the genotype matrix in uncompressed
+packed-binary format provides efficient access to genotype 
+data, but file sizes are substantially larger than 
+the equivalent compressed VCF. 
+For example, at two bits 
+per genotype, the full genotype matrix for the GraphTyper SNP dataset 
+in the UKB WGS data~\citep{uk2023whole} is 116 TiB.
+% 1,037,556,156 SNPs x  490,640 samples
+% humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
+% '115.7 TiB'
+
 Processing of Biobank-scale datasets can be split into a 
-few broad categories. The first level of analysis that is 
-done is quality control (QC). Variant calling QC is an 
+few broad categories. The most basic analysis 
+is quality control (QC). Variant calling QC is an 
 involved and multi-faceted 
 task [CITATIONS?], requiring analysis of many different metrics
 and incurring substantial computation.
@@ -209,40 +220,29 @@ Hail distributes data and calculations over a cluster, enabling
 interactive analysis of very large datasets. It has been successfully used 
 in many studies, and instrumental in datasets such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
-After QC, a common task is to perform a genome wide association study
+A common task to perform after QC is 
+a genome wide association study
 (GWAS)~\cite{uffelmann2021genome}. The majority of tools for 
-performing GWAS and associated tasks require
+performing GWAS and related analyses require
 data to be in PLINK format~\cite[e.g][]{chang2015second} [MORE],
 and so data must be ``hard-called'' according to some QC criteria
 and exported to additional files.
-PLINK's approach of storing the genotype matrix in uncompressed
-packed-binary format provides efficient access to genotype 
-data, but file sizes are substantially larger than 
-the equivalent compressed VCF. 
-For example, at two bits 
-per genotype, the full matrix for the GraphTyper SNP dataset in the UKB
-WGS data~\citep{uk2023whole} is 116 TiB.
-% 1,037,556,156 SNPs x  490,640 samples
-% humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
-% '115.7 TiB'
-Many applications examine data on a variant-by-variant
-basis, but others,
-e.g.\ reference-panel based phasing and imputation 
-methods~\citep[e.g.][MORE and CHECK]{browning2021fast,browning2023statistical}
-% and Ancestral Recombination Graph 
-% (ARG) inference~\cite{brandt2024promise,lewanski2024era,wong2024general}
-require access on a sample-by-sample basis.
+Genotype calls are often further refined via statistical methods,
+% methods~\citep[e.g.][MORE and CHECK]{browning2021fast,browning2023statistical}
+for example by phasing~[CITES] and imputation[CITES], usually 
+creating an additional copy of the dataset.
 Finally, variation datasets are often queried in exploratory
 analyses, to find regions or samples of interest for a particular 
-study (see section XXX).
+study (see section XXX for an example).
 
-VCF (and BCF) cannot support any of these workflows efficiently
-at the Biobank scale, and workarounds of creating subsets 
+VCF cannot support any of these workflows efficiently
+at the Biobank scale, and workarounds of copying subsets 
 of data (i.e., discarding QC metrics in VCF) or copying to 
-PLINK format are becoming less effective.
-The most intrinsically limiting aspect of VCF's design is its 
-row-wise layout of data within a file, which means that (for example)
-data for a particular sample cannot be efficiently retrieved.
+PLINK format have reached their limits.
+The most intrinsically limiting aspect of VCF's design 
+is its row-wise layout of data, which means that (for example)
+information for a particular sample or field cannot be obtained without
+retrieving the entire dataset.
 The file-oriented paradigm is also unsuited to the realities 
 of modern datasets, which are too large to download and 
 often required to stay in-situ by data-access agreements.
@@ -252,20 +252,21 @@ are expensively emulated on the basic building blocks
 of object storage. 
 These multiple layers of inefficiences around processing
 VCF data at scale in the cloud mean that it is 
-time-consuming and expensive, effectively making 
-% Dunno if we want to get into this, but it's true
+time-consuming and expensive, 
+% Can easily delete this last bit:
+effectively making 
 analysis of these datasets the preserve of a well-funded elite.
 
-The analysis of Biobank-scale variation 
-datasets requires a primary data representation that can 
-efficiently support different types of query without 
+To fully utilise these vast variation datasets,
+we require a primary data representation that can 
+support different types of query without 
 conversion or intermediate copies, and operate 
 directly from cloud object stores. Such a representation
 can be termed ``analysis-ready''
 and ``cloud-native''~\citep{abernathey2021cloud}.
-For such a representation to be FAIR~\citep{wilkinson2016fair},
-it must also \emph{accessible}: ``open, free, and universally
-implementable''.
+For the representation to be FAIR~\citep{wilkinson2016fair},
+it must also \emph{accessible} using protocols that are 
+``open, free, and universally implementable''.
 There is no currently no efficient, FAIR representation of genetic variation
 data suitable for cloud deployments.
 While Hail is powerful software its file formats are not documented or 
@@ -278,13 +279,13 @@ The next generation of VCF analysis methods requires
 an open, free and transparent data representation 
 with multiple independent implementations.
 
-Here, we decouple the VCF data model from its row-oriented
+In this article, we decouple the VCF data model from its row-oriented
 file definition, and show how the data can be 
 efficiently stored and analysed in a cloud-native, FAIR manner.
 We do this by translating VCF data into Zarr format,
 a method of storing large multidimensional data as a regular
 grid of compressed chunks. 
-Zarr's simplicity and its direct mapping of chunks to 
+Zarr's elegant simplicity and direct mapping of chunks to 
 keys in an object store have lead to 
 it gaining substantial traction
 across the sciences, and it is now used in multiple petabyte-scale
@@ -293,7 +294,7 @@ We present the VCF Zarr specification which formalises this
 mapping, and the \texttt{vcf2zarr} 
 utility which reliably converts large-scale VCFs into Zarr 
 format. We show that VCF Zarr is much more compact than 
-VCF (and BCF), and is competitive with state-of-the-art
+VCF and is competitive with state-of-the-art
 VCF compression tools. 
 Moreover, we show that Zarr's storage of data in an analysis-ready 
 format greatly facilitates computation,
