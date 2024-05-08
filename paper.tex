@@ -311,7 +311,7 @@ and many methods
 have been suggested to improve on these properties.
 Most approaches balance compression with
 performance on particular types of queries, 
-typically using a command line interface
+typically using a command line interface (CLI)
 and outputting VCF text~\citep{
 layer2016efficient, %GQT
 li2016bgt, % BGT
@@ -378,6 +378,8 @@ Additionally, compression performance within columns is poor
 because there is much less similarity among
 the genotypes for a given sample than there is among the genotypes
 for a given variant. [TODO check this - reference?]
+[Note this is the approach used in OpenCGA, as shown in their storage 
+benchmark numbers]
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
@@ -399,14 +401,13 @@ VCF is at its core an encoding of the genotype matrix, where each entry
 describes the observed genotypes for a given sample at a given variant site,
 interleaved with per-variant information
 and other call-level matrices (e.g., the GQ or AD fields).
-The data is largely numerical and each field is of a fixed dimension, 
+The data is largely numerical and of fixed dimension, 
 and is therefore a natural mapping to array-oriented 
 or ``tensor'' storage.
 We propose the VCF Zarr specification which maps the 
-VCF data model into an array-oriented layout based on the
-widely-used Zarr format (Fig~\ref{fig-data-model}). 
-Briefly, Zarr stores multidimensional arrays of a given datatype
-as compressed fixed-size chunks. In the VCF Zarr specification, 
+VCF data model into an array-oriented layout using Zarr 
+(Fig~\ref{fig-data-model}). 
+In the VCF Zarr specification, 
 each field in a VCF is mapped to an array, 
 which is stored individually allowing for efficient retrieval and 
 high levels of compression.
@@ -429,39 +430,62 @@ for Savvy (21.25GiB) and Zarr (22.06GiB) are very similar.
 \label{fig-data-storage}}
 \end{figure}
 
-Remarkably, the simple approach of compressing
-two dimensional chunks with the Zstandard 
-compressor~\citep{collet2021rfc} and the bit-shuffle
-filter from Blosc~\cite{alted2010modern} produces 
-compression levels competitive with specialised methods
-on the genotype matrix. In Fig~\ref{fig-data-storage}
-we show compression performance on up to a million
-samples subset a large and highly realistic 
+One of the key benefits of Zarr is its cloud-native design, 
+but it also works well on standard file systems, where 
+arrays and chunks are stored hierarchically in directories
+and files (storage as a single Zip archive is also supported).
+To enable comparison with the existing file-based ecosystem
+of tools, we focus on this scenario in a series of illustrative 
+benchmarks in the following sections. 
+(See \citep{durbin2020task,moore2021ome,gowan2022using} for Zarr
+benchmarks in cloud settings.)
+We compare primarily with
+VCF/BCF based workflows using \texttt{bcftools} because this
+is the standard practice, used in the vast majority of cases.
+We also compare with two representative recent specialised utilities;
+see~\cite{danek2018gtc,zhang2023gbc} for further benchmarks of 
+these and other tools.
+Genozip~\cite{lan2020genozip,lan2021genozip} is a tool focused 
+on compression performance, which uses a custom file format 
+and a CLI to extract VCF as text with various filtering options.
+Savvy~\cite{lefaive2021sparse} is an extension of BCF which 
+takes advantage of sparsity in the genotype matrix as well
+as using PBWT-based approaches for improved compression.
+Savvy provides a CLI as well as a C++ API.
+Our benchmarks are based on genotype data 
+from subsets of a large and highly realistic 
 simulation of French-Canadians~\cite{anderson2023on}
-(see Methods for details).
+(see Methods for details on the dataset and benchmarking methodology).
 Note that while simulations cannot capture 
 all the subtleties of real data, the allele frequency
 and population structure patterns in this dataset 
 have been shown to closely follow 
 observations~\cite{anderson2023on} and so provides 
-a reasonable data point when comparing such methods.
-% Could note here that this might represent a best 
-% case scenario for specialised methods, but maybe 
-% not worth bothering with.
+a reasonably and easily reproducible data point 
+when comparing such methods.
+The simulations only contain genotypes without any additional
+high-entropy QC fields, which is unrealistic (see Section XXX
+for benchmarks on a large human dataset that includes 
+many such fields). 
+Note, however, that such minimal, genotype-only data 
+is something of a best-case scenario for specialised genotype
+compression methods using row-based storage.
 
-[Short note here on why we choose these tools to
-benchmark against, and why there's no point in 
-a major benchmarkathon. Some recent papers 
-have good benchmarks which the interested 
-reader can cross-reference]
-
-Although Zarr is optimised for cloud settings, it also
-works very well in the classical (shared) file-system setting
-and we therefore focus on benchmarks in this setting
-to allow us to compare with existing tools.
-Those seeking benchmarks of Zarr in cloud deployments are 
-directed to~\citep{durbin2020task,moore2021ome,gowan2022using} [ANY OTHERS?]
-
+Fig~\ref{fig-data-storage} shows compression performance 
+on up to a million samples for chromosome 21.
+Unsurprisingly, gzipped compressed VCF requires the most 
+storage, with BCF providing substantially better compression
+performance (note the log-log scale). Genozip has 
+superb compression, having far smaller file sizes that the 
+other methods (although somewhat losing its advantages at 
+larger sample sizes). Zarr and Savvy have 
+almost identical compression performance in this example.
+It is remarkable that the simple approach of compressing
+two dimensional chunks of the genotype matrix 
+using the Zstandard compressor~\citep{collet2021rfc} and the 
+bit-shuffle filter from Blosc~\cite{alted2010modern} produces 
+compression levels competitive with the highly specialised methods
+used by Savvy.
 
 \subsection{Calculating with the genotype matrix}
 Storing genetic variation data compactly is important, but it is also
