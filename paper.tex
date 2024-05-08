@@ -663,13 +663,12 @@ For the BCF file we used \texttt{bcftools query -f"\%POS$\backslash$n"}.
 For sav, we used the Savvy C++ API to extract just the position, 
 and output text using the \texttt{std::cout} stream. For Zarr, we read 
 \texttt{variant\_position} into a NumPy array, and then wrote to
-a text file using the Pandas
-\texttt{write\_csv} method. Writing
-text dominates in the case of Zarr: populating the NumPy array 
-in memory takes less than a second in all cases. Genozip does
-not offer an option to extract individual columns, and so would require
-the output to be piped into \texttt{bcftools query} or a
-Unix utility such as \texttt{cut}.
+a text file using the Pandas \texttt{write\_csv} method. 
+Zarr CPU time is dominated by writing the text output; we also show
+the time required to populate a NumPy array with the data in Zarr,
+which is less than a second. Wall-clock time (dotted line) is dominated 
+in this case by file I/O. Time to output text for Savvy is not significant
+for $> 1000$ samples (not shown).
 \label{fig-column-extract}}
 \end{figure}
 
@@ -1287,6 +1286,15 @@ Full details of the benchmarking done in
 Figure~\ref{fig-data-storage} and
 Figure~\ref{fig-whole-matrix-compute}.
 Quick notes:
+
+All simulation-based benchmarks were performed on a 
+dual CPU (Intel Xeon E5-2680 v2)
+server with 256GiB of RAM running Debian GNU/Linux 11.
+To ensure that the true effects of having data distributed over a large 
+number of files were reported, benchmarks for Zarr and Savvy were 
+performed on a cold disk cache by running 
+\texttt{echo 3 | sudo tee /proc/sys/vm/drop\_caches} before each run.
+The IO subsytem used is based on a RAID 5 of 12 SATA hard drives.
 
 \begin{itemize}
 \item Dataset is based on subsets of French-Canadian sims. We simplify

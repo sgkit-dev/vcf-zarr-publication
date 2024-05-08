@@ -72,15 +72,16 @@ def plot_size(ax, df, label_y_offset=None):
     plt.tight_layout()
 
 
-def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
-    colours = {
-        "bcftools+vcf": vcf_colour,
-        "bcftools": bcf_colour,
-        "genozip": genozip_colour,
-        "zarr": zarr_colour,
-        "zarr_nshf": zarr_nshf_colour,
-        "savvy": sav_colour,
-    }
+def plot_total_cpu(ax, df, toolname=None, colours=None, time_units="h", extrapolate=None):
+    if colours is None:
+        colours = {
+            "bcftools+vcf": vcf_colour,
+            "bcftools": bcf_colour,
+            "genozip": genozip_colour,
+            "zarr": zarr_colour,
+            "zarr_nshf": zarr_nshf_colour,
+            "savvy": sav_colour,
+        }
     have_genozip = False
     toolname = {} if toolname is None else toolname
     divisors = {"s": 1, "h": 3600, "m": 60}
@@ -116,7 +117,7 @@ def plot_total_cpu(ax, df, toolname=None, time_units="h", extrapolate=None):
         if tool not in extrapolate:
             time = total_cpu[-1] / divisors[time_units]
             ax.annotate(
-                f"{time:.0f}{time_units}",
+                f"{time:.0f}{time_units}" if time > 1 else f"{time:.1f}{time_units}",
                 textcoords="offset points",
                 xytext=(15, 0),
                 xy=(row.num_samples, total_cpu[-1]),
@@ -250,15 +251,18 @@ def column_extract(time_data, output):
     Plot the figure showing time to extract the POS column
     """
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
-    df = df[df.storage == "hdd"]
+    df_mem = df[df.destination == "memory"]
+    df = df[df.destination == "file"]
 
     toolname = {
         "bcftools": "bcftools query",
-        "savvy": "savvy C++",
-        "zarr": "zarr + pandas to_csv",
+        "savvy": "Savvy C++",
+        "zarr": "Zarr + pandas to_csv",
     }
     fig, ax1 = one_panel_fig()
     plot_total_cpu(ax1, df, toolname=toolname, time_units="s", extrapolate=["bcftools"])
+    plot_total_cpu(ax1, df_mem, colours={"zarr": "black"}, toolname={"zarr": "Zarr (memory)"},
+            time_units="s")
     plt.savefig(output)
 
 
