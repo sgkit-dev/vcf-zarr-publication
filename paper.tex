@@ -663,13 +663,12 @@ For the BCF file we used \texttt{bcftools query -f"\%POS$\backslash$n"}.
 For sav, we used the Savvy C++ API to extract just the position, 
 and output text using the \texttt{std::cout} stream. For Zarr, we read 
 \texttt{variant\_position} into a NumPy array, and then wrote to
-a text file using the Pandas
-\texttt{write\_csv} method. Writing
-text dominates in the case of Zarr: populating the NumPy array 
-in memory takes less than a second in all cases. Genozip does
-not offer an option to extract individual columns, and so would require
-the output to be piped into \texttt{bcftools query} or a
-Unix utility such as \texttt{cut}.
+a text file using the Pandas \texttt{write\_csv} method. 
+Zarr CPU time is dominated by writing the text output; we also show
+the time required to populate a NumPy array with the data in Zarr,
+which is less than a second. Wall-clock time (dotted line) is dominated 
+in this case by file I/O. Time to output text for Savvy is not significant
+for $> 1000$ samples (not shown).
 \label{fig-column-extract}}
 \end{figure}
 
