@@ -337,14 +337,12 @@ employed in genetic data compression.
 in here.]
 
 VCF is row-wise format in which 
-describes observations
-and metadata for a single variant~\citep{danecek2011variant} are
-encoded as a line of text.
-BCF (a packed binary representation) is similarly 
+observations and metadata for a single variant are
+encoded as a line of text~\citep{danecek2011variant}.
+BCF (the standard binary representation of VCF) is similarly 
 row-wise, as are the majority of proposed alternative storage formats.
 Row-wise storage makes retrieving all information
-for a given record straightforward and efficient, and 
-allows data to be easily streamed through Unix pipelines (see Discussion).
+for a given record straightforward and efficient. 
 The row-wise approach works well when records are relatively small, 
 or when we typically want to analyse each record in its entirity.
 When we want to analyse only a subset of a record,
@@ -358,7 +356,7 @@ information from these rows.
 The usual alternative to row-wise storage is \emph{columnar} storage:
 instead of grouping together all the fields for a record,
 we group together all the records for a given field.
-Columnar storage formats such as Parquet~\citep{parquet2024},
+Columnar storage formats such as Parquet~\citep{parquet2024}
 make retrieving particular columns much 
 more efficient and can lead to substantially better compression.
 While columnar techniques have been successfully applied 
@@ -371,10 +369,10 @@ the use of technologies such as Parquet for
 storing and analysing variation data have had limited
 success~\citep{boufea2017managing,fan2020variant}.
 Columnar techologies tend to be 
-optimised for ``tall and narrow'' data there is a large number of records
+optimised for ``tall and narrow'' data where there is a large number of records
 for a relatively small number of columns. 
 Mapping VCF directly to a columnar layout, in which there is a 
-a column for the genotypes (and other per-sample QC metrics) 
+column for the genotypes (and other per-call QC metrics) 
 leads to millions of columns, and substantial technical challenges.
 Additionally, compression performance within columns is poor 
 because there is much less similarity among
@@ -383,32 +381,39 @@ for a given variant. [TODO check this - reference?]
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
-\caption{Columnar storage of VCF data in chunked, compressed form using Zarr.
-[TODO more detail, including brief overview of how data maps from 
-VCF to VCF Zarr in the examples]
-\label{fig-data-model}}
+\caption{Chunked compressed storage of VCF data using Zarr. 
+The \texttt{call\_genotype} array is a three-dimensional (variants, samples,
+ploidy) array of integers, split into a uniform grid of 
+chunks determined by the variant and sample chunk sizes (10,000
+and 1,000 by default in \texttt{vcf2zarr}). Each chunk is associated 
+with a key defining its location in this grid, which can be stored 
+in any key-value store such as a standard file-system or cloud object
+store. Chunks are compressed independently using standard 
+codecs and pre-compression filters, which can be specified on a per-array
+basis. Also shown are the one-dimensional \texttt{variant\_contig} (CHROM)
+and \texttt{variant\_position} arrays (POS). Other fields are stored 
+in a similar fashion. \label{fig-data-model}}
 \end{figure}
 
-VCF is at its core an encoding of the genotype matrix where each entry
-describes the observed genotypes for a given sample at a give variant site,
+VCF is at its core an encoding of the genotype matrix, where each entry
+describes the observed genotypes for a given sample at a given variant site,
 interleaved with per-variant information
-and other matrices (e.g., the GQ or AD fields).
+and other call-level matrices (e.g., the GQ or AD fields).
 The data is largely numerical and each field is of a fixed dimension, 
 and is therefore a natural mapping to array-oriented 
 or ``tensor'' storage.
 We propose the VCF Zarr specification which maps the 
-VCF data model into an array-oriented layout using the
+VCF data model into an array-oriented layout based on the
 widely-used Zarr format (Fig~\ref{fig-data-model}). 
-Briefly, Zarr is a format 
-% FIXME two different uses of $n$ here in a paragraph
-for storing $n$-dimensional arrays of a fixed datatype, stored as 
-compressed chunks. In the VCF Zarr specification, 
-each field in a VCF is mapped to an array, which is compressed 
-and stored individually allowing for efficient retrieval. 
-In particular, call-level data is stored as $m \times n$ arrays
-(for $m$ sites and $n$ samples), allowing for efficient 
-retrieval of subsets of those fields along both the 
-variants and samples axis.
+Briefly, Zarr stores multidimensional arrays of a given datatype
+as compressed fixed-size chunks. In the VCF Zarr specification, 
+each field in a VCF is mapped to an array, 
+which is stored individually allowing for efficient retrieval and 
+high levels of compression.
+% In particular, call-level data is stored as $m \times n$ arrays
+% (for $m$ sites and $n$ samples), allowing for efficient 
+% retrieval of subsets of those fields along both the 
+% variants and samples axis.
 See the Methods for more detail on Zarr and the VCF Zarr
 specification.
 
