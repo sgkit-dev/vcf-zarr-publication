@@ -1,4 +1,6 @@
-/* To any C++ programmers reading this file: apologies! */
+/* To any C++ programmers reading this file: apologies! It's obviously the work
+ * of non C++ programmers, but hopefully the nastiness won't make it
+ * slower. If so, please do let us know and we'll fix. */
 
 #include <fstream>
 #include <iostream>
@@ -64,15 +66,20 @@ void decode(const std::string& filename) {
     std::cout << "Decoded variants: " << count << std::endl;
 }
 
-void output_pos(const std::string& filename) {
+void output_pos(const std::string& filename, bool mem_only) {
     savvy::reader f(filename);
     savvy::variant var;
+    std::vector<int> pos;
 
     while (f >> var) {
-        std::cout << var.position() << std::endl;
+        pos.push_back(var.position());
+    }
+    if (! mem_only) {
+        for(unsigned int j = 0; j < pos.size(); j++) {
+            std::cout << pos[j] << std::endl;
+        }
     }
 }
-
 
 // Use a lambda expression for finding the bin index
 auto findBinIndex = [](const std::vector<double>& bins, double value) -> int {
@@ -96,6 +103,7 @@ int main(int argc, char* argv[]) {
     std::string samples_file;
     bool decode_only = false;
     bool pos_only = false;
+    bool mem_only = false;
     int start = -1;
     int end = -1;
 
@@ -105,6 +113,8 @@ int main(int argc, char* argv[]) {
             decode_only = true;
         } else if (arg == "--pos-only") {
             pos_only = true;
+        } else if (arg == "--mem-only") {
+            mem_only = true;
         } else if (arg == "--start") {
             i++;
             start = std::stoi(argv[i]);
@@ -139,7 +149,7 @@ int main(int argc, char* argv[]) {
     if (decode_only) {
         decode(filename);
     } else if (pos_only) {
-        output_pos(filename);
+        output_pos(filename, mem_only);
     } else {
         std::vector<double> af;
         std::vector<int> hets;
