@@ -67,6 +67,8 @@ def plot_size(ax, df, label_y_offset=None):
 
     ax.legend()
     add_number_of_variants(df, ax)
+    ax.set_xlabel("Number of samples")
+    ax.set_ylabel("Time (seconds)")
     plt.tight_layout()
 
 
