@@ -151,7 +151,9 @@ def run_bcftools_afdist(path, *, num_threads=1, debug=False):
     return time_cli_command(cmd, debug)
 
 
-def run_bcftools_pos_extract(path, *, debug=False):
+def run_bcftools_pos_extract(path, memory_only, *, debug=False):
+    if memory_only:
+        raise ValueError("Decoding to memory not possible for bcftools")
     with tempfile.NamedTemporaryFile("w") as f:
         cmd = (
             "/usr/bin/time -f'%S %U' "
@@ -224,11 +226,14 @@ def summarise_pos_file(path):
         print("Total rows:", num_lines)
 
 
-def run_savvy_pos_extract(path, *, debug=False):
+def run_savvy_pos_extract(path, memory_only, *, debug=False):
     with tempfile.NamedTemporaryFile("w") as f:
+        args = "--pos-only"
+        if memory_only:
+            args += " --mem-only"
         cmd = (
             "/usr/bin/time -f'%S %U' "
-            f"software/savvy-afdist/sav-afdist {path} --pos-only > {f.name}"
+            f"software/savvy-afdist/sav-afdist {path} {args} > {f.name}"
         )
         result = time_cli_command(cmd, debug)
         if debug:
@@ -276,20 +281,19 @@ def zarr_decode_worker(ds_path, debug, conn):
     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
 
 
-def zarr_pos_extract_worker(ds_path, debug, conn):
-    with tempfile.NamedTemporaryFile("w") as f:
-        before = time.time()
-        root = zarr.open(ds_path)
-        pos = root["variant_position"][:]
-        # Write the array to a text file to make the comparison fair
-        # np.savetxt(f, pos, fmt="%d")
-        # make a pandas dataframe because np.savetxt is too slow
-        df = pd.DataFrame(pos)
-        df.to_csv(f, header=False, index=False)
-        f.flush()
-        if debug:
-            summarise_pos_file(f.name)
+def zarr_pos_extract_worker(ds_path, memory_only, debug, conn):
 
+    before = time.time()
+    root = zarr.open(ds_path)
+    pos = root["variant_position"][:]
+    if not memory_only:
+        with tempfile.NamedTemporaryFile("w") as f:
+            # make a pandas dataframe because np.savetxt is too slow
+            df = pd.DataFrame(pos)
+            df.to_csv(f, header=False, index=False)
+            f.flush()
+            if debug:
+                summarise_pos_file(f.name)
     wall_time = time.time() - before
     cpu_times = psutil.Process().cpu_times()
     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
@@ -328,10 +332,10 @@ def run_zarr_decode(ds_path, *, debug=False):
     return ProcessTimeResult(wall_time, sys_time, user_time)
 
 
-def run_zarr_pos_extract(ds_path, *, debug=False):
+def run_zarr_pos_extract(ds_path, memory_only, *, debug=False):
     conn1, conn2 = multiprocessing.Pipe()
     p = multiprocessing.Process(
-        target=zarr_pos_extract_worker, args=(ds_path, debug, conn2)
+        target=zarr_pos_extract_worker, args=(ds_path, memory_only, debug, conn2)
     )
     p.start()
     value = conn1.recv()
@@ -597,7 +601,8 @@ extract_tools = ["savvy", "bcftools", "zarr"]
 @click.option("-t", "--tool", multiple=True, default=extract_tools)
 @click.option("-s", "--storage", default="hdd")
 @click.option("--debug", is_flag=True)
-def column_extract(src, output, tool, storage, debug):
+@click.option("--memory-only", is_flag=True)
+def column_extract(src, output, tool, storage, debug, memory_only):
     if len(src) == 0:
         raise ValueError("Need at least one input file!")
     tool_map = {t.name: t for t in all_tools}
@@ -613,7 +618,7 @@ def column_extract(src, output, tool, storage, debug):
             tool_path = ts_path.with_suffix(tool.suffix)
             if debug:
                 print("Running:", tool)
-            result = tool.column_extract_func(tool_path, debug=debug)
+            result = tool.column_extract_func(tool_path, memory_only, debug=debug)
             data.append(
                 {
                     "num_samples": ts.num_samples // 2,
@@ -623,6 +628,7 @@ def column_extract(src, output, tool, storage, debug):
                     "sys_time": result.system,
                     "wall_time": result.wall,
                     "storage": storage,
+                    "destination": "memory" if memory_only else "file",
                 }
             )
             df = pd.DataFrame(data).sort_values(["num_samples", "tool"])
