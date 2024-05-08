@@ -461,7 +461,7 @@ all the subtleties of real data, the allele frequency
 and population structure patterns in this dataset 
 have been shown to closely follow 
 observations~\cite{anderson2023on} and so provides 
-a reasonably and easily reproducible data point 
+a reasonable and easily reproducible data point 
 when comparing such methods.
 The simulations only contain genotypes without any additional
 high-entropy QC fields, which is unrealistic (see Section XXX
@@ -515,19 +515,19 @@ methods have begun to provide Application Programming Interfaces
 [TODO check these citations]~\cite[e.g.][]{kelleher2013processing,lefaive2021sparse,
 wertenbroek2022xsi,zhang2023gbc}. By providing programmatic access,
 the data can be retrieved from storage, decoded and then analysed
-in the same memory space, avoiding the need for copying
-the decoded data and inter-process communication. [TODO some refs
-on zero-copy semantics and things like Arrow?]
+in the same memory space without additional copies and 
+interprocess communication through pipes.
 
 To demonstrate the accessibility of genotype data and efficiency with 
 which calculations can be performed under the different formats,
-we use the \texttt{bcftools +af-dist} plugin as an example of such a whole-matrix
-computation. 
+we use the \texttt{bcftools +af-dist} plugin as an example.
 % The details of the \texttt{af-dist} operation are not important:
 % as an example of a whole-matrix operation. 
-We chose this particular operation for several
-reasons. First, it is a simple but non-trival calculation that requires 
-examining every element in the genotype matrix.
+We chose this particular operation for several reasons. 
+First, it is a straightforward calculation that 
+requires examining every element in the genotype matrix,
+and can be reproduced in different programming languages
+without too much effort.
 Secondly, it produces a small volume of output (a table of
 deviations from Hardy-Weinberg expectations in ten allele frequency
 bins) and therefore the time spent outputting results is negligible.
@@ -546,23 +546,25 @@ See Methods for full details.
 \label{fig-whole-matrix-compute}}
 \end{figure}
 
-Figure~\ref{fig-whole-matrix-compute} shows the results of 
-running \texttt{bcftools +af-dist} and equivalent operations 
+Fig~\ref{fig-whole-matrix-compute} shows timing results 
+for running \texttt{bcftools +af-dist} and equivalent operations 
 on the data of Figure~\ref{fig-data-storage}. There is a large
 difference in the time required (note the log-log scale). 
 The slowest approach uses Genozip. Because genozip does not
 provide an API and only outputs VCF text, the best approach available 
 is to pipe its output into \texttt{bcftools +af-dist}. Thus,
 not only must we decode the data from the genozip format, we must 
-then parse the large volumes of VCF text and then finally do the 
-actual calculation. Running \texttt{bcftools +af-dist} directly
-on the gzipped VCF text incurs essentially the same cost, but
-the decompression cost is lower and without the interprocess 
-communication overhead. Using a BCF file is somewhat faster,
-because the packed binary format can be read into the internal 
-data structures used by the \texttt{htslib} API more efficiently.
+then parse the large volumes of VCF text produced and then finally do the 
+actual calculation. 
+Running \texttt{bcftools +af-dist} directly on the gzipped VCF
+is substantially faster, indicating that Genozip's excellent
+compression performance comes at a substantial decompression cost.
+Using a BCF file is again significantly faster,
+because the packed binary format avoids the overhead of parsing 
+VCF text into \texttt{htslib}'s internal data structures. 
+We only use BCF for subsequent \texttt{bcftools} benchmarks.
 
-The data shown in Figure~\ref{fig-whole-matrix-compute} for Zarr and Savvy
+The data shown in Fig~\ref{fig-whole-matrix-compute} for Zarr and Savvy
 is based on custom programs written using their respective APIs
 to implement the \texttt{af-dist} operation. The Zarr program uses
 the Zarr-Python package to iterate over the decoded chunks of the 
@@ -585,7 +587,7 @@ to be due to Savvy's excellent genotype decoding performance
 % savvy 6.6 GiB
 % zarr_nshf 3.9 GiB
 (up to 6.6GiB/s vs 1.2GiB/s for Zarr on this dataset;
-Figure~\ref{fig-whole-matrix-decode}).
+Fig~\ref{fig-whole-matrix-decode}).
 % sequence_length  num_samples  num_sites       tool       size
 % 40         48129895      1000000    7254858       zarr  22.071687
 % 35         48129895      1000000    7254858        bcf  51.749294
@@ -622,14 +624,14 @@ Methods like Savvy and XSI largely follow the same principles [TODO check and
 be more concrete]. The row-wise nature of these methods, however, mean 
 that we cannot efficiently subset \emph{by sample}. In the extreme
 case, if we want to access only the genotypes for a single sample
-we must still read in and decompress the entire dataset.
+we must still retrieve and decompress the entire dataset.
 
 \begin{figure}
 \includegraphics{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
 Total CPU time required to run the af-dist calculation for
 a subset of 10000 variants $\times$ 10 samples from the middle of the matrix
-for the data in Figure~\ref{fig-data-storage}.
+for the data in Fig~\ref{fig-data-storage}.
 The \texttt{genozip} and \texttt{bcftools} pipelines involve
 multiple commands required to correctly calculate the AF INFO field
 required by \texttt{bcftools +af-dist}. See the Methods for full details
@@ -638,16 +640,16 @@ on the steps performed.
 \end{figure}
 
 We illustrate the cost of row-wise encoding in
-Figure~\ref{fig-subset-matrix-compute}, where we run the af-dist calculation
+Fig~\ref{fig-subset-matrix-compute}, where we run the af-dist calculation
 on a small fixed-size subset of the genotype matrices of
-Figure~\ref{fig-data-storage}. The two-dimensional chunking of Zarr
+Fig~\ref{fig-data-storage}. The two-dimensional chunking of Zarr
 means that this small subset of the overall matrix can be efficiently
 extracted, and therefore the execution time depends very weakly on 
 the overall dataset size, with the overall computation requiring around
 1 second for 1 million samples. Because of their 
 row-wise encoding for all the other methods CPU time
 scales with the number of samples.
-Figure~\ref{fig-subset-matrix-compute-supplemental} shows performance
+Fig~\ref{fig-subset-matrix-compute-supplemental} shows performance
 for the same operation when selecting half of the samples in the 
 dataset.
 
@@ -655,7 +657,7 @@ dataset.
 \includegraphics{figures/column-extract}
 \caption{Time to extract the genome position and write to a text file.
 Total CPU time required to extract the POS field for BCF,
-sav and Zar formats
+sav and Zarr formats
 for the data in Figure~\ref{fig-data-storage}.
 For the BCF file we used \texttt{bcftools query -f"\%POS$\backslash$n"}.
 For sav, we used the Savvy C++ API to extract just the position, 
@@ -673,21 +675,17 @@ Unix utility such as \texttt{cut}.
 
 \subsection{Extracting fields}
 We have focused on the genotype matrix up to this point, contrasting
-Zarr with existing row-wise methods. The genotype matrix, however,
-is only one aspect of VCF data.
+Zarr with existing row-wise methods.
 Real-world VCFs encapsulate much more than just the genotype
-matrix, and can contain large numbers of additional fields. Efficient
-extraction of the data from these fields is a key use-case
-and an area where columnar storage has clear benefits.
-Figure~\ref{fig-column-extract} shows the time required to extract 
+matrix, and can contain large numbers of additional fields.
+Fig~\ref{fig-column-extract} shows the time required to extract 
 the genomic position of each variant in the simulated benchmark 
 dataset, which we can use as an indicative example of a per-variant 
 query. Although Savvy is many times faster than \texttt{bcftools query}
 here, the row-wise storage strategy that they share means that 
 the entire dataset must be read into memory and 
-decompressed to extract just one field from each record. Zarr's
-columnar storage excels at these tasks: we only read and decompress
-the information required.
+decompressed to extract just one field from each record. Zarr
+excels at these tasks: we only read and decompress the information required.
 
 \subsection{Case study: Genomics England 100,000 genomes}
 In this section we demonstrate the utility of VCF Zarr on a large human dataset
