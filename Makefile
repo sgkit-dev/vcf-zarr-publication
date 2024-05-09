@@ -84,6 +84,11 @@ figures/subset-matrix-compute-supplemental.pdf: plot_data/subset-matrix-compute.
 		plot_data/subset-matrix-compute.csv  \
 		figures/subset-matrix-compute-supplemental.pdf
 
+figures/compression-shuffle.pdf: plot_data/compression_benchmarks.csv
+	python3 src/plot.py compression-shuffle \
+                plot_data/compression_benchmarks.csv \
+                figures/compression-shuffle.pdf
+
 figures/compression_ratio_grid.pdf: plot_data/compression_benchmarks.csv
 	python3 src/plot.py plot-compression-ratio-grid \
 		plot_data/compression_benchmarks.csv \

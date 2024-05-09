@@ -349,6 +349,50 @@ def plot_compression_ratio_grid(data, output):
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
+def compression_shuffle(data, output):
+    """
+    Plot figure showing the effect of shuffle settings on compression ratio.
+    """
+    df = pd.read_csv(data)
+
+    # Note this is ordered by best-to-worst compression for viz
+    arrays = [
+        "call_GQ",
+        "call_DP",
+        "call_AD",
+        "call_AB",
+        "call_genotype",
+    ]
+    df_sub = df[
+        df.ArrayName.isin(arrays)
+        & (df.sample_chunksize == 1000)
+        & (df.variant_chunksize == 10000)
+        & (df.cname == "zstd")
+        & (df.dim_order.isin(["(0, 1)", "(0, 1, 2)"]))
+    ].copy()
+    names = np.array(["No Shuffle", "Byte Shuffle", "Bit Shuffle"])
+    df_sub["Shuffle"] = names[df_sub["shuffle"]]
+
+    fig, ax = one_panel_fig()
+    sns.barplot(
+        df_sub,
+        orient="h",
+        order=arrays,
+        y="ArrayName",
+        x="CompressionRatio",
+        hue="Shuffle",
+        ax=ax,
+    )
+    ax.set_ylabel("")
+    ax.get_legend().set_title("")
+
+    plt.tight_layout()
+    plt.savefig(output)
+
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
 def plot_compression_dim_shuffle(data, output):
     df = pd.read_csv(data)
 
@@ -417,6 +461,7 @@ cli.add_command(whole_matrix_decode)
 cli.add_command(column_extract)
 cli.add_command(subset_matrix_compute)
 cli.add_command(subset_matrix_compute_supplemental)
+cli.add_command(compression_shuffle)
 cli.add_command(plot_compression_ratio_grid)
 cli.add_command(plot_compression_dim_shuffle)
 cli.add_command(plot_compression_packbits)
