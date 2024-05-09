@@ -35,7 +35,7 @@
 
 % See https://github.com/sgkit-dev/vcf-zarr-publication/issues/87
 % for discussion
-\title{Analysis-ready VCF at Biobank-scale using Zarr}
+\title{Analysis-ready VCF at Biobank scale using Zarr}
 
 %%% Use the \authfn to add symbols for additional footnotes, if any. 
 % 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
@@ -112,7 +112,7 @@ of interoperating tools.
 The standard row-wise encoding of the VCF data model (either as text
 or packed binary) emphasises efficient retrieval of all data for a given
 variant, but accessing subsets of the data within rows is inefficient.
-Biobank-scale datasets currently available 
+Biobank scale datasets currently available 
 consist of hundreds of thousands of whole genomes 
 and hundreds of terabytes of compressed VCF.
 Row-based data storage is fundamentally unsuited to such datasets
@@ -169,7 +169,7 @@ it has been refined and standardised~\citep{rehm2021ga4gh} and the
 underlying data-model is now deeply embedded in bioinformatics practice.
 Dataset sizes have grown explosively since the introduction of 
 VCF as part of 1000 Genomes project~\citep{10002015global},
-with Biobank-scale initiatives such as 
+with Biobank scale initiatives such as 
 Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 and the All of Us research program~\citep{all2024genomic}
@@ -205,7 +205,7 @@ in the 500K UKB WGS data~\citep{uk2023whole} is 116 TiB.
 % humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
 % '115.7 TiB'
 
-Processing of Biobank-scale datasets can be split into a 
+Processing of Biobank scale datasets can be split into a 
 few broad categories. The most basic analysis 
 is quality control (QC). Variant QC is an 
 involved and multi-faceted 
@@ -435,7 +435,7 @@ but it also works well on standard file systems, where
 arrays and chunks are stored hierarchically in directories
 and files (storage as a single Zip archive is also supported).
 To enable comparison with the existing file-based ecosystem
-of tools, we focus on this scenario in a series of illustrative 
+of tools, we focus on Zarr's file system chunk storage in a series of illustrative 
 benchmarks in the following sections. 
 (See \citep{durbin2020task,moore2021ome,gowan2022using} for Zarr
 benchmarks in cloud settings.)
@@ -622,7 +622,8 @@ decompress only the necessary blocks and can quickly access
 the required records. 
 Methods like Savvy and XSI largely follow the same principles [TODO check and 
 be more concrete]. The row-wise nature of these methods, however, mean 
-that we cannot efficiently subset \emph{by sample}. In the extreme
+that we cannot efficiently subset \emph{by sample}
+(e.g., to calculate statistics within a particular cohort). In the extreme
 case, if we want to access only the genotypes for a single sample
 we must still retrieve and decompress the entire dataset.
 
@@ -873,10 +874,10 @@ popular Zarr standard and widely used compression libraries,
 can support many different types of data access
 patterm efficiently, and has excellent computational accessibility.
 In this approach there are some significant departures from 
-standard practise, which warrant some discussion here.
+standard practice, which warrant some discussion here.
 
 Perhaps the largest deviation in the approach that we advocate here 
-from standard practise is to decouple our concept of a dataset from
+from standard practice is to decouple our concept of a dataset from
 a file. Each VCF is broken up into a set of Zarr arrays, each 
 corresponding to a large number of chunks stored in a directory
 hierarchy (Zarr also supports other forms of chunk storage 
@@ -1143,7 +1144,7 @@ of its ``next generation'' cloud ready file formats~\citep{moore2021ome}.
 OME-Zarr already has a rich suite of supporting
 tools~\cite{moore2023ome,rzepka2023toward}. 
 Zarr has also seen recent uptake 
-in single-scell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
+in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
 and multimodal spatial omics
 data~\citep{marconato2024spatialdata,baker2023emobject}.
 Recent additions using Zarr include the application of deep learning
@@ -1199,7 +1200,7 @@ efficiently masking out values that shouldn't be processed, at the cost of
 a small amount of extra storage.
 
 The VCF Zarr specification can represent anything described by BCF
-(which is somewhat more restrictive than BCF) except for two corner
+(which is somewhat more restrictive than VCF) except for two corner
 cases related to the encoding of missing data. Firstly, VCF Zarr does
 not distinguish between a field that is not present and one that 
 is present but contains missing data. For example, a variant with an
@@ -1294,7 +1295,7 @@ To ensure that the true effects of having data distributed over a large
 number of files were reported, benchmarks for Zarr and Savvy were 
 performed on a cold disk cache by running 
 \texttt{echo 3 | sudo tee /proc/sys/vm/drop\_caches} before each run.
-The IO subsytem used is based on a RAID 5 of 12 SATA hard drives.
+The IO subsystem used is based on a RAID 5 of 12 SATA hard drives.
 
 \begin{itemize}
 \item Dataset is based on subsets of French-Canadian sims. We simplify
