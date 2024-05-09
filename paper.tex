@@ -1072,9 +1072,10 @@ of Zarr and the techologies that it depends upon. Zarr is a specialised format
 for storing large-scale $n$-dimensional data (arrays). Arrays
 are split into chunks, which are compressed and stored separately. Chunks are 
 addressed by their indexes along the dimensions of the array, and the 
-compressed data associated with this key. Chunks are
-are often stored in individual files, but a wide array of different
-stores are supported including cloud buckets and NoSQL databases;
+compressed data associated with this key. Chunks can
+be stored in individual files (as we do here), but a wide array of different
+storage backends are supported including cloud object stores 
+and NoSQL databases;
 in principle, Zarr can store data in any key-value store.
 Metadata describing the array and its properties is then stored 
 in JSON format along with the chunks. The simplicity and transparency
@@ -1095,7 +1096,7 @@ and R~\cite{pizzarr}.
 Zarr is flexible in allowing different compression codecs and 
 pre-compression filters to be specified on a per-array basis
 (see section XXX).
-Two key technologies used by Zarr are the Blosc
+Two key technologies often used in conjunction with Zarr are the Blosc
 % This seems like the best citation for Blosc? It is mentioned here
 meta-compressor~\cite{alted2010modern}
 and Zstandard compression algorithm~\citep{collet2021rfc}.
@@ -1112,9 +1113,10 @@ Blosc is written in C, with APIs for C, Python, Julia, Rust
 and others.
 Blosc is a ``meta-compressor'' because it provides 
 access to several different compression codecs. The 
-Zstandard compressor~\citep{collet2021rfc} is of particular 
+Zstandard codec is of particular 
 interest here as it achieves very high compression ratios
-with fast decompression speeds [see fig]. 
+with good decompression speeds. See Fig~\ref{fig-whole-matrix-decode}
+for a comparison of Zstandard with LZ4 on decoding performance.
 % This may seem a bit off topic, but want to reassure reader that 
 % this isn't some niche technology
 Zstandard is also used in several recent VCF compression 
@@ -1160,8 +1162,7 @@ of Zarr's hierarchical structure by representing a VCF file as a top-level
 Zarr group containing Zarr arrays. Each VCF field (fixed fields, INFO fields,
 and FORMAT fields) is represented as a separate array in the Zarr hierarchy.
 Some of the structures from the VCF header are also represented as arrays,
-including contigs, filters, and samples. Making every item in VCF Zarr an
-array means that the data can be accessed via a uniform API.
+including contigs, filters, and samples.
 
 % Do we need to say that VCF Zarr is an evolution of the Zarr format in scikit-allel?
 
@@ -1177,7 +1178,8 @@ according to the application's needs.
 The specification defines a clear mapping of VCF field names (keys) to
 array names, VCF Number to array shape, and VCF Type to array data type.
 To take one example, consider the VCF AD genotype field defined by the
-following VCF header: \texttt{\#\#FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">}
+following VCF header: \texttt{
+\#\#FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">}.
 The FORMAT key \texttt{ID} maps to an array name of \texttt{call\_AD}
 (FORMAT fields have a \texttt{call\_} prefix, while INFO fields have a
 \texttt{variant\_} prefix; both are followed by the key name). Arrays
@@ -1186,18 +1188,30 @@ like \texttt{(variants, samples, <Number>)} in general. In this case, the
 Number A entry indicates that the field has one value per alternate allele,
 which in VCF Zarr is represented as the \texttt{alt\_alleles} dimension name,
 so the shape of this array is \texttt{(variants, samples, alt\_alleles)}.
-The VCF Integer type can be represented as any Zarr integer type, and in
-fact the specification doesn't mandate a particular integer width, so it
-could be encoded as a 16 bit integer for example.
-% Refer to GeL case study section?
+The VCF Integer type can be represented as any Zarr integer type, 
+and the specification doesn't mandate particular integer widths. 
+The \texttt{vcf2zarr} (see the next section) conversion utility 
+chooses the narrowest integer width that can represent the data in
+each field.
 
-VCF Zarr uses special sentinel values to encode missing values to indicate
-that a value is not present, and fill values to pad variable length fields.
-The latter is necessary since Zarr arrays have fixed size dimensions. The
-specification also permits extra boolean arrays to accompany a field array
-to redundantly encode the missing and fill status, which can be useful for
-efficiently masking out values that shouldn't be processed, at the cost of
-a small amount of extra storage.
+An important aspect of VCF Zarr is that field dimensions are 
+global and fixed, and defined as the maximum across all rows.
+Continuing the example above, the third dimension of the array 
+is the maximum number of alternate alleles across \emph{all} 
+variants. For variants at which there are less than the maximum
+number of alternative alleles, the third dimension of the 
+\texttt{call\_AD} array
+is padded with a sentinel value (-2 for integers and a specific
+non-signalling NaN for floats). While this is not a problem 
+in practise for datasets in which all four bases are observed, 
+it is a substantial issue for
+fields that have a quadratic dependency on the number of alleles
+(Number=G) such as PL. Such fields are already known to cause 
+significant problems, and the ``local alleles'' proposal 
+provides an elegant solution~\cite{poterba2024scalable}.
+As this approach is on a likely path to 
+standardisation~\cite{danecek2021twelve}, we would aim to 
+include support in later versions of VCF Zarr.
 
 The VCF Zarr specification can represent anything described by BCF
 (which is somewhat more restrictive than VCF) except for two corner
@@ -1211,8 +1225,7 @@ of sentinel values to represent missing and fill values for integers
 cannot be stored. In practice this doesn't seem to be much of 
 an issue (we have not found a real VCF that contains negative 
 integers). However, if -1 and -2 need to be stored, a float field
-can be used without issues (since the float sentinel is a special NaN
-value).
+can be used without issues.
 
 The VCF Zarr specification is general and can be mapped to 
 file formats such as \toolname{plink}~\citep{purcell2007plink,chang2015second}
