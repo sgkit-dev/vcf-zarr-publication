@@ -15,7 +15,7 @@ all: data/chr21_10_1.zarr data/chr21_10_1.sav data/chr21_10_1.genozip data/chr21
 	data/chr21_10_3.zarr data/chr21_10_3.sav data/chr21_10_3.genozip data/chr21_10_3.tags.genozip \
 	data/chr21_10_4.zarr data/chr21_10_4.sav data/chr21_10_4.genozip data/chr21_10_4.tags.genozip \
 	data/chr21_10_5.zarr data/chr21_10_5.sav data/chr21_10_5.genozip data/chr21_10_5.tags.genozip \
-	data/chr21_10_6.zarr data/chr21_10_6.sav data/chr21_10_6.genozip data/chr21_10_6.tags.genozip 
+	data/chr21_10_6.zarr data/chr21_10_6.sav data/chr21_10_6.genozip data/chr21_10_6.tags.genozip
 
 .PRECIOUS: %.tags.bcf %.bcf %.vcf.gz %.icf %.ts
 
@@ -54,7 +54,7 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 	${SAVVY} import --phasing full $< > $@
 
 %.genozip: %.bcf
-	# There's some weird bug in genocat that doesn't allow us 
+	# There's some weird bug in genocat that doesn't allow us
 	# to run --samples on output if it's derived directly from
 	# bcf, so we have to filter it through bcftools first.
 	${BCFTOOLS} view $< | ${GENOZIP} --no-test -o $@

@@ -548,7 +548,7 @@ See Methods for full details.
 
 Fig~\ref{fig-whole-matrix-compute} shows timing results 
 for running \texttt{bcftools +af-dist} and equivalent operations 
-on the data of Figure~\ref{fig-data-storage}. There is a large
+on the data of Fig~\ref{fig-data-storage}. There is a large
 difference in the time required (note the log-log scale). 
 The slowest approach uses Genozip. Because genozip does not
 provide an API and only outputs VCF text, the best approach available 
@@ -1274,14 +1274,13 @@ Once the VCF data has been converted to the intermediate columnar format,
 it can then be converted to Zarr using the \texttt{vcf2zarr encode}
 command. We take advantage of Zarr's flexibility
 in \texttt{vcf2zarr} by choosing integer widths based 
-on the range of values seen in the ICF
+
 and reasonable compressor defaults, but these can be
 modified by generating and editing a JSON-formatted storage schema.
 Encoding a given column (for example, \texttt{call\_AD})
 involves creating a buffer to hold a full variant-chunk of the 
 array in question, and then sequentially filling this buffer with 
-values read from ICF and flushing to file. 
-Similar to the \texttt{explode} command,
+values read from ICF and flushing to file. Similar to the \texttt{explode} command,
 encoding to Zarr can be done in parallel on a single 
 machine using the \texttt{encode} command,
 or can be distributed across a cluster using the 
@@ -1301,11 +1300,35 @@ data from the 1000 Genomes project.
 % https://github.com/sgkit-dev/vcf-zarr-publication/issues/26
 
 \subsection{Benchmarks}
-Full details of the benchmarking done in
-Figure~\ref{fig-data-storage} and
-Figure~\ref{fig-whole-matrix-compute}.
-Quick notes:
+In this section we describe the methodology used for the simulation-based
+benchmarks of Figs~\ref{fig-data-storage},\ref{fig-whole-matrix-compute},
+\ref{fig-subset-matrix-compute} and \ref{fig-column-extract}.
+The benchmarks use data simulated by conditioning on a large
+pedigree of French-Canadians using 
+\texttt{msprime}~\citep{baumdicker2021efficient},
+which have been shown to follow patterns observed in real 
+data from the same population to a remarkable 
+degree~\cite{anderson2023on}.
+We begin by downloading the simulated ancestral recombination 
+graph~\cite{brandt2024promise,lewanski2024era,wong2024general}
+for chromosome 21 from Zenodo~\cite{anderson2023simulated} 
+in compressed \texttt{tszip} format. This 552M file 
+contains the simulated ancestry and mutations for 1.4 million
+present-day samples. We then subset the full simulation 
+down to ${10^1, 10^2, \dots, 10^6}$ samples using 
+ARG simplification~\cite{kelleher2018efficient,wong2024general},
+storing the subsets in \texttt{tskit} format~\cite{tskit2024}.
+Note that this procedure captures the growth 
+in the number of variants (shown in the top x-axis labels)
+as we increase sample sizes as a 
+natural consequence of population-genetic processes.
+We then export the variation data from each subset to VCF
+using \texttt{tskit vcf subset.ts | bgzip > subset.vcf.gz}
+as the starting point for other tools.
 
+We used bcftools version 1.18, Savvy 2.1.0, Genozip 5.0.26
+and vcf2zarr 0.0.9. All tools used default settings, 
+unless otherwise stated.
 All simulation-based benchmarks were performed on a 
 dual CPU (Intel Xeon E5-2680 v2)
 server with 256GiB of RAM running Debian GNU/Linux 11.
@@ -1313,30 +1336,17 @@ To ensure that the true effects of having data distributed over a large
 number of files were reported, benchmarks for Zarr and Savvy were 
 performed on a cold disk cache by running 
 \texttt{echo 3 | sudo tee /proc/sys/vm/drop\_caches} before each run.
-The IO subsystem used is based on a RAID 5 of 12 SATA hard drives.
+The I/O subsystem used is based on a RAID 5 of 12 SATA hard drives.
+For the CPU time benchmarks we measure the sum of the total user and
+system times required to execute the full command (as reported by GNU
+\texttt{time}) as well as elapsed wall-clock time. 
+Each tool was instructed to use one thread, where the options
+were provided. 
+Where possible in pipelines we use uncompressed BCF
+output \texttt{-Ou} to make processing more efficient~\citep{danecek2021twelve}.
+We do not use BCF output in genozip because it is not supported
+directly.
 
-\begin{itemize}
-\item Dataset is based on subsets of French-Canadian sims. We simplify
-for increasingly large subsets, keeping only variant sites. We then
-convert to VCF and encode to BCF using
-\texttt{tskit vcf | bcftools view -O b}.
-\item We used a chunk size of XX for sgkit, after some experimentation.
-This gave n files of around x MB each for the ``call\_genotypes`` array.
-We used the defaults for savvy and genozip.
-\item For the afdist CPU time we measure the sum of the total user and
-system times required to execute the full command, as reported by GNU
-time. Each tool was instructed to use one thread, where the options
-were provided. For genozip, the time required to compute
-\texttt{genocat file.genozip | bcftools +af-dist}. Because commands
-in the pipeline execute concurrently on mutiple cores, the total CPU time is
-greater than the elapsed time.
-\item Where possible in pipelines we use uncompressed BCF
- output \texttt{-Ou} to make processing more efficient (skip printf
-and parsing costs, which are substantial). Following advice
-in~\citep{danecek2021twelve}.
-\item We do not use BCF output in genozip because it doesn't support
-it directly, only VCF (supports BCF by pipeing through bcftools).
-\end{itemize}
 
 \section{Availability of source code and requirements}
 
