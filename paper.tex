@@ -541,14 +541,15 @@ a \texttt{bcftools} plugin.
 Total CPU time required to run \texttt{bcftools +af-dist}
 and equivalent operations in a single thread for various tools.
 Elapsed time is also reported (dotted line). Run-time for genozip
-at $10^6$ samples was extrapolated by fitting an exponential.
+and bcftools on VCF
+at $10^6$ samples were extrapolated by fitting an exponential.
 See Methods for full details.
 \label{fig-whole-matrix-compute}}
 \end{figure}
 
 Fig~\ref{fig-whole-matrix-compute} shows timing results 
 for running \texttt{bcftools +af-dist} and equivalent operations 
-on the data of Figure~\ref{fig-data-storage}. There is a large
+on the data of Fig~\ref{fig-data-storage}. There is a large
 difference in the time required (note the log-log scale). 
 The slowest approach uses Genozip. Because genozip does not
 provide an API and only outputs VCF text, the best approach available 
@@ -1232,58 +1233,62 @@ file formats such as \toolname{plink}~\citep{purcell2007plink,chang2015second}
 and BGEN~\citep{band2018bgen} with some minor extensions.
 
 \subsection{vcf2zarr}
-Converting VCF to Zarr format at Biobank scale is challenging. This main issue is 
-around memory usage: although we can view each record in the VCF one-by-one,
-we must buffer a full chunk (10,000 variants is reasonable choice) 
-in the variants dimension for each of the arrays. 
+Converting VCF to Zarr at Biobank scale is challenging. 
+One problem is to determine the dimension of fields,
+(i.e., finding the maximum number of alternate alleles and the 
+maximum size of \texttt{Number=.} fields) which requires a full
+pass through the data. Another challenge is to keep
+memory usage within reasonable limits: although 
+we can view each record in the VCF one-by-one,
+we must buffer a full chunk (10,000 variants is the default in
+\texttt{vcf2zarr}) 
+in the variants dimension for each of the fields to convert to Zarr. 
 For VCFs with many FORMAT fields and large numbers of samples this can
-easily require tens of gigabytes of RAM per worker, which makes 
-parallelism troublesome. Reading the VCF multiple times for different fields
+require tens of gigabytes of RAM per worker, making
+parallelism difficult. Reading the VCF multiple times for different fields
 is possible, but would be prohibitively slow for multi-terabyte VCFs.
 
 The \texttt{vcf2zarr} utility solves this problem by first converting 
 the VCF data (which can be split across many files) into an Intermediate
 Columnar Format (ICF). The \texttt{vcf2zarr explode} command takes a set
-of VCFs and stores the data in per-field chunks (by default, 64MiB).
-In this way, the memory required is bounded by the size of single record 
-BCF record in htslib (plus the size of a decoded bgzf record
-[FIXME what is the correct terminology here?]), plus 64MiB for each 
-field.  The Intermediate Columnar Format stores the data for each 
-field spread across multiple partitions of the data (so that 
-multiple parts of the VCF can be read in parallel), and then 
-fixed size compressed chunks within those partitions. It also stores information
-about the number of records in each partition and chunk of a given
-field, so that the record at a particular index can be retrieved efficiently 
-later. Summaries such as the minimum and maximum value 
+of VCFs, and reads through them using
+\texttt{cyvcf2}~\cite{pedersen2017cyvcf2},
+storing each field independently in (approximately) fixed-size 
+compressed chunks.
+Large files can be partitioned based on information extracted from the 
+CSI or Tabix indexes, and so different parts of a file can be 
+converted to ICF in parallel.
+Once all partitions have completed, information about 
+the number of records in each partition and chunk of a given
+field is stored so that the record at a particular index 
+can be efficiently retrieved. 
+Summaries such as maximum dimension and the minimum and maximum value 
 of each field are also maintained, to aid choice of data types later.
 A set of VCF files can be converted to intermediate columnar 
-format in parallel on a single machine using a given number 
-of worker processes using the \texttt{explode} command,
+format in parallel on a single machine 
+using the \texttt{explode} command,
 or can be distributed across a cluster using the 
 \texttt{dexplode-init},
 \texttt{dexplode-partition} and \texttt{dexplode-finalise} commands.
 
-Once the VCF data has converted to the intermediate columnar format,
+Once the VCF data has been converted to the intermediate columnar format,
 it can then be converted to Zarr using the \texttt{vcf2zarr encode}
-command. Alhough there is a one-to-one mapping between the VCF
-fields and the Zarr arrays, there is considerable flexibility 
-in how the data is stored, for example in integer width
-and compression and filter settings.
-By default vcf2zarr chooses integer type sizes based 
-on the range of values seen in the intermediate column format
+command. We take advantage of Zarr's flexibility
+in \texttt{vcf2zarr} by choosing integer widths based 
+
 and reasonable compressor defaults, but these can be
-altered by generating a schema in JSON format and editing it.
+modified by generating and editing a JSON-formatted storage schema.
 Encoding a given column (for example, \texttt{call\_AD})
 involves creating a buffer to hold a full variant-chunk of the 
 array in question, and then sequentially filling this buffer with 
-values read from the intermediate columnar format. Once the buffer 
-is full, the chunks in the samples dimension are compressed
-and written to file. [Something about parallelism and distributing]
-
-Fields such as PL are currently problematic when there are large 
-numbers of alleles. However, we plan on implementing the 
-local alleles strategy~\citep{poterba2024scalable,danecek2021twelve}
-which will likely become part of the VCF specification.
+values read from ICF and flushing to file. Similar to the \texttt{explode} command,
+encoding to Zarr can be done in parallel on a single 
+machine using the \texttt{encode} command,
+or can be distributed across a cluster using the 
+\texttt{dencode-init},
+\texttt{dencode-partition} and \texttt{dencode-finalise} commands.
+The distributed commands are fault-tolerant, reporting any failed
+parititions so that they can be retried.
 
 \section{Choosing default compressor settings}
 To inform the choice of compression settings across different fields 
@@ -1296,11 +1301,46 @@ data from the 1000 Genomes project.
 % https://github.com/sgkit-dev/vcf-zarr-publication/issues/26
 
 \subsection{Benchmarks}
-Full details of the benchmarking done in
-Figure~\ref{fig-data-storage} and
-Figure~\ref{fig-whole-matrix-compute}.
-Quick notes:
+In this section we describe the methodology used for the simulation-based
+benchmarks of Figs~\ref{fig-data-storage},\ref{fig-whole-matrix-compute},
+\ref{fig-subset-matrix-compute} and \ref{fig-column-extract}.
+The benchmarks use data simulated by conditioning on a large
+pedigree of French-Canadians using 
+\texttt{msprime}~\citep{baumdicker2021efficient},
+which have been shown to follow patterns observed in real 
+data from the same population to a remarkable 
+degree~\cite{anderson2023on}.
+We begin by downloading the simulated ancestral recombination 
+graph~\cite{brandt2024promise,lewanski2024era,wong2024general}
+for chromosome 21 from Zenodo~\cite{anderson2023simulated} 
+in compressed \texttt{tszip} format. This 552M file 
+contains the simulated ancestry and mutations for 1.4 million
+present-day samples. We then subset the full simulation 
+down to ${10^1, 10^2, \dots, 10^6}$ samples using 
+ARG simplification~\cite{kelleher2018efficient,wong2024general},
+storing the subsets in \texttt{tskit} format~\cite{tskit2024}.
+Note that this procedure captures the growth 
+in the number of variants (shown in the top x-axis labels)
+as we increase sample sizes as a 
+natural consequence of population-genetic processes.
+% jk@holly$ python3 src/collect_data.py site-allele-report
+% scaling/data/chr21_10_6.zarr/
+% 0 alleles:  100.00%
+% 1 alleles:  100.00%
+% 2 alleles:  7.92%
+% 3 alleles:  0.21%
+As a result of simulated mutational processes,
+most sites have one alternate allele, 
+with 7.9\% having two and 0.2\% having three
+alternate alleles in the $10^6$ samples dataset.
+We then export the variation data from each subset to VCF
+using \texttt{tskit vcf subset.ts | bgzip > subset.vcf.gz}
+as the starting point for other tools.
 
+We used bcftools version 1.18, Savvy 2.1.0, Genozip 5.0.26,
+vcf2zarr 0.0.9, and Zarr-Python 2.17.2. 
+All tools used default settings, 
+unless otherwise stated.
 All simulation-based benchmarks were performed on a 
 dual CPU (Intel Xeon E5-2680 v2)
 server with 256GiB of RAM running Debian GNU/Linux 11.
@@ -1308,30 +1348,32 @@ To ensure that the true effects of having data distributed over a large
 number of files were reported, benchmarks for Zarr and Savvy were 
 performed on a cold disk cache by running 
 \texttt{echo 3 | sudo tee /proc/sys/vm/drop\_caches} before each run.
-The IO subsystem used is based on a RAID 5 of 12 SATA hard drives.
+The I/O subsystem used is based on a RAID 5 of 12 SATA hard drives.
+For the CPU time benchmarks we measure the sum of the total user and
+system times required to execute the full command (as reported by GNU
+\texttt{time}) as well as elapsed wall-clock time. Total CPU
+time is shown as a solid line, with wall-clock time as a dashed line 
+of the same colour. In the case of pipelines, where some processing 
+is conducted concurrently wall-clock time can be less than total
+CPU (e.g.\ genozip in Fig~\ref{fig-whole-matrix-compute}). 
+When I/0 costs are significant, wall-clock time can be greater 
+than total CPU (e.g.\ Zarr and Savvy in Fig~\ref{fig-subset-matrix-compute}).
+Each tool was instructed to use one thread, where the options
+were provided. 
+Where possible in pipelines we use uncompressed BCF
+output (\texttt{-Ou}) to make processing 
+more efficient~\citep{danecek2021twelve}.
+We do not use BCF output in genozip because it is not supported
+directly.
 
-\begin{itemize}
-\item Dataset is based on subsets of French-Canadian sims. We simplify
-for increasingly large subsets, keeping only variant sites. We then
-convert to VCF and encode to BCF using
-\texttt{tskit vcf | bcftools view -O b}.
-\item We used a chunk size of XX for sgkit, after some experimentation.
-This gave n files of around x MB each for the ``call\_genotypes`` array.
-We used the defaults for savvy and genozip.
-\item For the afdist CPU time we measure the sum of the total user and
-system times required to execute the full command, as reported by GNU
-time. Each tool was instructed to use one thread, where the options
-were provided. For genozip, the time required to compute
-\texttt{genocat file.genozip | bcftools +af-dist}. Because commands
-in the pipeline execute concurrently on mutiple cores, the total CPU time is
-greater than the elapsed time.
-\item Where possible in pipelines we use uncompressed BCF
- output \texttt{-Ou} to make processing more efficient (skip printf
-and parsing costs, which are substantial). Following advice
-in~\citep{danecek2021twelve}.
-\item We do not use BCF output in genozip because it doesn't support
-it directly, only VCF (supports BCF by pipeing through bcftools).
-\end{itemize}
+Because \texttt{bcftools +af-dist} requires the AF INFO field
+and this is not kept in sync by \texttt{bcftools view}  
+(although the AC and AN fields are), the subset calculation 
+for Fig~\ref{fig-subset-matrix-compute} requires an additional step. 
+The resulting pipeline is
+\texttt{bcftools view -r REGION -S SAMPLESFILE -IOu BCFFILE | 
+bcftools +fill-tags -Ou | bcftools +af-dist}. Genozip similarly
+requires a \texttt{+fill-tags} step in the pipeline.
 
 \section{Availability of source code and requirements}
 

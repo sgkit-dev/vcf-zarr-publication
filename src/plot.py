@@ -210,7 +210,7 @@ def whole_matrix_compute(time_data, output):
     name_map = {
         "bcftools": "bcftools +af-dist <BCF_FILE>",
         "bcftools+vcf": "bcftools +af-dist <VCF_FILE>",
-        "genozip": "genozip <FILE> | bcftools +af-dist",
+        "genozip": "genocat <FILE> | bcftools +af-dist",
         "zarr": "zarr-python API",
         "savvy": "savvy C++ API",
     }
