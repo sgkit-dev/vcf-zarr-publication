@@ -282,7 +282,6 @@ def zarr_decode_worker(ds_path, debug, conn):
 
 
 def zarr_pos_extract_worker(ds_path, memory_only, debug, conn):
-
     before = time.time()
     root = zarr.open(ds_path)
     pos = root["variant_position"][:]
@@ -374,6 +373,10 @@ class Tool:
     column_extract_func: None = None
 
 
+def zarr_version():
+    return zarr.__version__
+
+
 all_tools = [
     Tool(
         "savvy",
@@ -389,7 +392,7 @@ all_tools = [
         ".zarr",
         run_zarr_afdist,
         run_zarr_afdist_subset,
-        None,
+        zarr_version,
         run_zarr_decode,
         run_zarr_pos_extract,
     ),
@@ -753,6 +756,23 @@ def report_versions():
 
 @click.command()
 @click.argument("path", type=click.Path())
+def site_allele_report(path):
+    """
+    Classify sites by numbers of muations.
+    """
+    ts = tskit.load(path)
+    sites_num_mutations = np.bincount(ts.mutations_site, minlength=ts.num_sites)
+
+    counts = {1: 0, 2: np.sum(sites_num_mutations == 1), 3: 0, 4: 0}
+    variant = tskit.Variant(ts)
+    print(
+        "Fraction with one mutation:",
+        np.sum(sites_num_mutations == 1) / ts.num_mutations,
+    )
+
+
+@click.command()
+@click.argument("path", type=click.Path())
 def benchmark_zarr_decode(path):
     before = time.time()
     bytes_decoded = zarr_decode(path)
@@ -781,6 +801,7 @@ cli.add_command(column_extract)
 cli.add_command(genotype_filtering_processing_time)
 cli.add_command(site_filtering_processing_time)
 cli.add_command(report_versions)
+cli.add_command(site_allele_report)
 cli.add_command(benchmark_zarr_decode)
 
 
