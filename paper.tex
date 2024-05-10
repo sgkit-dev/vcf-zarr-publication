@@ -797,26 +797,33 @@ size is dominated by a few columns with the top four
 (call\_AD, call\_GQ, call\_DP and call\_DPF) accounting for over 
 80\% of the total. These fields are much less compressible
 than genotype data (which uses $<1\%$ of the total space here)
-because of their inherent noisiness~\citep{lin2020sparse}. By 
-default the \texttt{bio2zarr} conversion is lossless, and integers
-of the narrowest type required to represent all of the data are
-used. In this case, this has resulted in 16 bit integers being used 
-for these top four fields. Examining the distribution of the depth
-fields, (call\_AD, call\_DP, call\_DPF), we can 
-we can see that a tiny fraction of the values stored
-are greater than 127 (call\_AD: 0.1\%, call\_DP: xx\%, call\_DPF: x\%; see 
-Fig SX for histograms).
-One might then reasonably truncate these fields to 8 bit integers.
-After converting to 8 bit, call\_AD is reduced by 
-x\% (XX GiB) and call\_DP reduced by x\% (XX GiB)
-and call\_DPF by x\% (XX GiB). 
-Similarly, the vast majority of call\_GQ values (xx\%) are less than 
-128 (corresponding to a conditional probability that the genotype call is 
-wrong of $10^{-128}$ [TODO CHECK THIS]), and can also reasonably
-be truncated. Here, this results in a reduction of x\% (XX GiB).
-Combined, truncating these top four fields to 8 bits reduces the 
-overall storage of the dataset to XXGiB, corresponding to a 
-X-fold compression of the VCF.
+because of their inherent noisiness~\citep{lin2020sparse}. 
+
+[TODO add in benchmarks discussed in issue. Extract POS, run af-dist, 
+do a filtering query. Note problems with orchestration when
+dealing with multiple VCF chunks. 
+Talk about mask-oriented computing there at the
+end, pointing out the cost of these multiple copies.]
+
+% By default the \texttt{bio2zarr} conversion is lossless, and integers
+% of the narrowest type required to represent all of the data are
+% used. In this case, this has resulted in 16 bit integers being used 
+% for these top four fields. Examining the distribution of the depth
+% fields, (call\_AD, call\_DP, call\_DPF), we can 
+% we can see that a tiny fraction of the values stored
+% are greater than 127 (call\_AD: 0.1\%, call\_DP: xx\%, call\_DPF: x\%; see 
+% Fig SX for histograms).
+% One might then reasonably truncate these fields to 8 bit integers.
+% After converting to 8 bit, call\_AD is reduced by 
+% x\% (XX GiB) and call\_DP reduced by x\% (XX GiB)
+% and call\_DPF by x\% (XX GiB). 
+% Similarly, the vast majority of call\_GQ values (xx\%) are less than 
+% 128 (corresponding to a conditional probability that the genotype call is 
+% wrong of $10^{-128}$ [TODO CHECK THIS]), and can also reasonably
+% be truncated. Here, this results in a reduction of x\% (XX GiB).
+% Combined, truncating these top four fields to 8 bits reduces the 
+% overall storage of the dataset to XXGiB, corresponding to a 
+% X-fold compression of the VCF.
 
 % and can reasonably be truncated (a 
 % much information would be lost if we used 8 bit
@@ -831,52 +838,62 @@ X-fold compression of the VCF.
 % As discussed in Methods, judicious use of additional filters
 % and lossy quantizing can result substantial space savings.
 
-Calculating the histogram of per call values at this 
-scale is not a trivial task.
-Taking advantage of the rich software ecosystem growing around Zarr
-(see Discussion) we used xarray~\citep{hoyer2017xarray}
-and Dask~\citep{rocklin2015dask} to transparently distribute the 
-computations over a cluster of X workers. 
-[ADD DETAILS]
-The elapsed time was X minutes, and requires X lines of Python in a 
-Jupyter notebook~\citep{kluyver2016jupyter}. 
+% Calculating the histogram of per call values at this 
+% scale is not a trivial task.
+% Taking advantage of the rich software ecosystem growing around Zarr
+% (see Discussion) we used xarray~\citep{hoyer2017xarray}
+% and Dask~\citep{rocklin2015dask} to transparently distribute the 
+% computations over a cluster of X workers. 
+% [ADD DETAILS]
+% The elapsed time was X minutes, and requires X lines of Python in a 
+% Jupyter notebook~\citep{kluyver2016jupyter}. 
 
-One of the key uses of the aggV2 dataset is to enable simple queries 
-of specific regions. For example, in [A PAPER] they [DID SOMETHING].
-We replicated this by running the appropriate bcftools query
-on the VCF chunk (note that the user is responsible for finding 
-the correct chunk file here, limiting the utility of genomic 
-indexes). This took XXX hours.
-The same query implemented with the Zarr-python 
-API required XXX seconds to produce identical output.
+% One of the key uses of the aggV2 dataset is to enable simple queries 
+% of specific regions. For example, in [A PAPER] they [DID SOMETHING].
+% We replicated this by running the appropriate bcftools query
+% on the VCF chunk (note that the user is responsible for finding 
+% the correct chunk file here, limiting the utility of genomic 
+% indexes). This took XXX hours.
+% The same query implemented with the Zarr-python 
+% API required XXX seconds to produce identical output.
 
 \section{Discussion}
-% The introduction of VCF as part of the work of the 1000 Genomes
-% project~\cite{10002015global} has transformed a fragmented 
-% landscape of mutually incompatible per-program file formats
-% into an ecosystem of tools that largely
-% interoperate~\cite{garrison2022spectrum}. In this 
-% sense VCF has been a huge success, and the underlying data model
-% is now deeply embedded in bioinformatics practice. As we have 
-% illustrated here, the shortcomings of the VCF and BCF file
-% formats (and more generally \emph{any} row-wise encoding of the 
-% data model) in terms of computational accessibility are severe,
-% and there can be little doubt that these file formats 
-% are incurring a large economic cost and 
-% holding back progress. 
-% As we have illustrated in the Genomics England
-% example here, these shortcomings are most acutely felt in 
-% large-scale data human datasets but any setting in which we 
-% wish to extract columns of the data from a row-wise 
-% VCF format will be inefficient 
-% when datasets are larger than a few hundred megabytes.
+VCF is a central element of modern genomics, facilitating
+the exchange of data among interoperating tools. 
+Its current row-oriented form, however,
+is fundamentally inefficient,
+profoundly limiting the scalability of the current generation
+of bioinformatics tools. Large scale VCF data cannot 
+currently be 
+processed without incurring a substantial economic
+and likely environmental cost~\cite{grealey2022carbon}.
+We have shown here that this is not a necessary situation,
+and that greatly improved efficiency can be achieved by 
+using more appropriate storage representations tuned
+to the realities of modern computing. We have argued that 
+Zarr provides a powerful basis for cloud-based
+storage and analysis of large-scale genetic variation data.
+We propose the VCF Zarr specification which losslessly
+maps VCF data to Zarr, and provide an efficient and scalable
+tool to perform conversion.
 
-% As we have demonstrated, the columnar approach, based on the 
-% popular Zarr standard and widely used compression libraries, 
-% can support many different types of data access
-% patterm efficiently, and has excellent computational accessibility.
-% In this approach there are some significant departures from 
-% standard practice, which warrant some discussion here.
+Zarr provides pragmatic solutions to some of the more pressing 
+problems facing the analysis of large-scale genetic variation
+data, but it is not a solution to all problems. Firstly, 
+any dataset containing a variant with a large number of alleles
+(perhaps due to indels) will cause problems because the 
+dimensions of various fields are determined by the \emph{maximum}
+dimension among all variants. Secondly, the design of 
+VCF Zarr emphasises efficiency of analysis for a fixed 
+dataset, and does not consider problems of ongoing updates
+(i.e, as new samples and their variants are added).
+Thirdly, Zarr is not suitable for handling unstructured
+string data, and for example likely not work well as a 
+basis for storing annotation data [CITES].
+
+
+
+
 
 % Perhaps the largest deviation in the approach that we advocate here 
 % from standard practice is to decouple our concept of a dataset from
@@ -902,45 +919,6 @@ API required XXX seconds to produce identical output.
 % We have focused here on the classical single-server and 
 % HPC cluster settings, but a major advantage of Zarr is 
 % its cloud readiness.
-
-% Probably getting into the weeds too much.
-% Some large cloud-hosted VCF datasets are currently stored in 
-% filesystems that emulate POSIX semantics on top of such object 
-% stores, at a substantial cost in performance. Directly hosting 
-% these datasets in object stores would have substantial 
-% benefits, both in terms of storage costs and performance.
-% Thirdly, breaking up fields into different directories (or 
-% cloud buckets) enables fine-grained access control to the 
-% dataset. For example, all users may be allowed access to
-% variant-level data, but only a subset permitted to access
-% call-level individual data. Such access controls can be 
-% straightforwardly applied using file or cloud-hosting 
-% methods on the relevant directores/buckets. Such concerns
-% are entirely decoupled from the file format.
-
-% This is poorly explained
-Along with the move away from the single-file-storage paradigm,
-the approach we outline here also suggests a shift from 
-the classical Unix pipeline-based processing approach 
-(but see below for a discussion of how existing pipelines can
-be supported). Datasets flowing through pipelines inherently 
-implies creating muliple copies of the data, and when 
-multiple terabytes of either unrelated or unchanged data 
-get copied several times through these pipes large inefficiencies 
-are incurred (see Fig~\ref{fig-whole-matrix-compute}). 
-We may think of this strategy as ``copy-oriented'' workflows.
-A more efficient way to structure such multilayered computations
-is in a  ``mask-oriented'' way. For example, to implement some
-complex multilayered call filtering strategy we could imagine sequentially
-updating a given per-call mask. Masks are cheap (e.g., the 
-standard genotype missingness mask in Table~\ref{tab-genomics-england-data}
-uses less than 1\% of the overall storage).
-
-Zarr provides pragmatic solutions to some of the more pressing 
-problems facing the analysis of large-scale genetic variation
-data, but it is not a solution to all problems. [large number
-of alleles, dataset is basically static, ragged arrays,
-strings ... any others? Zarr v3 on the way.]
 
 Nonetheless, at least in the single-shared-copy model currently
 used by most large-scale variation datasets, Zarr provides
@@ -1023,15 +1001,6 @@ efficient storage layer, freeing the next generation of
 bioinformatics tools
 from the traditional burdens of text parsing and format
 conversion.
-
-
-% Zarr has also seen recent uptake 
-% in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
-% and multimodal spatial omics
-% data~\citep{marconato2024spatialdata,baker2023emobject}.
-% Recent additions using Zarr include the application of deep learning
-% models to genomic sequence data~\citep{klie2023predictive} 
-% and a browser for genetic variation data~\citep{konig2023divbrowse}.
 
 % Workflow engines such as
 % Snakemake~\cite{koster2012snakemake,molder2021sustainable}
