@@ -760,15 +760,12 @@ def site_allele_report(path):
     """
     Classify sites by numbers of muations.
     """
-    ts = tskit.load(path)
-    sites_num_mutations = np.bincount(ts.mutations_site, minlength=ts.num_sites)
+    ds = sg.load_dataset(path)
+    variant_allele = ds["variant_allele"].values
+    for j in range(variant_allele.shape[1]):
+        non_missing = np.sum(variant_allele[:, j] != '')
+        print(f"{j} alleles: {non_missing / variant_allele.shape[0] * 100: .2f}%")
 
-    counts = {1: 0, 2: np.sum(sites_num_mutations == 1), 3: 0, 4: 0}
-    variant = tskit.Variant(ts)
-    print(
-        "Fraction with one mutation:",
-        np.sum(sites_num_mutations == 1) / ts.num_mutations,
-    )
 
 
 @click.command()
