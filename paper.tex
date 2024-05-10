@@ -858,6 +858,7 @@ end, pointing out the cost of these multiple copies.]
 % API required XXX seconds to produce identical output.
 
 \section{Discussion}
+% Zarr is great
 VCF is a central element of modern genomics, facilitating
 the exchange of data among interoperating tools. 
 Its current row-oriented form, however,
@@ -877,6 +878,8 @@ We propose the VCF Zarr specification which losslessly
 maps VCF data to Zarr, and provide an efficient and scalable
 tool to perform conversion.
 
+% We're not pretending is a solution to all problems and
+% up front about weaknesses of the model.
 Zarr provides pragmatic solutions to some of the more pressing 
 problems facing the analysis of large-scale genetic variation
 data, but it is not a solution to all problems. Firstly, 
@@ -891,41 +894,12 @@ Thirdly, Zarr is not suitable for handling unstructured
 string data, and for example likely not work well as a 
 basis for storing annotation data [CITES].
 
-
-
-
-
-% Perhaps the largest deviation in the approach that we advocate here 
-% from standard practice is to decouple our concept of a dataset from
-% a file. Each VCF is broken up into a set of Zarr arrays, each 
-% corresponding to a large number of chunks stored in a directory
-% hierarchy (Zarr also supports other forms of chunk storage 
-% including single files and key-value stores however; see Methods).
-% While there are some disadvantages to large numbers of small files,
-% we argue that the benefits greatly outweigh them, particularly 
-% in the large, centrally controlled dataset setting. 
-% Firstly, this approach is inherently parallelisable, and chunks across the 
-% dataset written and read in parallel without needing complex 
-% synchronisation and prior layout planning. 
-% Such parallel write access is very difficult 
-% in the single-file setting, and one of the key weaknesses 
-% of the HDF5 format~\citep{folk2011overview} [CITATION with 
-% parallel troubles from HDF5?]
-% Secondly, mapping chunks in arrays to individually addressed
-% keys maps well to large-scale cloud object storage. Indeed,
-% Zarr is specifically designed for such usage, and 
-% several petabyte scale datasets have been successfully deployed
-% and used [citations?].
-% We have focused here on the classical single-server and 
-% HPC cluster settings, but a major advantage of Zarr is 
-% its cloud readiness.
-
-Nonetheless, at least in the single-shared-copy model currently
-used by most large-scale variation datasets, Zarr provides
-an excellent basis for building a new generation of tools 
-that compute \emph{directly} on the data, efficiently
-accessing data by variant and by sample.
-[Mention ``Cloud native data repositories''~\cite{abernathey2021cloud}]
+Nonetheless, there are numerous datasets that exist today
+what would benefit from cloud-native storage, 
+inherent parallelism and granular storage.
+[Mention benefits of fine-grained access control to 
+different parts of the dataset using native storage access
+control mechanism?]
 
 The VCF Zarr specification and scalable vcf2zarr conversion utility
 that we have provided here are the starting points of such 
@@ -947,28 +921,7 @@ scale concerns distributed computation. Even with more efficient
 columnar data representations, computations that required examing 
 large volumes of per-call data must be distributed to complete 
 in a reasonable amount of time. [Dask, Xarray, sgkit?]
-Currently users are responsible for orchestrating such calculations
-on clusters, and automation would be a significant boon
-for reasearcher productivity. [Hail has demonstrated the value of this?]
 
-
-% We suggest that the future of VCF is to explicitly define the underlying
-% data model, and to decouple it from the current row-wise encodings 
-% of the VCF text and BCF binary file formats. This will enable data 
-% to flow more freely, and provide scope for much-needed innovation.
-
-% \item A major strong point of Zarr is its simplicity. All it's doing
-% is compressing n-dimensional chunks of numerical data and storing
-% them using fixed address keys. This key-value approach means that storage
-% is very flexible and implementation is straightforward. There
-% are several implementations of the Zarr protocol, and while some of these
-% are rudimentary, they could be improved or replaced with relatively
-% little effort. Zarr has been successfully used to store petabytes
-% of data across different sciences --- genetic variation data is largely
-% arrays of numerical data, and not really that different ultimately.
-% Zarr is cloud native.
-% Zarr is an open specification, built on standard components (contrast
-% with Hail).
 
 % \item Vision. An ecosystem of tools that interoperate
 % based on an open, cloud-based format where distribution is naturally
@@ -1001,25 +954,6 @@ efficient storage layer, freeing the next generation of
 bioinformatics tools
 from the traditional burdens of text parsing and format
 conversion.
-
-% Workflow engines such as
-% Snakemake~\cite{koster2012snakemake,molder2021sustainable}
-% and [TODO mention WDL, Cromwell, etc?] make such analyses
-% much easier, but there is still a great deal of room for
-% mistakes.
-% Per-chromosome VCFs are not practical for biobank scale
-% projects, however, and variant call data tends to be split
-% into many (still large) files.
-% For example, the VCFs for 150K UKB WGS data~\cite{halldorsson2022sequences}
-% are provided in 50kb chunks~\cite{browning2023statistical}, resulting in
-% hundreds of files per chromosome.
-% % This is horrible writing, but the point is important.
-% While these files provide a natural
-% unit for distributing work, the details of how they
-% are split differ and essentially there is
-% no interoperability among large-scale datasets because the VCFs are
-% so cumbersome that a separate orchestration layer is required to
-% access the data in parallel.
 
 \section{Methods}
 
