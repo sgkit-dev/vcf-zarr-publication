@@ -541,7 +541,8 @@ a \texttt{bcftools} plugin.
 Total CPU time required to run \texttt{bcftools +af-dist}
 and equivalent operations in a single thread for various tools.
 Elapsed time is also reported (dotted line). Run-time for genozip
-at $10^6$ samples was extrapolated by fitting an exponential.
+and bcftools on VCF
+at $10^6$ samples were extrapolated by fitting an exponential.
 See Methods for full details.
 \label{fig-whole-matrix-compute}}
 \end{figure}
@@ -1322,12 +1323,23 @@ Note that this procedure captures the growth
 in the number of variants (shown in the top x-axis labels)
 as we increase sample sizes as a 
 natural consequence of population-genetic processes.
+% jk@holly$ python3 src/collect_data.py site-allele-report
+% scaling/data/chr21_10_6.zarr/
+% 0 alleles:  100.00%
+% 1 alleles:  100.00%
+% 2 alleles:  7.92%
+% 3 alleles:  0.21%
+As a result of simulated mutational processes,
+most sites have one alternate allele, 
+with 7.9\% having two and 0.2\% having three
+alternate alleles in the $10^6$ samples dataset.
 We then export the variation data from each subset to VCF
 using \texttt{tskit vcf subset.ts | bgzip > subset.vcf.gz}
 as the starting point for other tools.
 
-We used bcftools version 1.18, Savvy 2.1.0, Genozip 5.0.26
-and vcf2zarr 0.0.9. All tools used default settings, 
+We used bcftools version 1.18, Savvy 2.1.0, Genozip 5.0.26,
+vcf2zarr 0.0.9, and Zarr-Python 2.17.2. 
+All tools used default settings, 
 unless otherwise stated.
 All simulation-based benchmarks were performed on a 
 dual CPU (Intel Xeon E5-2680 v2)
@@ -1339,14 +1351,29 @@ performed on a cold disk cache by running
 The I/O subsystem used is based on a RAID 5 of 12 SATA hard drives.
 For the CPU time benchmarks we measure the sum of the total user and
 system times required to execute the full command (as reported by GNU
-\texttt{time}) as well as elapsed wall-clock time. 
+\texttt{time}) as well as elapsed wall-clock time. Total CPU
+time is shown as a solid line, with wall-clock time as a dashed line 
+of the same colour. In the case of pipelines, where some processing 
+is conducted concurrently wall-clock time can be less than total
+CPU (e.g.\ genozip in Fig~\ref{fig-whole-matrix-compute}). 
+When I/0 costs are significant, wall-clock time can be greater 
+than total CPU (e.g.\ Zarr and Savvy in Fig~\ref{fig-subset-matrix-compute}).
 Each tool was instructed to use one thread, where the options
 were provided. 
 Where possible in pipelines we use uncompressed BCF
-output \texttt{-Ou} to make processing more efficient~\citep{danecek2021twelve}.
+output (\texttt{-Ou}) to make processing 
+more efficient~\citep{danecek2021twelve}.
 We do not use BCF output in genozip because it is not supported
 directly.
 
+Because \texttt{bcftools +af-dist} requires the AF INFO field
+and this is not kept in sync by \texttt{bcftools view}  
+(although the AC and AN fields are), the subset calculation 
+for Fig~\ref{fig-subset-matrix-compute} requires an additional step. 
+The resulting pipeline is
+\texttt{bcftools view -r REGION -S SAMPLESFILE -IOu BCFFILE | 
+bcftools +fill-tags -Ou | bcftools +af-dist}. Genozip similarly
+requires a \texttt{+fill-tags} step in the pipeline.
 
 \section{Availability of source code and requirements}
 
