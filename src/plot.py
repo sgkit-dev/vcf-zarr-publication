@@ -315,36 +315,6 @@ def subset_matrix_compute_supplemental(data, output):
     run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"])
 
 
-@click.command()
-@click.argument("data", type=click.File("r"))
-@click.argument("output", type=click.Path())
-def plot_compression_ratio_grid(data, output):
-    df = pd.read_csv(data)
-
-    # Filter to only arrays in the same dim order as the original:
-    df_plot = df.loc[df.dim_order.isin(["(0, 1)", "(0, 1, 2)"])]
-
-    # Filter out results with Quantize / PackBits:
-    df_plot = df_plot.loc[df_plot.cname == "zstd"]
-
-    g = sns.catplot(
-        df_plot,
-        kind="bar",
-        row="ArrayName",
-        col="shuffle",
-        x="named_chunksize",
-        y="CompressionRatio",
-        sharex=False,
-        sharey="row",
-    )
-
-    for i, ax in enumerate(g.fig.axes):  ## getting all axes of the fig object
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-
-    plt.subplots_adjust(hspace=1.0)
-    plt.tight_layout()
-    plt.savefig(output)
-
 
 @click.command()
 @click.argument("data", type=click.File("r"))
@@ -356,6 +326,7 @@ def compression_shuffle(data, output):
     df = pd.read_csv(data)
 
     # Note this is ordered by best-to-worst compression for viz
+
     arrays = [
         "call_GQ",
         "call_DP",
@@ -363,25 +334,17 @@ def compression_shuffle(data, output):
         "call_AB",
         "call_genotype",
     ]
-    df_sub = df[
-        df.ArrayName.isin(arrays)
-        & (df.sample_chunksize == 1000)
-        & (df.variant_chunksize == 10000)
-        & (df.cname == "zstd")
-        & (df.dim_order.isin(["(0, 1)", "(0, 1, 2)"]))
-    ].copy()
-    names = np.array(["No Shuffle", "Byte Shuffle", "Bit Shuffle"])
-    df_sub["Shuffle"] = names[df_sub["shuffle"]]
 
     fig, ax = one_panel_fig()
     sns.barplot(
-        df_sub,
+        df,
         orient="h",
         order=arrays,
         y="ArrayName",
         x="CompressionRatio",
         hue="Shuffle",
         ax=ax,
+        palette='Set2'
     )
     ax.set_ylabel("")
     ax.get_legend().set_title("")
@@ -393,59 +356,28 @@ def compression_shuffle(data, output):
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
-def plot_compression_dim_shuffle(data, output):
+def compression_chunksize(data, output):
+    """
+    Plot figure showing the effect of chunksize settings on compression ratio.
+    """
+
     df = pd.read_csv(data)
+    sample_df = df.loc[df.variant_chunksize == 10000]
+    variant_df = df.loc[df.sample_chunksize == 1000]
 
-    # Effect was mainly on `call_AD`, so we filter here?
-    df_plot = df.loc[df.ArrayName == "call_AD"]
+    fig, axes = plt.subplots(1, 2)
 
-    g = sns.catplot(
-        df_plot,
-        kind="bar",
-        col="shuffle",
-        x="named_chunksize",
-        y="CompressionRatio",
-        sharex=True,
-        sharey=True,
-    )
+    for arr in df.ArrayName.unique():
+        arr_sdf = sample_df.loc[sample_df.ArrayName == arr].sort_values('sample_chunksize')
+        arr_vdf = variant_df.loc[variant_df.ArrayName == arr].sort_values('variant_chunksize')
+        axes[0].plot(arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr)
+        axes[1].plot(arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr)
 
-    for i, ax in enumerate(g.fig.axes):  ## getting all axes of the fig object
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    plt.legend()
+    axes[0].set_xlabel("Sample chunk size")
+    axes[1].set_xlabel("Variant chunk size")
+    axes[0].set_ylabel("Compression ratio")
 
-    plt.suptitle("Compression Ratios for call_AD across dimension shuffles")
-
-    plt.tight_layout()
-    plt.savefig(output)
-
-
-@click.command()
-@click.argument("data", type=click.File("r"))
-@click.argument("output", type=click.Path())
-def plot_compression_packbits(data, output):
-    df = pd.read_csv(data)
-    df_plot = df.loc[
-        (df.ArrayName == "call_genotype_mask")
-        & df.dim_order.isin(["(0, 1)", "(0, 1, 2)"])
-    ]
-
-    if len(df_plot) < 1:
-        raise ValueError("Information about call_genotype_mask isn't present.")
-
-    g = sns.catplot(
-        df_plot,
-        kind="bar",
-        col="shuffle",
-        row="cname",
-        x="named_chunksize",
-        y="CompressionRatio",
-        sharex=False,
-        sharey=True,
-    )
-
-    for i, ax in enumerate(g.fig.axes):  ## getting all axes of the fig object
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-
-    plt.subplots_adjust(hspace=1.0)
     plt.tight_layout()
     plt.savefig(output)
 
@@ -462,9 +394,8 @@ cli.add_command(column_extract)
 cli.add_command(subset_matrix_compute)
 cli.add_command(subset_matrix_compute_supplemental)
 cli.add_command(compression_shuffle)
-cli.add_command(plot_compression_ratio_grid)
-cli.add_command(plot_compression_dim_shuffle)
-cli.add_command(plot_compression_packbits)
+cli.add_command(compression_chunksize)
+
 
 if __name__ == "__main__":
     cli()

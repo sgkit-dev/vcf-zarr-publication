@@ -1,0 +1,16 @@
+Shuffle,nchunks,CompressionRatio,ArrayName,input_data
+No Shuffle,30,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+Byte Shuffle,30,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+Bit Shuffle,30,2.6,call_GQ,real_data/data/WGS/chr22.zarr
+Byte Shuffle,30,4.9,call_DP,real_data/data/WGS/chr22.zarr
+No Shuffle,30,4.1,call_DP,real_data/data/WGS/chr22.zarr
+Bit Shuffle,30,4.1,call_DP,real_data/data/WGS/chr22.zarr
+Byte Shuffle,30,18.1,call_AD,real_data/data/WGS/chr22.zarr
+No Shuffle,30,16.4,call_AD,real_data/data/WGS/chr22.zarr
+Bit Shuffle,30,12.7,call_AD,real_data/data/WGS/chr22.zarr
+No Shuffle,30,29.8,call_AB,real_data/data/WGS/chr22.zarr
+Byte Shuffle,30,16.6,call_AB,real_data/data/WGS/chr22.zarr
+Bit Shuffle,30,10.4,call_AB,real_data/data/WGS/chr22.zarr
+Bit Shuffle,30,60.3,call_genotype,real_data/data/WGS/chr22.zarr
+No Shuffle,30,44.0,call_genotype,real_data/data/WGS/chr22.zarr
+Byte Shuffle,30,44.0,call_genotype,real_data/data/WGS/chr22.zarr

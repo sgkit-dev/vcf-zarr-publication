@@ -53,8 +53,19 @@ TS_FILES=scaling/data/chr21_10_1.ts\
 plot_data/data-scaling.csv:
 	python3 src/collect_data.py file-size $(TS_FILES) -o $@
 
-plot_data/compression_benchmarks.csv:
-	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr
+
+# Compression benchmarks:
+
+plot_data/shuffle_benchmarks.csv:
+	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr \
+		--test-config shuffle \
+		-o $@
+
+plot_data/chunksize_benchmarks.csv:
+	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr \
+		--test-config chunksize \
+		-o $@
+
 
 # TODO make rule for time-scaling
 
@@ -84,23 +95,14 @@ figures/subset-matrix-compute-supplemental.pdf: plot_data/subset-matrix-compute.
 		plot_data/subset-matrix-compute.csv  \
 		figures/subset-matrix-compute-supplemental.pdf
 
-figures/compression-shuffle.pdf: plot_data/compression_benchmarks.csv
+figures/compression-shuffle.pdf: plot_data/shuffle_benchmarks.csv
 	python3 src/plot.py compression-shuffle \
-                plot_data/compression_benchmarks.csv \
-                figures/compression-shuffle.pdf
+                plot_data/shuffle_benchmarks.csv \
+                $@
 
-figures/compression_ratio_grid.pdf: plot_data/compression_benchmarks.csv
-	python3 src/plot.py plot-compression-ratio-grid \
-		plot_data/compression_benchmarks.csv \
-		figures/compression_ratio_grid.pdf
+figures/compression-chunksize.pdf: plot_data/chunksize_benchmarks.csv
+	python3 src/plot.py compression-chunksize \
+		plot_data/chunksize_benchmarks.csv \
+		$@
 
-figures/compression_dim_shuffle.pdf: plot_data/compression_benchmarks.csv
-	python3 src/plot.py plot-compression-dim-shuffle \
-                plot_data/compression_benchmarks.csv \
-                figures/compression_dim_shuffle.pdf
-
-figures/compression_packbits.pdf: plot_data/compression_benchmarks.csv
-	python3 src/plot.py plot-compression-packbits \
-                plot_data/compression_benchmarks.csv \
-                figures/compression_packbits.pdf
 
