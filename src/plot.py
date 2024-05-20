@@ -14,7 +14,7 @@ plt.rcParams.update({"lines.markersize": 4})
 
 
 bcf_colour = "tab:orange"
-vcf_colour = "tab:pink"
+vcf_colour = "tab:green"
 sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
@@ -26,6 +26,13 @@ def one_panel_fig(**kwargs):
     # 3 15/32 inch, = 3.46
     width = 3.46
     fig, ax = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
+    return fig, ax
+
+def two_panel_fig(**kwargs):
+    # The columnwidth of the format is ~250pt, which is
+    # 3 15/32 inch, = 3.46
+    width = 3.46
+    fig, ax = plt.subplots(1, 2, figsize=(width, 2 * width / 3), **kwargs)
     return fig, ax
 
 
@@ -315,7 +322,6 @@ def subset_matrix_compute_supplemental(data, output):
     run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"])
 
 
-
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
@@ -344,7 +350,6 @@ def compression_shuffle(data, output):
         x="CompressionRatio",
         hue="Shuffle",
         ax=ax,
-        palette='Set2'
     )
     ax.set_ylabel("")
     ax.get_legend().set_title("")
@@ -365,13 +370,19 @@ def compression_chunksize(data, output):
     sample_df = df.loc[df.variant_chunksize == 10000]
     variant_df = df.loc[df.sample_chunksize == 1000]
 
-    fig, axes = plt.subplots(1, 2)
+    fig, axes = two_panel_fig()
 
     for arr in df.ArrayName.unique():
-        arr_sdf = sample_df.loc[sample_df.ArrayName == arr].sort_values('sample_chunksize')
-        arr_vdf = variant_df.loc[variant_df.ArrayName == arr].sort_values('variant_chunksize')
-        axes[0].plot(arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr)
-        axes[1].plot(arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr)
+        arr_sdf = sample_df.loc[sample_df.ArrayName == arr].sort_values(
+            "sample_chunksize"
+        )
+        arr_vdf = variant_df.loc[variant_df.ArrayName == arr].sort_values(
+            "variant_chunksize"
+        )
+        axes[0].plot(arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr,
+                marker="o")
+        axes[1].semilogx(arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr,
+                marker="o")
 
     plt.legend()
     axes[0].set_xlabel("Sample chunk size")
