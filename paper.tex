@@ -736,64 +736,72 @@ We also show the percentage of the overall storage that each array consumes.
 \toprule
 {Field} & {type} & {storage} & {compress} & {\%total} \\
 \midrule
-call\_AD &  int16 & 179.7G & 26 & 24.0\\
-call\_GQ &  int16 & 171.8G & 13 & 23.0 \\
-call\_DP &  int16 & 141.8G & 16 & 18.9 \\
-call\_DPF& int16  & 115.1G & 20 & 15.3\\
-call\_FT &  string & 58.5G & 160 & 7.8 \\
-call\_PL &  int16 & 51.4G & 140 & 6.9 \\
-call\_GQX &  int16 & 12.1G & 190 & 1.6 \\
-call\_genotype & int8 & 6.1G & 380 & 0.8 \\
-call\_genotype\_mask & bool & 3.7G  & 630 & 0.5\\
-call\_genotype\_phased & bool & 692.5M  & 1700 & 0.1 \\
-call\_PS  & int8  & 102.2M & 12000 & 0.05 \\
-variant\_quality & float32 & 22.6M & 2.7 & <0.01 \\
-variant\_allele & string & 21.5M & 11 \\
-variant\_position & int32 & 12.7M & 4.7 \\
-variant\_ABratio & float32 & 9.6M & 6.3 \\
-variant\_AN & int32 & 9.6M & 6.3 \\
-variant\_filter & bool & 1.9M & 490 \\
+/call\_AD & int16 & 658.4G & 26.0 & 25.35\% \\
+/call\_GQ & int16 & 654.5G & 13.0 & 25.20\% \\
+/call\_DP & int16 & 570.0G & 15.0 & 21.95\% \\
+/call\_DPF & int16 & 447.1G & 20.0 & 17.22\% \\
+/call\_PL & int16 & 162.6G & 160.0 & 6.26\% \\
+/call\_GQX & int16 & 41.0G & 210.0 & 1.58\% \\
+/call\_FT & string & 25.0G & 1400.0 & 0.96\% \\
+/call\_genotype & int8 & 21.5G & 410.0 & 0.83\% \\
+/call\_genotype\_mask & bool & 12.8G & 680.0 & 0.49\% \\
+/call\_genotype\_phased & bool & 2.4G & 1900.0 & 0.09\% \\
+/call\_PS & int8 & 383.4M & 12000.0 & 0.01\% \\
+% /call\_ADF & int8 & 383.4M & 12000.0 & 0.01\% \\
+% /call\_ADR & int8 & 383.4M & 12000.0 & 0.01\% \\
+/variant\_position & int32 & 111.6M & 2.0 & \\
+/variant\_quality & float32 & 87.4M & 2.6 & \\
+/variant\_allele & string & 69.3M & 13.0 & \\
+% /variant\_OLD\_MULTIALLELIC & object & 55.88M & 8.2 & 0.00\% \\
+/variant\_AN & int32 & 47.3M & 4.8 & \\
+% /variant\_AC & int32 & 47M & 4.9 & 0.00\% \\
+% /variant\_AC\_Het & int32 & 46.62M & 4.9 & 0.00\% \\
+% /variant\_ABratio & float32 & 20.23M & 11.0 & 0.00\% \\
+% /variant\_MendelSite & float32 & 20.09M & 11.0 & 0.00\% \\
+% /variant\_medianGQ & float32 & 19.16M & 12.0 & 0.00\% \\
+% /variant\_completeGTRatio & float32 & 14.98M & 15.0 & 0.00\% \\
+% /variant\_phwe\_eur & float32 & 14.46M & 16.0 & 0.00\% \\
+% /variant\_phwe\_afr & float32 & 13.37M & 17.0 & 0.00\% \\
+% /variant\_medianDepthNonMiss & float32 & 12.17M & 19.0 & 0.00\% \\
+% /variant\_medianDepthAll & float32 & 11.99M & 19.0 & 0.00\% \\
+% /variant\_phwe\_sas & float32 & 11.59M & 20.0 & 0.00\% \\
+% /variant\_AC\_Hom & int32 & 11.12M & 21.0 & 0.00\% \\
+% /variant\_missingness & float32 & 9.3M & 25.0 & 0.00\% \\
+% /variant\_phwe\_eas & float32 & 7.12M & 32.0 & 0.00\% \\
+/variant\_filter & bool & 6.4M & 570.0 & \\
+% /variant\_AC\_Hemi & int32 & 849.43 KiB & 280.0 & 0.00\% \\
+% /variant\_composite\_filter & bool & 433.38 KiB & 130.0 & 0.00\% \\
+% /variant\_OLD\_CLUMPED & object & 384.18 KiB & 1200.0 & 0.00\% \\
+% /variant\_id & object & 298.76 KiB & 1600.0 & 0.00\% \\
+% /variant\_phwe\_amr & float32 & 269.52 KiB & 870.0 & 0.00\% \\
+% /variant\_id\_mask & bool & 269.46 KiB & 220.0 & 0.00\% \\
+% /sample\_id & object & 268.12 KiB & 2.3 & 0.00\% \\
+% /variant\_contig & int16 & 257.77 KiB & 450.0 & 0.00\% \\
+% /contig\_length & int64 & 3.79 KiB & 5.3 & 0.00\% \\
+% /contig\_id & object & 2.3 KiB & 8.8 & 0.00\% \\
+% /filter\_id & object & 808 bytes & 0.6 & 0.00\% \\
+%%%% OLD for chr20
+% call\_AD &  int16 & 179.7G & 26 & 24.0\\
+% call\_GQ &  int16 & 171.8G & 13 & 23.0 \\
+% call\_DP &  int16 & 141.8G & 16 & 18.9 \\
+% call\_DPF& int16  & 115.1G & 20 & 15.3\\
+% call\_FT &  string & 58.5G & 160 & 7.8 \\
+% call\_PL &  int16 & 51.4G & 140 & 6.9 \\
+% call\_GQX &  int16 & 12.1G & 190 & 1.6 \\
+% call\_genotype & int8 & 6.1G & 380 & 0.8 \\
+% call\_genotype\_mask & bool & 3.7G  & 630 & 0.5\\
+% call\_genotype\_phased & bool & 692.5M  & 1700 & 0.1 \\
+% call\_PS  & int8  & 102.2M & 12000 & 0.05 \\
+% variant\_quality & float32 & 22.6M & 2.7 & <0.01 \\
+% variant\_allele & string & 21.5M & 11 \\
+% variant\_position & int32 & 12.7M & 4.7 \\
+% variant\_ABratio & float32 & 9.6M & 6.3 \\
+% variant\_AN & int32 & 9.6M & 6.3 \\
+% variant\_filter & bool & 1.9M & 490 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% array([23.956     , 22.90533333, 18.90133333, 15.34533333,  7.8       ,
-%         6.85333333,  1.61066667,  0.81733333,  0.488     ])
-
-% /call_AD                     int16    179.67 GiB  4.53 TiB       26 125768  37.74 MiB     1.46 MiB            (15912293, 78195, 2)  (10000, 1000, 2)  
-% /call_GQ                     int16    171.79 GiB  2.26 TiB       13 125768  18.87 MiB     1.4 MiB             (15912293, 78195)     (10000, 1000) 
-% /call_DP                     int16    141.76 GiB  2.26 TiB       16 125768  18.87 MiB     1.15 MiB            (15912293, 78195)     (10000, 1000)
-% /call_DPF                    int16    115.09 GiB  2.26 TiB       20 125768  18.87 MiB     959.56 KiB          (15912293, 78195)     (10000, 1000)
-% /call_FT                     object   58.5 GiB    9.05 TiB      160 125768  75.48 MiB     487.71 KiB          (15912293, 78195)     (10000, 1000)
-% /call_PL                     int16    51.4 GiB    6.79 TiB      140 125768  56.61 MiB     428.51 KiB          (15912293, 78195, 3)  (10000, 1000, 3)
-% /call_GQX                    int16    12.08 GiB   2.26 TiB      190 125768  18.87 MiB     100.73 KiB          (15912293, 78195)     (10000, 1000) 
-% /call_genotype               int8     6.13 GiB    2.26 TiB      380 125768  18.87 MiB     51.11 KiB           (15912293, 78195, 2)  (10000, 1000, 2)  
-% /call_genotype_mask          bool     3.66 GiB    2.26 TiB      630 125768  18.87 MiB     30.53 KiB           (15912293, 78195, 2)  (10000, 1000, 2)  
-% /call_genotype_phased        bool     692.51 MiB  1.13 TiB     1700 125768  9.43 MiB      5.64 KiB            (15912293, 78195)     (10000, 1000) 
-% /call_PS                     int8     102.2 MiB   1.13 TiB    12000 125768  9.43 MiB      852 bytes           (15912293, 78195)     (10000, 1000) 
-% /call_ADR                    int8     102.2 MiB   1.13 TiB    12000 125768  9.43 MiB      852 bytes           (15912293, 78195)     (10000, 1000)
-% /call_ADF                    int8     102.2 MiB   1.13 TiB    12000 125768  9.43 MiB      852 bytes           (15912293, 78195)     (10000, 1000)
-% /variant_OLD_MULTIALLELIC    object   31.63 MiB   121.4 MiB       3.8 1592  78.09 KiB     20.34 KiB           (15912293,)           (10000,) 
-% /variant_quality             float32  22.6 MiB    60.7 MiB        2.7 1592  39.04 KiB     14.53 KiB           (15912293,)           (10000,) 
-% /variant_allele              object   21.52 MiB   242.8 MiB      11 1592  156.17 KiB    13.84 KiB           (15912293, 2)         (10000, 2) 
-% /variant_position            int32    12.83 MiB   60.7 MiB        4.7 1592  39.04 KiB     8.25 KiB            (15912293,)           (10000,) 
-% /variant_ABratio             float32  9.62 MiB    60.7 MiB        6.3 1592  39.04 KiB     6.18 KiB            (15912293,)           (10000,) 
-% /variant_AN                  int32    9.6 MiB     60.7 MiB        6.3 1592  39.04 KiB     6.18 KiB            (15912293,)           (10000,) 
-% /variant_AC                  int32    9.22 MiB    60.7 MiB        6.6 1592  39.04 KiB     5.93 KiB            (15912293,)           (10000,) 
-% /variant_AC_Het              int32    8.98 MiB    60.7 MiB        6.8 1592  39.04 KiB     5.78 KiB            (15912293,)           (10000,) 
-
-% Approx total = 179.67 + 171.79 + 141.76 + 115.09 + 58.5 + 51.4 + 12.08 + 6.13 + 3.66 
-% 740, round up to 750
-% [179.67 , 171.79 , 141.76 , 115.09 , 58.5 , 51.4 , 12.08 , 6.13 , 3.66 ]
-% >>> import numpy as np
-% >>> a = np.array([179.67 , 171.79 , 141.76 , 115.09 , 58.5 , 51.4 , 12.08 ,
-% 6.13 , 3.66 ]  )
-% >>> a
-% array([179.67, 171.79, 141.76, 115.09,  58.5 ,  51.4 ,  12.08,   6.13,
-%          3.66])
-% >>> a / 750 * 100
-% array([23.956     , 22.90533333, 18.90133333, 15.34533333,  7.8       ,
-%         6.85333333,  1.61066667,  0.81733333,  0.488     ])
 
 Table~\ref{tab-genomics-england-data} shows that the dataset storage
 size is dominated by a few columns with the top four
