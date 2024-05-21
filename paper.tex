@@ -710,155 +710,177 @@ regions~\cite{leggatt2023genotype,lam2023repeat}.
 As described in the Methods, conversion to Zarr using 
 \texttt{vcf2zarr} is a two-step 
 process to limit memory usage and ensure reliability. We 
-first converted the 28 VCF files (3.51 TiB) for chromosome 20
+first converted the 106 VCF files (12.81 TiB) for chromosome 2
 into the intermediate columnar format (ICF). This task was 
-split into 3899 partitions, and distributed using the Genomics England
-HPC cluster. It required about 50 days of CPU, with an elapsed
-wall-clock time of about 2 hours. The ICF representation uses a total
-of XTiB over XX files and YY directories. We then encoded this intermediate
-columnar format to Zarr using 8 cores and XX GB of RAM in about 12 hours.
-This produced a dataset with 43 arrays, consuming a 
-total of Y GiB of storage over X directories and 
-Y files. This is about a 4.8X reduction over the original VCF. 
+split into 14,605 partitions, and distributed using the Genomics England
+HPC cluster. The average run-time per partition was 20.7 min.
+The ICF representation used a total
+of 9.94 TiB over 3,960,177 data storage files. 
+We then converted the ICF to Zarr [DETAILS].
+This produced a dataset with 44 arrays, consuming a 
+total of 2.54 TiB of storage over 6,312,488
+chunk files. This is a roughly 5X reduction in total storage space over the original VCF. 
 The top fields in terms 
 of storage are detailed in Table~\ref{tab-genomics-england-data}.
 
 \begin{table}
 \caption{Summary for a selection of the largest VCF Zarr columns produced for 
-Genomics England aggV2 VCFs on chromosome 20 using \texttt{vcf2zarr}
+Genomics England aggV2 VCFs on chromosome 2 using \texttt{vcf2zarr}
 default settings. Each field is stored independently 
 as a Zarr array with the given type (sufficient to represent all values in the
 data). We show the total storage consumed (reported via \texttt{du}) in 
 power-of-two units, and the compression ratio achieved on that array.
-We also show the percentage of the overall storage that each array consumes.
+We also show the percentage of the overall storage that each array consumes
+(omitting values < 0.01\%).
 \label{tab-genomics-england-data}}
 \begin{tabular}{llS[table-format=3.1]S[table-format=3.2]S[table-format=3.2]}
 \toprule
 {Field} & {type} & {storage} & {compress} & {\%total} \\
 \midrule
-call\_AD &  int16 & 179.7G & 26 & 24.0\\
-call\_GQ &  int16 & 171.8G & 13 & 23.0 \\
-call\_DP &  int16 & 141.8G & 16 & 18.9 \\
-call\_DPF& int16  & 115.1G & 20 & 15.3\\
-call\_FT &  string & 58.5G & 160 & 7.8 \\
-call\_PL &  int16 & 51.4G & 140 & 6.9 \\
-call\_GQX &  int16 & 12.1G & 190 & 1.6 \\
-call\_genotype & int8 & 6.1G & 380 & 0.8 \\
-call\_genotype\_mask & bool & 3.7G  & 630 & 0.5\\
-call\_genotype\_phased & bool & 692.5M  & 1700 & 0.1 \\
-call\_PS  & int8  & 102.2M & 12000 & 0.05 \\
-variant\_quality & float32 & 22.6M & 2.7 & <0.01 \\
-variant\_allele & string & 21.5M & 11 \\
-variant\_position & int32 & 12.7M & 4.7 \\
-variant\_ABratio & float32 & 9.6M & 6.3 \\
-variant\_AN & int32 & 9.6M & 6.3 \\
-variant\_filter & bool & 1.9M & 490 \\
+/call\_AD & int16 & 658.4G & 26.0 & 25.35\% \\
+/call\_GQ & int16 & 654.5G & 13.0 & 25.20\% \\
+/call\_DP & int16 & 570.0G & 15.0 & 21.95\% \\
+/call\_DPF & int16 & 447.1G & 20.0 & 17.22\% \\
+/call\_PL & int16 & 162.6G & 160.0 & 6.26\% \\
+/call\_GQX & int16 & 41.0G & 210.0 & 1.58\% \\
+/call\_FT & string & 25.0G & 1400.0 & 0.96\% \\
+/call\_genotype & int8 & 21.5G & 410.0 & 0.83\% \\
+/call\_genotype\_mask & bool & 12.8G & 680.0 & 0.49\% \\
+/call\_genotype\_phased & bool & 2.4G & 1900.0 & 0.09\% \\
+/call\_PS & int8 & 383.4M & 12000.0 & 0.01\% \\
+% /call\_ADF & int8 & 383.4M & 12000.0 & 0.01\% \\
+% /call\_ADR & int8 & 383.4M & 12000.0 & 0.01\% \\
+/variant\_position & int32 & 111.6M & 2.0 & \\
+/variant\_quality & float32 & 87.4M & 2.6 & \\
+/variant\_allele & string & 69.3M & 13.0 & \\
+% /variant\_OLD\_MULTIALLELIC & object & 55.88M & 8.2 & 0.00\% \\
+/variant\_AN & int32 & 47.3M & 4.8 & \\
+% /variant\_AC & int32 & 47M & 4.9 & 0.00\% \\
+% /variant\_AC\_Het & int32 & 46.62M & 4.9 & 0.00\% \\
+% /variant\_ABratio & float32 & 20.23M & 11.0 & 0.00\% \\
+% /variant\_MendelSite & float32 & 20.09M & 11.0 & 0.00\% \\
+% /variant\_medianGQ & float32 & 19.16M & 12.0 & 0.00\% \\
+% /variant\_completeGTRatio & float32 & 14.98M & 15.0 & 0.00\% \\
+% /variant\_phwe\_eur & float32 & 14.46M & 16.0 & 0.00\% \\
+% /variant\_phwe\_afr & float32 & 13.37M & 17.0 & 0.00\% \\
+% /variant\_medianDepthNonMiss & float32 & 12.17M & 19.0 & 0.00\% \\
+% /variant\_medianDepthAll & float32 & 11.99M & 19.0 & 0.00\% \\
+% /variant\_phwe\_sas & float32 & 11.59M & 20.0 & 0.00\% \\
+% /variant\_AC\_Hom & int32 & 11.12M & 21.0 & 0.00\% \\
+% /variant\_missingness & float32 & 9.3M & 25.0 & 0.00\% \\
+% /variant\_phwe\_eas & float32 & 7.12M & 32.0 & 0.00\% \\
+/variant\_filter & bool & 6.4M & 570.0 & \\
+% /variant\_AC\_Hemi & int32 & 849.43 KiB & 280.0 & 0.00\% \\
+% /variant\_composite\_filter & bool & 433.38 KiB & 130.0 & 0.00\% \\
+% /variant\_OLD\_CLUMPED & object & 384.18 KiB & 1200.0 & 0.00\% \\
+% /variant\_id & object & 298.76 KiB & 1600.0 & 0.00\% \\
+% /variant\_phwe\_amr & float32 & 269.52 KiB & 870.0 & 0.00\% \\
+% /variant\_id\_mask & bool & 269.46 KiB & 220.0 & 0.00\% \\
+/sample\_id & str & 268.12K & 2.3 & \\
+% /variant\_contig & int16 & 257.77 KiB & 450.0 & 0.00\% \\
+% /contig\_length & int64 & 3.79 KiB & 5.3 & 0.00\% \\
+% /contig\_id & object & 2.3 KiB & 8.8 & 0.00\% \\
+% /filter\_id & object & 808 bytes & 0.6 & 0.00\% \\
+%%%% OLD for chr20
+% call\_AD &  int16 & 179.7G & 26 & 24.0\\
+% call\_GQ &  int16 & 171.8G & 13 & 23.0 \\
+% call\_DP &  int16 & 141.8G & 16 & 18.9 \\
+% call\_DPF& int16  & 115.1G & 20 & 15.3\\
+% call\_FT &  string & 58.5G & 160 & 7.8 \\
+% call\_PL &  int16 & 51.4G & 140 & 6.9 \\
+% call\_GQX &  int16 & 12.1G & 190 & 1.6 \\
+% call\_genotype & int8 & 6.1G & 380 & 0.8 \\
+% call\_genotype\_mask & bool & 3.7G  & 630 & 0.5\\
+% call\_genotype\_phased & bool & 692.5M  & 1700 & 0.1 \\
+% call\_PS  & int8  & 102.2M & 12000 & 0.05 \\
+% variant\_quality & float32 & 22.6M & 2.7 & <0.01 \\
+% variant\_allele & string & 21.5M & 11 \\
+% variant\_position & int32 & 12.7M & 4.7 \\
+% variant\_ABratio & float32 & 9.6M & 6.3 \\
+% variant\_AN & int32 & 9.6M & 6.3 \\
+% variant\_filter & bool & 1.9M & 490 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% array([23.956     , 22.90533333, 18.90133333, 15.34533333,  7.8       ,
-%         6.85333333,  1.61066667,  0.81733333,  0.488     ])
-
-% /call_AD                     int16    179.67 GiB  4.53 TiB       26 125768  37.74 MiB     1.46 MiB            (15912293, 78195, 2)  (10000, 1000, 2)  
-% /call_GQ                     int16    171.79 GiB  2.26 TiB       13 125768  18.87 MiB     1.4 MiB             (15912293, 78195)     (10000, 1000) 
-% /call_DP                     int16    141.76 GiB  2.26 TiB       16 125768  18.87 MiB     1.15 MiB            (15912293, 78195)     (10000, 1000)
-% /call_DPF                    int16    115.09 GiB  2.26 TiB       20 125768  18.87 MiB     959.56 KiB          (15912293, 78195)     (10000, 1000)
-% /call_FT                     object   58.5 GiB    9.05 TiB      160 125768  75.48 MiB     487.71 KiB          (15912293, 78195)     (10000, 1000)
-% /call_PL                     int16    51.4 GiB    6.79 TiB      140 125768  56.61 MiB     428.51 KiB          (15912293, 78195, 3)  (10000, 1000, 3)
-% /call_GQX                    int16    12.08 GiB   2.26 TiB      190 125768  18.87 MiB     100.73 KiB          (15912293, 78195)     (10000, 1000) 
-% /call_genotype               int8     6.13 GiB    2.26 TiB      380 125768  18.87 MiB     51.11 KiB           (15912293, 78195, 2)  (10000, 1000, 2)  
-% /call_genotype_mask          bool     3.66 GiB    2.26 TiB      630 125768  18.87 MiB     30.53 KiB           (15912293, 78195, 2)  (10000, 1000, 2)  
-% /call_genotype_phased        bool     692.51 MiB  1.13 TiB     1700 125768  9.43 MiB      5.64 KiB            (15912293, 78195)     (10000, 1000) 
-% /call_PS                     int8     102.2 MiB   1.13 TiB    12000 125768  9.43 MiB      852 bytes           (15912293, 78195)     (10000, 1000) 
-% /call_ADR                    int8     102.2 MiB   1.13 TiB    12000 125768  9.43 MiB      852 bytes           (15912293, 78195)     (10000, 1000)
-% /call_ADF                    int8     102.2 MiB   1.13 TiB    12000 125768  9.43 MiB      852 bytes           (15912293, 78195)     (10000, 1000)
-% /variant_OLD_MULTIALLELIC    object   31.63 MiB   121.4 MiB       3.8 1592  78.09 KiB     20.34 KiB           (15912293,)           (10000,) 
-% /variant_quality             float32  22.6 MiB    60.7 MiB        2.7 1592  39.04 KiB     14.53 KiB           (15912293,)           (10000,) 
-% /variant_allele              object   21.52 MiB   242.8 MiB      11 1592  156.17 KiB    13.84 KiB           (15912293, 2)         (10000, 2) 
-% /variant_position            int32    12.83 MiB   60.7 MiB        4.7 1592  39.04 KiB     8.25 KiB            (15912293,)           (10000,) 
-% /variant_ABratio             float32  9.62 MiB    60.7 MiB        6.3 1592  39.04 KiB     6.18 KiB            (15912293,)           (10000,) 
-% /variant_AN                  int32    9.6 MiB     60.7 MiB        6.3 1592  39.04 KiB     6.18 KiB            (15912293,)           (10000,) 
-% /variant_AC                  int32    9.22 MiB    60.7 MiB        6.6 1592  39.04 KiB     5.93 KiB            (15912293,)           (10000,) 
-% /variant_AC_Het              int32    8.98 MiB    60.7 MiB        6.8 1592  39.04 KiB     5.78 KiB            (15912293,)           (10000,) 
-
-% Approx total = 179.67 + 171.79 + 141.76 + 115.09 + 58.5 + 51.4 + 12.08 + 6.13 + 3.66 
-% 740, round up to 750
-% [179.67 , 171.79 , 141.76 , 115.09 , 58.5 , 51.4 , 12.08 , 6.13 , 3.66 ]
-% >>> import numpy as np
-% >>> a = np.array([179.67 , 171.79 , 141.76 , 115.09 , 58.5 , 51.4 , 12.08 ,
-% 6.13 , 3.66 ]  )
-% >>> a
-% array([179.67, 171.79, 141.76, 115.09,  58.5 ,  51.4 ,  12.08,   6.13,
-%          3.66])
-% >>> a / 750 * 100
-% array([23.956     , 22.90533333, 18.90133333, 15.34533333,  7.8       ,
-%         6.85333333,  1.61066667,  0.81733333,  0.488     ])
-
 Table~\ref{tab-genomics-england-data} shows that the dataset storage
 size is dominated by a few columns with the top four
-(call\_AD, call\_GQ, call\_DP and call\_DPF) accounting for over 
-80\% of the total. These fields are much less compressible
+(call\_AD, call\_GQ, call\_DP and call\_DPF) accounting for 
+90\% of the total. These fields are much less compressible
 than genotype data (which uses $<1\%$ of the total space here)
 because of their inherent noisiness~\citep{lin2020sparse}. 
+Note that these top four fields are stored as 16 bit integers
+because they contain rare outliers that cannot be stored as 
+8 bits. While the fields could likely be truncated to have 
+a maximum of 127 with minimal loss of information, 
+the compression gains from doing so are relatively minor,
+and we therefore opt for fully lossless compression here 
+for simplicity.
 
-[TODO add in benchmarks discussed in issue. Extract POS, run af-dist, 
-do a filtering query. Note problems with orchestration when
-dealing with multiple VCF chunks. 
-Talk about mask-oriented computing there at the
-end, pointing out the cost of these multiple copies.]
+To demonstrate the computational accessibility of Zarr on this 
+large human dataset, we performed some illustrative benchmarks.
+Firstly, we ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
+and~\ref{fig-subset-matrix-compute}) on one 132GiB VCF file covering
+positions 58,219,159--60,650,943 (562,640 variants) using \texttt{bcftools
++af-dist} as before. The elapsed time for this operation was 716 min
+user+sys time almost exactly equal). We repeated this operation for the 
+same genome coordinates in Zarr (using Python code described in previous sections) 
+% 716 minutes / 4.25 = 168X
+with a total CPU time of 2min 19s and elapsed time of 4min 15s (168X faster).
+Second, we extracted the genome position for each variant in this single VCF 
+chunk using \texttt{bcftools query} and Python Zarr code as described in 
+Fig~\ref{fig-column-extract}. The \texttt{bcftools} command required 
+% def parse_time(time_str):
+%     minsplit = time_str.split("m")
+%     return datetime.timedelta(minutes=int(minsplit[0]),
+%         seconds=float(minsplit[1][:-1]))
+% def parse_time_output(s):
+%     values = {}
+%     for line in s.splitlines():
+%         split = line.split()
+%         values[split[0]] = parse_time(split[1])
+%     return values["real"].seconds / 60, (values["user"] + values["sys"]).seconds / 60
+% real  85m51.013s
+% user  54m39.986s
+% sys 0m45.277s
+55.42 min total CPU (85.85 min elapsed).
+% CPU times: user 846 ms, sys: 1.93 s, total: 2.78 s
+% Wall time: 1min 44s
+% 85.85 / 1.73 = 49.62 = 50X
+The Zarr code required 2.78 sec total CPU and 1.73 min elapsed (50X faster).
+Note that the Zarr code here is heavily I/O bound [TODO say something 
+about the GEL cluster?]. When we subsequently time the operation of 
+just populating an array of the variant positions in specified region,
+this is reduced to 1.13 sec, with an elapsed time of 20.9 sec.
+[Note: this is crazy that we still have a 19 second I/O wait. The
+5989 files for the POS chunks must be in cache already, so the delay
+has to be the file system checking cache coherency.]
 
-% By default the \texttt{bio2zarr} conversion is lossless, and integers
-% of the narrowest type required to represent all of the data are
-% used. In this case, this has resulted in 16 bit integers being used 
-% for these top four fields. Examining the distribution of the depth
-% fields, (call\_AD, call\_DP, call\_DPF), we can 
-% we can see that a tiny fraction of the values stored
-% are greater than 127 (call\_AD: 0.1\%, call\_DP: xx\%, call\_DPF: x\%; see 
-% Fig SX for histograms).
-% One might then reasonably truncate these fields to 8 bit integers.
-% After converting to 8 bit, call\_AD is reduced by 
-% x\% (XX GiB) and call\_DP reduced by x\% (XX GiB)
-% and call\_DPF by x\% (XX GiB). 
-% Similarly, the vast majority of call\_GQ values (xx\%) are less than 
-% 128 (corresponding to a conditional probability that the genotype call is 
-% wrong of $10^{-128}$ [TODO CHECK THIS]), and can also reasonably
-% be truncated. Here, this results in a reduction of x\% (XX GiB).
-% Combined, truncating these top four fields to 8 bits reduces the 
-% overall storage of the dataset to XXGiB, corresponding to a 
-% X-fold compression of the VCF.
+Finally, to illustrate performance on a common filtering task, we 
+created a copy of the VCF chunk which contains only variants 
+that pass some common filtering criteria using
+\texttt{bcftools view -I --include "FORMAT/DP>10 \& FORMAT/GQ>20"},
+following standard practices [citations?].
+This took a total of 689 min CPU time, with the same elapsed time.
+In comparison, computing and storing a variant mask (i.e., a boolean value 
+for each variant denoting whether it should be considered or not
+for analysis) based on the same criteria using Zarr 
+required a total of 1.96 min CPU time with an elapsed time 
+of  11 min (63X faster).
+%689 / 11 = 62.6 = 63X
+There is an important distinction here between creating a copy
+of the data (an implicit part of VCF based workflows) and creating an
+an additional \emph{mask}. As Table~\ref{tab-genomics-england-data} 
+illustrates, call-level masks are cheap (the standard 
+missingness mask, call\_genotype\_mask, uses 0.49\% of the overall 
+storage) and variant or sample level masks requiring negligible storage.
+If downstream software can 
+use configurable masks (at variant, sample and call level) 
+rather than expecting full copies of the data, major storage savings
+and improvements in processing efficiency can be made.
+Such a transition from ``mask-oriented'' vs ``copy-oriented'' 
+analysis is one of the transformational changes enabled by Zarr.
 
-% and can reasonably be truncated (a 
-% much information would be lost if we used 8 bit
-% Substantial
-% reductions in space can be achieved, however, if we examine the 
-% distributions of these fields and truncate some outliers.
-% Figure~SX shows the histogram of the XX call\_AD values, and we can
-% see that < 0.0X\% of the values are $>127$. Truncating and 
-% re-encoding the call\_AD array as an int8 results in a total storage of 
-% XX. A substantial advantage of Zarr is that such per-field optimisations
-% can be made after conversion, without affecting the rest of the dataset.
-% As discussed in Methods, judicious use of additional filters
-% and lossy quantizing can result substantial space savings.
-
-% Calculating the histogram of per call values at this 
-% scale is not a trivial task.
-% Taking advantage of the rich software ecosystem growing around Zarr
-% (see Discussion) we used xarray~\citep{hoyer2017xarray}
-% and Dask~\citep{rocklin2015dask} to transparently distribute the 
-% computations over a cluster of X workers. 
-% [ADD DETAILS]
-% The elapsed time was X minutes, and requires X lines of Python in a 
-% Jupyter notebook~\citep{kluyver2016jupyter}. 
-
-% One of the key uses of the aggV2 dataset is to enable simple queries 
-% of specific regions. For example, in [A PAPER] they [DID SOMETHING].
-% We replicated this by running the appropriate bcftools query
-% on the VCF chunk (note that the user is responsible for finding 
-% the correct chunk file here, limiting the utility of genomic 
-% indexes). This took XXX hours.
-% The same query implemented with the Zarr-python 
-% API required XXX seconds to produce identical output.
 
 \section{Discussion}
 % Zarr is great
