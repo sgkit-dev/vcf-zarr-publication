@@ -1,0 +1,38 @@
+name,type,chunks,size,compressed,max_n,min_val,max_val
+CHROM,String,14763,6.25 GiB,4.04 MiB,1,n/a,n/a
+POS,Integer,14763,6.25 GiB,62.72 MiB,1, 1e+04, 2.4e+08
+QUAL,Float,14763,6.25 GiB,116.39 MiB,1, 0, 6.1e+06
+ID,String,14763,913.71 MiB,864.92 KiB,0,n/a,n/a
+FILTERS,String,14763,7.73 GiB,15.7 MiB,1,n/a,n/a
+REF,String,14763,6.25 GiB,62.59 MiB,1,n/a,n/a
+ALT,String,14763,6.61 GiB,63.78 MiB,1,n/a,n/a
+FORMAT/GT,Integer,426102,25.56 TiB,149.29 GiB,3,-2, 1
+FORMAT/DP,Integer,285891,17.04 TiB,2.23 TiB,1, 0, 1e+04
+FORMAT/DPF,Integer,285891,17.04 TiB,1.05 TiB,1, 0, 8.3e+03
+FORMAT/AD,Integer,561755,34.08 TiB,3.57 TiB,2, 0, 1e+04
+FORMAT/ADF,Integer,14763,913.71 MiB,864.92 KiB,0,n/a,n/a
+FORMAT/ADR,Integer,14763,913.71 MiB,864.92 KiB,0,n/a,n/a
+FORMAT/GQ,Integer,285891,17.04 TiB,2.62 TiB,1, 0, 3.1e+03
+FORMAT/FT,String,561755,34.08 TiB,33.2 GiB,1,n/a,n/a
+FORMAT/PL,Integer,838874,51.11 TiB,238.94 GiB,3, 0, 3e+03
+FORMAT/PS,Integer,14763,913.71 MiB,864.92 KiB,0,n/a,n/a
+FORMAT/GQX,Integer,285891,17.04 TiB,59.52 GiB,1, 0, 3.1e+03
+INFO/OLD_MULTIALLELIC,String,14763,7.1 GiB,86.08 MiB,1,n/a,n/a
+INFO/OLD_CLUMPED,String,14763,917.52 MiB,1.1 MiB,1,n/a,n/a
+INFO/medianDepthAll,Float,14763,6.25 GiB,20.39 MiB,1, 0, 1.9e+03
+INFO/medianDepthNonMiss,Float,14763,6.25 GiB,20.66 MiB,1, 0, 99
+INFO/medianGQ,Float,14763,6.25 GiB,31.22 MiB,1, 0, 99
+INFO/missingness,Float,14763,6.25 GiB,15.32 MiB,1, 0, 1
+INFO/completeGTRatio,Float,14763,6.25 GiB,22.75 MiB,1, 0, 1
+INFO/ABratio,Float,14763,6.23 GiB,32.15 MiB,1, 0, 1
+INFO/MendelSite,Float,14763,6.25 GiB,30.47 MiB,1, 0, 2.3e+03
+INFO/phwe_afr,Float,14763,6.25 GiB,21.55 MiB,1, 0, 0.98
+INFO/phwe_amr,Float,14763,913.71 MiB,864.92 KiB,0,n/a,n/a
+INFO/phwe_eas,Float,14763,6.25 GiB,12.93 MiB,1, 0, 0.96
+INFO/phwe_eur,Float,14763,6.25 GiB,22.65 MiB,1, 0, 1
+INFO/phwe_sas,Float,14763,6.25 GiB,19.01 MiB,1, 0, 0.99
+INFO/AN,Integer,14763,6.25 GiB,53 MiB,1, 0, 1.6e+05
+INFO/AC,Integer,14763,6.25 GiB,70.2 MiB,1, 0, 1.6e+05
+INFO/AC_Hom,Integer,14763,6.25 GiB,18.07 MiB,1, 0, 1.6e+05
+INFO/AC_Het,Integer,14763,6.25 GiB,69.8 MiB,1, 0, 7.8e+04
+INFO/AC_Hemi,Integer,14763,6.25 GiB,4.24 MiB,1, 0, 5.8e+04

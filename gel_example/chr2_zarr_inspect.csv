@@ -1,0 +1,45 @@
+name,dtype,stored,size,ratio,nchunks,chunk_size,avg_chunk_stored,shape,chunk_shape,compressor,filters
+/call_AD,int16,658.44 GiB,17.03 TiB, 26,473131,37.75 MiB,1.43 MiB,"(59880903, 78195, 2)","(10000, 1000, 2)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_GQ,int16,654.45 GiB,8.52 TiB, 13,473131,18.88 MiB,1.42 MiB,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_DP,int16,570.03 GiB,8.52 TiB, 15,473131,18.88 MiB,1.23 MiB,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_DPF,int16,447.09 GiB,8.52 TiB, 20,473131,18.88 MiB,990.86 KiB,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_PL,int16,162.56 GiB,25.55 TiB, 1.6e+02,473131,56.63 MiB,360.27 KiB,"(59880903, 78195, 3)","(10000, 1000, 3)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_GQX,int16,40.99 GiB,8.52 TiB, 2.1e+02,473131,18.88 MiB,90.84 KiB,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_FT,object,25.04 GiB,34.07 TiB, 1.4e+03,473131,75.51 MiB,55.5 KiB,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/call_genotype,int8,21.46 GiB,8.52 TiB, 4.1e+02,473131,18.88 MiB,47.57 KiB,"(59880903, 78195, 2)","(10000, 1000, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_genotype_mask,bool,12.78 GiB,8.52 TiB, 6.8e+02,473131,18.88 MiB,28.32 KiB,"(59880903, 78195, 2)","(10000, 1000, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_genotype_phased,bool,2.35 GiB,4.26 TiB, 1.9e+03,473131,9.44 MiB,5.2 KiB,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_ADR,int8,383.38 MiB,4.26 TiB, 1.2e+04,473131,9.44 MiB,849 bytes,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_ADF,int8,383.38 MiB,4.26 TiB, 1.2e+04,473131,9.44 MiB,849 bytes,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_PS,int8,383.38 MiB,4.26 TiB, 1.2e+04,473131,9.44 MiB,849 bytes,"(59880903, 78195)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_position,int32,111.6 MiB,228.43 MiB, 2,5989,39.06 KiB,19.08 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_quality,float32,87.4 MiB,228.43 MiB, 2.6,5989,39.06 KiB,14.94 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_allele,object,69.33 MiB,913.71 MiB, 13,5989,156.23 KiB,11.85 KiB,"(59880903, 2)","(10000, 2)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_OLD_MULTIALLELIC,object,55.88 MiB,456.86 MiB, 8.2,5989,78.11 KiB,9.55 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_AN,int32,47.32 MiB,228.43 MiB, 4.8,5989,39.06 KiB,8.09 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_AC,int32,47 MiB,228.43 MiB, 4.9,5989,39.06 KiB,8.04 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_AC_Het,int32,46.62 MiB,228.43 MiB, 4.9,5989,39.06 KiB,7.97 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_ABratio,float32,20.23 MiB,228.43 MiB, 11,5989,39.06 KiB,3.46 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_MendelSite,float32,20.09 MiB,228.43 MiB, 11,5989,39.06 KiB,3.43 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_medianGQ,float32,19.16 MiB,228.43 MiB, 12,5989,39.06 KiB,3.28 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_completeGTRatio,float32,14.98 MiB,228.43 MiB, 15,5989,39.06 KiB,2.56 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_phwe_eur,float32,14.46 MiB,228.43 MiB, 16,5989,39.06 KiB,2.47 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_phwe_afr,float32,13.37 MiB,228.43 MiB, 17,5989,39.06 KiB,2.29 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_medianDepthNonMiss,float32,12.17 MiB,228.43 MiB, 19,5989,39.06 KiB,2.08 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_medianDepthAll,float32,11.99 MiB,228.43 MiB, 19,5989,39.06 KiB,2.05 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_phwe_sas,float32,11.59 MiB,228.43 MiB, 20,5989,39.06 KiB,1.98 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_AC_Hom,int32,11.12 MiB,228.43 MiB, 21,5989,39.06 KiB,1.9 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_missingness,float32,9.3 MiB,228.43 MiB, 25,5989,39.06 KiB,1.59 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_phwe_eas,float32,7.12 MiB,228.43 MiB, 32,5989,39.06 KiB,1.22 KiB,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_filter,bool,6.42 MiB,3.57 GiB, 5.7e+02,5989,624.91 KiB,1.1 KiB,"(59880903, 64)","(10000, 64)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_AC_Hemi,int32,849.43 KiB,228.43 MiB, 2.8e+02,5989,39.06 KiB,145 bytes,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_composite_filter,bool,433.38 KiB,57.11 MiB, 1.3e+02,5989,9.76 KiB,74 bytes,"(59880903,)","(10000,)","Blosc(cname='lz4', clevel=5, shuffle=SHUFFLE, blocksize=0)",None
+/variant_OLD_CLUMPED,object,384.18 KiB,456.86 MiB, 1.2e+03,5989,78.11 KiB,65 bytes,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_id,object,298.76 KiB,456.86 MiB, 1.6e+03,5989,78.11 KiB,51 bytes,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_phwe_amr,float32,269.52 KiB,228.43 MiB, 8.7e+02,5989,39.06 KiB,46 bytes,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_id_mask,bool,269.46 KiB,57.11 MiB, 2.2e+02,5989,9.76 KiB,46 bytes,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/sample_id,object,268.12 KiB,610.9 KiB, 2.3,79,7.73 KiB,3.39 KiB,"(78195,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_contig,int16,257.77 KiB,114.21 MiB, 4.5e+02,5989,19.53 KiB,44 bytes,"(59880903,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/contig_length,int64,3.79 KiB,20.16 KiB, 5.3,1,20.16 KiB,3.79 KiB,"(2580,)","(2580,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",None
+/contig_id,object,2.3 KiB,20.16 KiB, 8.8,1,20.16 KiB,2.3 KiB,"(2580,)","(2580,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
+/filter_id,object,808 bytes,512 bytes, 0.63,1,512.0 bytes,808 bytes,"(64,)","(64,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
