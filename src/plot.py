@@ -19,6 +19,7 @@ sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
 zarr_nshf_colour = "tab:cyan"
+two_bit_colour = "tab:pink"
 
 
 def one_panel_fig(**kwargs):
@@ -38,6 +39,7 @@ def two_panel_fig(**kwargs):
 
 def plot_size(ax, df, label_y_offset=None):
     colour_map = {
+        "2bit": two_bit_colour,
         "vcf": vcf_colour,
         "bcf": bcf_colour,
         "zarr": zarr_colour,
@@ -61,8 +63,12 @@ def plot_size(ax, df, label_y_offset=None):
         )
         row = dfs.iloc[-1]
         size = row["size"] / GB
+        label = f"{size:.0f}G"
+        if size > 100:
+            size /= 1024
+            label = f"{size:.1f}T"
         ax.annotate(
-            f"{size:.0f}G",
+            label,
             textcoords="offset points",
             xytext=(15, label_y_offset.get(tool, 0)),
             xy=(row.num_samples, row["size"]),
@@ -76,7 +82,7 @@ def plot_size(ax, df, label_y_offset=None):
     ax.legend()
     add_number_of_variants(df, ax)
     ax.set_xlabel("Number of samples")
-    ax.set_ylabel("Time (seconds)")
+    ax.set_ylabel("Storage size (bytes)")
     plt.tight_layout()
 
 
@@ -189,13 +195,23 @@ def data_scaling(size_data, output):
     """
     df1 = pd.read_csv(size_data, index_col=None).sort_values("num_samples")
 
-    fig, ax1 = one_panel_fig()
-    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
-
     sav = df1[df1.tool == "sav"]
     zarr = df1[df1.tool == "zarr"]
     ratio = sav["size"].values / zarr["size"].values
     print("sav / zarr ratio:", ratio)
+
+    plink_ish = []
+    for _, row in zarr.iterrows():
+        d = dict(row)
+        d["tool"] = "2bit"
+        d["size"] = row.num_samples * row.num_sites / 4
+        plink_ish.append(d)
+
+    df1 = pd.concat([df1, pd.DataFrame(plink_ish)])
+
+    fig, ax1 = one_panel_fig()
+    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
+
     # I tried putting an inset axis showing the ratio, but it was too small.
     # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
     # ax_inset.semilogx(sav["num_samples"], ratio)
