@@ -29,6 +29,7 @@ def one_panel_fig(**kwargs):
     fig, ax = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
     return fig, ax
 
+
 def two_panel_fig(**kwargs):
     # The columnwidth of the format is ~250pt, which is
     # 3 15/32 inch, = 3.46
@@ -395,12 +396,16 @@ def compression_chunksize(data, output):
         arr_vdf = variant_df.loc[variant_df.ArrayName == arr].sort_values(
             "variant_chunksize"
         )
-        axes[0].plot(arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr,
-                marker="o")
-        axes[1].semilogx(arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr,
-                marker="o")
+        axes[0].plot(
+            arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr, marker="o"
+        )
+        axes[1].semilogx(
+            arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr, marker="o"
+        )
 
     plt.legend()
+    axes[0].set_title("(A)")
+    axes[1].set_title("(B)")
     axes[0].set_xlabel("Sample chunk size")
     axes[1].set_xlabel("Variant chunk size")
     axes[0].set_ylabel("Compression ratio")
