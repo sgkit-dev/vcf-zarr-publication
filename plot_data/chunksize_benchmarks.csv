@@ -1,61 +1,61 @@
 chunksize,variant_chunksize,sample_chunksize,nchunks,CompressionRatio,ArrayName,input_data
+"(100, 1000)",100,1000,2898,4.1,call_GQ,real_data/data/WGS/chr22.zarr
+"(10000, 2023)",10000,2023,20,4.0,call_GQ,real_data/data/WGS/chr22.zarr
 "(10000, 2504)",10000,2504,10,4.0,call_GQ,real_data/data/WGS/chr22.zarr
-"(10000, 2000)",10000,2000,20,4.0,call_GQ,real_data/data/WGS/chr22.zarr
-"(2000, 1000)",2000,1000,147,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(10000, 100)",10000,100,260,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(1000, 1000)",1000,1000,291,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(50000, 1000)",50000,1000,6,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(10000, 500)",10000,500,60,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(395, 1000)",395,1000,735,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(1562, 1000)",1562,1000,186,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(6176, 1000)",6176,1000,48,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(24415, 1000)",24415,1000,12,3.9,call_GQ,real_data/data/WGS/chr22.zarr
 "(96514, 1000)",96514,1000,3,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(20000, 1000)",20000,1000,15,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(10000, 1500)",10000,1500,20,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(5000, 1000)",5000,1000,60,3.9,call_GQ,real_data/data/WGS/chr22.zarr
-"(10000, 1000)",10000,1000,30,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(10000, 100)",10000,100,260,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(10000, 580)",10000,580,50,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(10000, 1061)",10000,1061,30,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(10000, 1542)",10000,1542,20,3.9,call_GQ,real_data/data/WGS/chr22.zarr
+"(100, 1000)",100,1000,2898,4.3,call_DP,real_data/data/WGS/chr22.zarr
 "(10000, 2504)",10000,2504,10,4.2,call_DP,real_data/data/WGS/chr22.zarr
-"(2000, 1000)",2000,1000,147,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(1000, 1000)",1000,1000,291,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(50000, 1000)",50000,1000,6,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(10000, 500)",10000,500,60,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(395, 1000)",395,1000,735,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(1562, 1000)",1562,1000,186,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(6176, 1000)",6176,1000,48,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(24415, 1000)",24415,1000,12,4.1,call_DP,real_data/data/WGS/chr22.zarr
 "(96514, 1000)",96514,1000,3,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(20000, 1000)",20000,1000,15,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(10000, 1500)",10000,1500,20,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(5000, 1000)",5000,1000,60,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(10000, 2000)",10000,2000,20,4.1,call_DP,real_data/data/WGS/chr22.zarr
-"(10000, 1000)",10000,1000,30,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(10000, 580)",10000,580,50,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(10000, 1061)",10000,1061,30,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(10000, 1542)",10000,1542,20,4.1,call_DP,real_data/data/WGS/chr22.zarr
+"(10000, 2023)",10000,2023,20,4.1,call_DP,real_data/data/WGS/chr22.zarr
 "(10000, 100)",10000,100,260,4.0,call_DP,real_data/data/WGS/chr22.zarr
-"(10000, 2504, 7)",10000,2504,10,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(2000, 1000, 7)",2000,1000,147,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(1000, 1000, 7)",1000,1000,291,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(50000, 1000, 7)",50000,1000,6,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(10000, 500, 7)",10000,500,60,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(100, 1000, 7)",100,1000,2898,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(395, 1000, 7)",395,1000,735,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(1562, 1000, 7)",1562,1000,186,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(6176, 1000, 7)",6176,1000,48,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(24415, 1000, 7)",24415,1000,12,16.4,call_AD,real_data/data/WGS/chr22.zarr
 "(96514, 1000, 7)",96514,1000,3,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(20000, 1000, 7)",20000,1000,15,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(10000, 1500, 7)",10000,1500,20,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(5000, 1000, 7)",5000,1000,60,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(10000, 1000, 7)",10000,1000,30,16.4,call_AD,real_data/data/WGS/chr22.zarr
-"(10000, 2000, 7)",10000,2000,20,16.3,call_AD,real_data/data/WGS/chr22.zarr
+"(10000, 580, 7)",10000,580,50,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(10000, 1061, 7)",10000,1061,30,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(10000, 1542, 7)",10000,1542,20,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(10000, 2504, 7)",10000,2504,10,16.4,call_AD,real_data/data/WGS/chr22.zarr
+"(10000, 2023, 7)",10000,2023,20,16.3,call_AD,real_data/data/WGS/chr22.zarr
 "(10000, 100, 7)",10000,100,260,15.7,call_AD,real_data/data/WGS/chr22.zarr
 "(10000, 2504)",10000,2504,10,32.5,call_AB,real_data/data/WGS/chr22.zarr
-"(10000, 1500)",10000,1500,20,30.5,call_AB,real_data/data/WGS/chr22.zarr
-"(10000, 2000)",10000,2000,20,30.1,call_AB,real_data/data/WGS/chr22.zarr
-"(2000, 1000)",2000,1000,147,29.8,call_AB,real_data/data/WGS/chr22.zarr
-"(50000, 1000)",50000,1000,6,29.8,call_AB,real_data/data/WGS/chr22.zarr
-"(10000, 500)",10000,500,60,29.8,call_AB,real_data/data/WGS/chr22.zarr
+"(10000, 1542)",10000,1542,20,30.4,call_AB,real_data/data/WGS/chr22.zarr
+"(10000, 2023)",10000,2023,20,30.1,call_AB,real_data/data/WGS/chr22.zarr
+"(395, 1000)",395,1000,735,29.8,call_AB,real_data/data/WGS/chr22.zarr
+"(1562, 1000)",1562,1000,186,29.8,call_AB,real_data/data/WGS/chr22.zarr
+"(6176, 1000)",6176,1000,48,29.8,call_AB,real_data/data/WGS/chr22.zarr
+"(24415, 1000)",24415,1000,12,29.8,call_AB,real_data/data/WGS/chr22.zarr
 "(96514, 1000)",96514,1000,3,29.8,call_AB,real_data/data/WGS/chr22.zarr
-"(20000, 1000)",20000,1000,15,29.8,call_AB,real_data/data/WGS/chr22.zarr
-"(5000, 1000)",5000,1000,60,29.8,call_AB,real_data/data/WGS/chr22.zarr
-"(10000, 1000)",10000,1000,30,29.8,call_AB,real_data/data/WGS/chr22.zarr
-"(1000, 1000)",1000,1000,291,29.7,call_AB,real_data/data/WGS/chr22.zarr
+"(10000, 1061)",10000,1061,30,29.8,call_AB,real_data/data/WGS/chr22.zarr
+"(100, 1000)",100,1000,2898,29.3,call_AB,real_data/data/WGS/chr22.zarr
+"(10000, 580)",10000,580,50,29.3,call_AB,real_data/data/WGS/chr22.zarr
 "(10000, 100)",10000,100,260,27.9,call_AB,real_data/data/WGS/chr22.zarr
 "(10000, 2504, 2)",10000,2504,10,61.8,call_genotype,real_data/data/WGS/chr22.zarr
-"(10000, 1500, 2)",10000,1500,20,60.6,call_genotype,real_data/data/WGS/chr22.zarr
+"(24415, 1000, 2)",24415,1000,12,60.4,call_genotype,real_data/data/WGS/chr22.zarr
 "(96514, 1000, 2)",96514,1000,3,60.4,call_genotype,real_data/data/WGS/chr22.zarr
-"(2000, 1000, 2)",2000,1000,147,60.3,call_genotype,real_data/data/WGS/chr22.zarr
-"(50000, 1000, 2)",50000,1000,6,60.3,call_genotype,real_data/data/WGS/chr22.zarr
-"(20000, 1000, 2)",20000,1000,15,60.3,call_genotype,real_data/data/WGS/chr22.zarr
-"(5000, 1000, 2)",5000,1000,60,60.3,call_genotype,real_data/data/WGS/chr22.zarr
-"(10000, 1000, 2)",10000,1000,30,60.3,call_genotype,real_data/data/WGS/chr22.zarr
-"(1000, 1000, 2)",1000,1000,291,60.2,call_genotype,real_data/data/WGS/chr22.zarr
-"(10000, 2000, 2)",10000,2000,20,60.0,call_genotype,real_data/data/WGS/chr22.zarr
-"(10000, 500, 2)",10000,500,60,59.8,call_genotype,real_data/data/WGS/chr22.zarr
+"(1562, 1000, 2)",1562,1000,186,60.3,call_genotype,real_data/data/WGS/chr22.zarr
+"(6176, 1000, 2)",6176,1000,48,60.3,call_genotype,real_data/data/WGS/chr22.zarr
+"(395, 1000, 2)",395,1000,735,59.9,call_genotype,real_data/data/WGS/chr22.zarr
+"(10000, 580, 2)",10000,580,50,59.7,call_genotype,real_data/data/WGS/chr22.zarr
+"(100, 1000, 2)",100,1000,2898,57.8,call_genotype,real_data/data/WGS/chr22.zarr
 "(10000, 100, 2)",10000,100,260,53.6,call_genotype,real_data/data/WGS/chr22.zarr
+"(10000, 1542, 2)",10000,1542,20,52.8,call_genotype,real_data/data/WGS/chr22.zarr
+"(10000, 1061, 2)",10000,1061,30,47.5,call_genotype,real_data/data/WGS/chr22.zarr
+"(10000, 2023, 2)",10000,2023,20,47.5,call_genotype,real_data/data/WGS/chr22.zarr
