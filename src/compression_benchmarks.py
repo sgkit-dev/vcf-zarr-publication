@@ -84,6 +84,50 @@ def test_compression_ratio_vs_chunksize(z_arr, dry_run=False):
     )
 
 
+def test_compression_ratio_vs_compressor(z_arr, dry_run=False):
+    compressors = numcodecs.blosc.list_compressors()
+
+    comp_results_table = []
+
+    if not dry_run:
+        # Extract the data
+        arr = z_arr[:]
+
+    for cname in tqdm(compressors, desc="Testing compressors"):
+        if not dry_run:
+            if z_arr.filters is not None:
+                object_codec = z_arr.filters[0]
+            else:
+                object_codec = None
+
+            config = z_arr.compressor.get_config()
+            config["cname"] = cname
+            new_compressor = numcodecs.get_codec(config)
+
+            z2 = zarr.empty_like(
+                arr,
+                chunks=z_arr.chunks,
+                compressor=new_compressor,
+                dtype=z_arr.dtype,
+                object_codec=object_codec,
+            )
+
+            z2[:] = arr
+
+            compress_ratio = float(dict(z2.info_items())["Storage ratio"])
+        else:
+            n_chunks = None
+            compress_ratio = None
+
+        comp_results_table.append(
+            {"Compressor": cname, "CompressionRatio": compress_ratio}
+        )
+
+    return pd.DataFrame(comp_results_table).sort_values(
+        "CompressionRatio", ascending=False
+    )
+
+
 def test_compression_ratio_vs_shuffle(z_arr, dry_run=False):
     shuffle_var = range(3)
     shuffle_names = ["No Shuffle", "Byte Shuffle", "Bit Shuffle"]
@@ -167,6 +211,8 @@ def test_vcf2zarr_compression_variations(
 
         if test_config == "chunksize":
             res = test_compression_ratio_vs_chunksize(z_group[k], dry_run=dry_run)
+        elif test_config == "compressor":
+            res = test_compression_ratio_vs_compressor(z_group[k], dry_run=dry_run)
         else:
             res = test_compression_ratio_vs_shuffle(z_group[k], dry_run=dry_run)
 
@@ -194,7 +240,7 @@ if __name__ == "__main__":
         dest="test_config",
         type=str,
         default="chunksize",
-        choices={"chunksize", "shuffle"},
+        choices={"chunksize", "compressor", "shuffle"},
     )
     parser.add_argument(
         "-o",
