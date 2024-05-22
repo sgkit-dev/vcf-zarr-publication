@@ -1223,21 +1223,48 @@ which is planned for implementation in a future
 version of \texttt{vcf2zarr}.
 
 Fig~\ref{fig-compression-chunksize} shows that chunk size has a 
-fairly weak influence on compression ratio. While larger 
-sample chunk sizes lead to a slight increase in compression
-ratio on the more compressable fields, the overall effect
-on total storage used will be slight. Variant chunk size 
-appears to have no effect on compression ratio. Thus, we 
-do not expect the choice of chunk size to have a significant
+weak influence on compression ratio for most fields. Interestingly,
+the choice of chunk size has a somewhat unpredictable effect
+on compression for the genotype matrix, suggesting that how 
+samples are grouped together has a strong effect on compression.
+At around 50X, compression is excellent in all cases however, 
+and given that genotypes contribute relatively little to the
+overall storage cost in many datasets 
+(Table~\ref{tab-genomics-england-data}), the differences are slight.
+Otherwise, increasing sample chunk size slightly increases 
+compression on call\_AB, and has no effect on less compressible
+fields. Variant chunk size appears to have almost no effect on compression 
+ratio. Thus, we do not expect the choice of chunk size to have a significant
 impact on overall storage usage, and so choice should be
 determined by other considerations such as expected data
 access patterns.
 
+The ``shuffle'' parameter in the Blosc meta-compressor~\cite{alted2010modern}
+can result in substantially better compression, albeit at the 
+cost of somewhat slower decoding (see Fig~\ref{fig-whole-matrix-decode}).
+Fig~\ref{fig-compression-shuffle} shows the effect of 
+the bit shuffle (grouping together bits at the same position
+across bytes before compression), and byte shuffle (grouping together 
+bytes at the sample position across words before compression)
+operations on compression ratio. Bit shuffle provides a significant
+improvement in compression for the call\_genotype field  because 
+the vast majority of genotype calls will be 0 or 1, and therefore 
+bits 1 to 7 will be 0. Thus, grouping these bits together will 
+lead to significantly better compression. This strategy also 
+works extremely well when compressing boolean fields stored as 
+8 bit integers, where the top 7 bits are always 0. In practise,
+boolean fields stored in this way have very similar compression
+to using a bit-packing pre-compression filter (data not shown).
+Although byte shuffle leads to somewhat better compression for call\_AD
+and call\_DP, it gives substantially worse compression on call\_AB
+than no shuffling. 
+The default in \texttt{vcf2zarr}
+is therefore to use bit shuffle for \texttt{call\_genotype}
+and all boolean fields, and to not use 
+byte shuffling on any field. These defaults can be easily
+overruled, however, by outputting and modifying a JSON formatted 
+storage schema before encoding to Zarr.
 
-
-
-[TODO, reffing Fig~\ref{fig-compression-shuffle} and 
-Fig~\ref{fig-compression-chunksize}.]
 
 \subsection{Benchmarks}
 In this section we describe the methodology used for the simulation-based
@@ -1386,6 +1413,9 @@ fields in 1000 Genomes data.
 (B) Varying variant chunk size, holding sample chunk size fixed at 1,000.
 In all cases the zstd compressor with clevel=7 was used. Bit shuffle
 was used for call\_genotype, and no shuffle used for the other fields.
+Values are chosen to be evenly spaced on a linear scale 
+between 100 and 2504 (the number of samples) in (A) and 
+evenly spaced between 100 and 96514 on a log scale in (B). 
 \label{fig-compression-chunksize}}
 \end{figure}
 
