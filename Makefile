@@ -61,6 +61,11 @@ plot_data/shuffle_benchmarks.csv:
 		--test-config shuffle \
 		-o $@
 
+plot_data/compressor_benchmarks.csv:
+	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr \
+		--test-config compressor \
+		-o $@
+
 plot_data/chunksize_benchmarks.csv:
 	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr \
 		--test-config chunksize \
@@ -98,6 +103,11 @@ figures/subset-matrix-compute-supplemental.pdf: plot_data/subset-matrix-compute.
 figures/compression-shuffle.pdf: plot_data/shuffle_benchmarks.csv
 	python3 src/plot.py compression-shuffle \
                 plot_data/shuffle_benchmarks.csv \
+                $@
+
+figures/compression-compressor.pdf: plot_data/compressor_benchmarks.csv
+	python3 src/plot.py compression-compressor \
+                plot_data/compressor_benchmarks.csv \
                 $@
 
 figures/compression-chunksize.pdf: plot_data/chunksize_benchmarks.csv

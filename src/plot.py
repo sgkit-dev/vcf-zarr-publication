@@ -29,6 +29,7 @@ def one_panel_fig(**kwargs):
     fig, ax = plt.subplots(1, 1, figsize=(width, 2 * width / 3), **kwargs)
     return fig, ax
 
+
 def two_panel_fig(**kwargs):
     # The columnwidth of the format is ~250pt, which is
     # 3 15/32 inch, = 3.46
@@ -377,6 +378,42 @@ def compression_shuffle(data, output):
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
+def compression_compressor(data, output):
+    """
+    Plot figure showing the effect of compressor codec on compression ratio.
+    """
+    df = pd.read_csv(data)
+
+    # Note this is ordered by best-to-worst compression for viz
+
+    arrays = [
+        "call_GQ",
+        "call_DP",
+        "call_AD",
+        "call_AB",
+        "call_genotype",
+    ]
+
+    fig, ax = one_panel_fig()
+    sns.barplot(
+        df,
+        orient="h",
+        order=arrays,
+        y="ArrayName",
+        x="CompressionRatio",
+        hue="Compressor",
+        ax=ax,
+    )
+    ax.set_ylabel("")
+    ax.get_legend().set_title("")
+
+    plt.tight_layout()
+    plt.savefig(output)
+
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
 def compression_chunksize(data, output):
     """
     Plot figure showing the effect of chunksize settings on compression ratio.
@@ -395,12 +432,16 @@ def compression_chunksize(data, output):
         arr_vdf = variant_df.loc[variant_df.ArrayName == arr].sort_values(
             "variant_chunksize"
         )
-        axes[0].plot(arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr,
-                marker="o")
-        axes[1].semilogx(arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr,
-                marker="o")
+        axes[0].plot(
+            arr_sdf.sample_chunksize, arr_sdf.CompressionRatio, label=arr, marker="o"
+        )
+        axes[1].semilogx(
+            arr_vdf.variant_chunksize, arr_vdf.CompressionRatio, label=arr, marker="o"
+        )
 
     plt.legend()
+    axes[0].set_title("(A)")
+    axes[1].set_title("(B)")
     axes[0].set_xlabel("Sample chunk size")
     axes[1].set_xlabel("Variant chunk size")
     axes[0].set_ylabel("Compression ratio")
@@ -422,6 +463,7 @@ cli.add_command(subset_matrix_compute)
 cli.add_command(subset_matrix_compute_supplemental)
 cli.add_command(compression_shuffle)
 cli.add_command(compression_chunksize)
+cli.add_command(compression_compressor)
 
 
 if __name__ == "__main__":

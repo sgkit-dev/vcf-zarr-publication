@@ -776,7 +776,7 @@ We also show the percentage of the overall storage that each array consumes
 % /variant\_id & object & 298.76 KiB & 1600.0 & 0.00\% \\
 % /variant\_phwe\_amr & float32 & 269.52 KiB & 870.0 & 0.00\% \\
 % /variant\_id\_mask & bool & 269.46 KiB & 220.0 & 0.00\% \\
-/sample\_id & str & 268.12K & 2.3 & \\
+/sample\_id & str & 268.1K & 2.3 & \\
 % /variant\_contig & int16 & 257.77 KiB & 450.0 & 0.00\% \\
 % /contig\_length & int64 & 3.79 KiB & 5.3 & 0.00\% \\
 % /contig\_id & object & 2.3 KiB & 8.8 & 0.00\% \\
@@ -1189,34 +1189,86 @@ or can be distributed across a cluster using the
 
 Once the VCF data has been converted to the intermediate columnar format,
 it can then be converted to Zarr using the \texttt{vcf2zarr encode}
-command. We take advantage of Zarr's flexibility
-in \texttt{vcf2zarr} by choosing integer widths based 
-
-and reasonable compressor defaults, but these can be
-modified by generating and editing a JSON-formatted storage schema.
+command. By default we choose integer widths based on the maximum
+and minimum values observed during conversion to ICF
+along with reasonable compressor defaults (see next section), 
+but these can be
+modified by generating a JSON-formatted storage schema, 
+which can be edited and supplied as an argument to \texttt{encode}.
 Encoding a given column (for example, \texttt{call\_AD})
 involves creating a buffer to hold a full variant-chunk of the 
 array in question, and then sequentially filling this buffer with 
-values read from ICF and flushing to file. Similar to the \texttt{explode} command,
+values read from ICF and flushing to file.
+ Similar to the \texttt{explode} command,
 encoding to Zarr can be done in parallel on a single 
 machine using the \texttt{encode} command,
 or can be distributed across a cluster using the 
 \texttt{dencode-init},
 \texttt{dencode-partition} and \texttt{dencode-finalise} commands.
 The distributed commands are fault-tolerant, reporting any failed
-parititions so that they can be retried.
+partitions so that they can be retried.
 
 \subsection{Choosing default compressor settings}
 To inform the choice of compression settings across different fields 
 in VCF data, we analysed their effect on compression ratio on 
-data from the 1000 Genomes project.
-[TODO, reffing Fig~\ref{fig-compression-shuffle} and 
-Fig~\ref{fig-compression-chunksize}.]
+data from the 1000 Genomes project. We began by downloading 
+the high coverage WGS data for 2504 samples~\citep{byrska2022high}
+for chromosome 22 and converted to Zarr using 
+\texttt{vcf2zarr} with default settings. We then systematically 
+examined the effects of varying chunk sizes and compressor settings
+on the compression ratio for call-level fields. We excluded call\_PL
+from this analysis as it requires conversion to a ``local alleles''
+encoding~\citep{poterba2024scalable} to be efficient, 
+which is planned for implementation in a future 
+version of \texttt{vcf2zarr}.
 
-% [FILL IN WITH Shadi's analysis from here:
-% https://github.com/sgkit-dev/bio2zarr/discussions/74
-% Discussed in:
-% https://github.com/sgkit-dev/vcf-zarr-publication/issues/26
+Fig~\ref{fig-compression-chunksize} shows that chunk size has a 
+weak influence on compression ratio for most fields. Interestingly,
+the choice of chunk size has a somewhat unpredictable effect
+on compression for the genotype matrix, suggesting that how 
+samples are grouped together has a strong effect on compression.
+At around 50X, compression is excellent in all cases however, 
+and given that genotypes contribute relatively little to the
+overall storage cost in many datasets 
+(Table~\ref{tab-genomics-england-data}), the differences are slight.
+Otherwise, increasing sample chunk size slightly increases 
+compression on call\_AB, and has no effect on less compressible
+fields. Variant chunk size appears to have almost no effect on compression 
+ratio. Thus, we do not expect the choice of chunk size to have a significant
+impact on overall storage usage, and so choice should be
+determined by other considerations such as expected data
+access patterns.
+
+The ``shuffle'' parameter in the Blosc meta-compressor~\cite{alted2010modern}
+can result in substantially better compression, albeit at the 
+cost of somewhat slower decoding (see Fig~\ref{fig-whole-matrix-decode}).
+Fig~\ref{fig-compression-shuffle} shows the effect of 
+the bit shuffle (grouping together bits at the same position
+across bytes before compression), and byte shuffle (grouping together 
+bytes at the sample position across words before compression)
+operations on compression ratio. Bit shuffle provides a significant
+improvement in compression for the call\_genotype field  because 
+the vast majority of genotype calls will be 0 or 1, and therefore 
+bits 1 to 7 will be 0. Thus, grouping these bits together will 
+lead to significantly better compression. This strategy also 
+works extremely well when compressing boolean fields stored as 
+8 bit integers, where the top 7 bits are always 0. In practise,
+boolean fields stored in this way have very similar compression
+to using a bit-packing pre-compression filter (data not shown).
+Although byte shuffle leads to somewhat better compression for call\_AD
+and call\_DP, it gives substantially worse compression on call\_AB
+than no shuffling. 
+The default in \texttt{vcf2zarr}
+is therefore to use bit shuffle for \texttt{call\_genotype}
+and all boolean fields, and to not use 
+byte shuffling on any field. These defaults can be easily
+overruled, however, by outputting and modifying a JSON formatted 
+storage schema before encoding to Zarr.
+
+Fig~\ref{fig-compression-compressor} shows the effect of varying compression
+codecs in Blosc. The combination of outstanding compression performance
+and good decoding speed makes zstd a good default choice.
+
 
 \subsection{Benchmarks}
 In this section we describe the methodology used for the simulation-based
@@ -1317,6 +1369,12 @@ requires a \texttt{+fill-tags} step in the pipeline.
 
 \section{Acknowledgements}
 
+% Acking according to the request here:
+% https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20190405_1000G_2504_high_cov_data_reuse_README.md
+The 1000 Genomes data used to analyse the effects of storage settings
+was generated at the New York Genome Center with funds provided by
+NHGRI Grant 3UM1HG008901-03S1.
+
 
 \bibliography{paper}
 
@@ -1352,17 +1410,36 @@ to execute.
 \end{figure}
 
 \begin{figure}
+\includegraphics{figures/compression-chunksize}
+\caption{Effects of chunk sizes on compression ratio on call-level 
+fields in 1000 Genomes data.
+(A) Varying sample chunk size, holding variant chunk size fixed at 10,000.
+(B) Varying variant chunk size, holding sample chunk size fixed at 1,000.
+In all cases the zstd compressor with compression level=7 was used. Bit shuffle
+was used for call\_genotype, and no shuffle used for the other fields.
+Values are chosen to be evenly spaced on a linear scale 
+between 100 and 2504 (the number of samples) in (A) and 
+evenly spaced between 100 and 96514 on a log scale in (B). 
+\label{fig-compression-chunksize}}
+\end{figure}
+
+\begin{figure}
 \includegraphics{figures/compression-shuffle}
-\caption{Effects of shuffle setting on compression ratios on 1000 Genomes
-data. TODO MORE DETAIL. 
+\caption{Effects of Blosc shuffle settings on compression ratio on call-level 
+fields in 1000 Genomes data. 
+In all cases the zstd compressor with compression level=7 was used, with a variant
+chunk size of 10,000 and sample chunk size of 1,000.
 \label{fig-compression-shuffle}}
 \end{figure}
 
 \begin{figure}
-\includegraphics{figures/compression-chunksize}
-\caption{Effects of chunk sizes on compression ratios on 1000 Genomes
-data. TODO MORE DETAIL. 
-\label{fig-compression-chunksize}}
+\includegraphics{figures/compression-compressor}
+\caption{Effects of Blosc compression codec on compression ratio on call-level 
+fields in 1000 Genomes data. 
+In all cases compression level=7 was used, with a variant
+chunk size of 10,000 and sample chunk size of 1,000.
+Bit shuffle was used for call\_genotype, and no shuffle used for the other fields.
+\label{fig-compression-compressor}}
 \end{figure}
 
 \end{document}
