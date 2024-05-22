@@ -1265,6 +1265,10 @@ byte shuffling on any field. These defaults can be easily
 overruled, however, by outputting and modifying a JSON formatted 
 storage schema before encoding to Zarr.
 
+Fig~\ref{fig-compression-compressor} shows the effect of varying compression
+codecs in Blosc. The combination of outstanding compression performance
+and good decoding speed makes zstd a good default choice.
+
 
 \subsection{Benchmarks}
 In this section we describe the methodology used for the simulation-based
@@ -1411,7 +1415,7 @@ to execute.
 fields in 1000 Genomes data.
 (A) Varying sample chunk size, holding variant chunk size fixed at 10,000.
 (B) Varying variant chunk size, holding sample chunk size fixed at 1,000.
-In all cases the zstd compressor with clevel=7 was used. Bit shuffle
+In all cases the zstd compressor with compression level=7 was used. Bit shuffle
 was used for call\_genotype, and no shuffle used for the other fields.
 Values are chosen to be evenly spaced on a linear scale 
 between 100 and 2504 (the number of samples) in (A) and 
@@ -1423,9 +1427,19 @@ evenly spaced between 100 and 96514 on a log scale in (B).
 \includegraphics{figures/compression-shuffle}
 \caption{Effects of Blosc shuffle settings on compression ratio on call-level 
 fields in 1000 Genomes data. 
-In all cases the zstd compressor with clevel=7 was used, with a variant
+In all cases the zstd compressor with compression level=7 was used, with a variant
 chunk size of 10,000 and sample chunk size of 1,000.
 \label{fig-compression-shuffle}}
+\end{figure}
+
+\begin{figure}
+\includegraphics{figures/compression-compressor}
+\caption{Effects of Blosc compression codec on compression ratio on call-level 
+fields in 1000 Genomes data. 
+In all cases compression level=7 was used, with a variant
+chunk size of 10,000 and sample chunk size of 1,000.
+Bit shuffle was used for call\_genotype, and no shuffle used for the other fields.
+\label{fig-compression-compressor}}
 \end{figure}
 
 \end{document}

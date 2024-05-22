@@ -378,6 +378,42 @@ def compression_shuffle(data, output):
 @click.command()
 @click.argument("data", type=click.File("r"))
 @click.argument("output", type=click.Path())
+def compression_compressor(data, output):
+    """
+    Plot figure showing the effect of compressor codec on compression ratio.
+    """
+    df = pd.read_csv(data)
+
+    # Note this is ordered by best-to-worst compression for viz
+
+    arrays = [
+        "call_GQ",
+        "call_DP",
+        "call_AD",
+        "call_AB",
+        "call_genotype",
+    ]
+
+    fig, ax = one_panel_fig()
+    sns.barplot(
+        df,
+        orient="h",
+        order=arrays,
+        y="ArrayName",
+        x="CompressionRatio",
+        hue="Compressor",
+        ax=ax,
+    )
+    ax.set_ylabel("")
+    ax.get_legend().set_title("")
+
+    plt.tight_layout()
+    plt.savefig(output)
+
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
 def compression_chunksize(data, output):
     """
     Plot figure showing the effect of chunksize settings on compression ratio.
@@ -427,6 +463,7 @@ cli.add_command(subset_matrix_compute)
 cli.add_command(subset_matrix_compute_supplemental)
 cli.add_command(compression_shuffle)
 cli.add_command(compression_chunksize)
+cli.add_command(compression_compressor)
 
 
 if __name__ == "__main__":
