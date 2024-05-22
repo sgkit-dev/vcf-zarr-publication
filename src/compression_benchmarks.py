@@ -8,20 +8,20 @@ from tqdm import tqdm
 import argparse
 
 
-def generate_chunksize_variations(
-    default_variant_chunksize=10_000, default_sample_chunksize=1_000
-):
-    variant_chunksizes = [1000, 2000, 5000, 10000, 20000, 50000, None]
-    sample_chunksizes = [100, 500, 1000, 1500, 2000, None]
+def generate_chunksize_variations(z_arr):
+    default_variant_chunksize = z_arr.chunks[0]
+    default_sample_chunksize = z_arr.chunks[1]
+    variant_chunksizes = np.logspace(2, np.log10(z_arr.shape[0]), num=6).astype(int)
+    sample_chunksizes = np.linspace(100, z_arr.shape[1], num=6).astype(int)
 
-    final_chunksizes = set()
+    final_chunksizes = []
     for vcs in variant_chunksizes:
-        final_chunksizes.add((vcs, default_sample_chunksize))
+        final_chunksizes.append((vcs, default_sample_chunksize))
 
     for scs in sample_chunksizes:
-        final_chunksizes.add((default_variant_chunksize, scs))
+        final_chunksizes.append((default_variant_chunksize, scs))
 
-    return list(final_chunksizes)
+    return final_chunksizes
 
 
 def test_compression_ratio_vs_chunksize(z_arr, dry_run=False):
@@ -32,7 +32,7 @@ def test_compression_ratio_vs_chunksize(z_arr, dry_run=False):
     :param dry_run: If True, generate the variations table without copying any data.
     """
 
-    chunksize_var = generate_chunksize_variations()
+    chunksize_var = generate_chunksize_variations(z_arr)
     comp_results_table = []
 
     if not dry_run:
@@ -40,7 +40,6 @@ def test_compression_ratio_vs_chunksize(z_arr, dry_run=False):
         arr = z_arr[:]
 
     for cs_var in tqdm(chunksize_var, total=len(chunksize_var), desc="Chunksizes"):
-        print(cs_var)
         cs_var = (cs_var[0] or z_arr.shape[0], cs_var[1] or z_arr.shape[1])
 
         variant_cs, sample_cs = cs_var
