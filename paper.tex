@@ -336,6 +336,14 @@ See~\citep{mcvean2019linkage} for a review of the techniques
 employed in genetic data compression.
 [FIXME need to work SeqArray~\citep{zheng2017seqarray,zheng2012high}
 in here.]
+Methods have also been developed which store variation data 
+along with annotations in databases to facilitate
+efficient queries~\cite[e.g.][]{
+paila2013gemini,%GEMINI
+lopez2017hgva} %OpenCGA
+which either limit to certain classes of variant~\cite[e.g.][]{greene2023genetic}
+or require storage larger 
+than uncompressed VCF~\citep{al2023critical}. 
 
 VCF is a row-wise format in which 
 observations and metadata for a single variant are
@@ -889,8 +897,8 @@ There is an important distinction here between creating a copy
 of the data (an implicit part of VCF based workflows) and creating an
 additional \emph{mask}. As Table~\ref{tab-genomics-england-data} 
 illustrates, call-level masks are cheap (the standard 
-missingness mask, call\_genotype\_mask, uses 0.49\% of the overall 
-storage) and variant or sample level masks requiring negligible storage.
+genotype missingness mask, call\_genotype\_mask, uses 0.49\% of the overall 
+storage) and variant or sample level masks require negligible storage.
 If downstream software can 
 use configurable masks (at variant, sample and call level) 
 rather than expecting full copies of the data, major storage savings
@@ -903,7 +911,7 @@ datasets is a potentially transformational change enabled by Zarr.
 \section{Discussion}
 % Zarr is great
 VCF is a central element of modern genomics, facilitating
-the exchange of data among interoperating tools. 
+the exchange of data in a large ecosystem of interoperating tools. 
 Its current row-oriented form, however,
 is fundamentally inefficient,
 profoundly limiting the scalability of the current generation
@@ -925,17 +933,24 @@ tool to perform conversion.
 % up front about weaknesses of the model.
 Zarr provides pragmatic solutions to some of the more pressing 
 problems facing the analysis of large-scale genetic variation
-data, but it is not a solution to all problems. Firstly, 
+data, but it is not a panacea. Firstly, 
 any dataset containing a variant with a large number of alleles
 (perhaps due to indels) will cause problems because the 
-dimensions of various fields are determined by the \emph{maximum}
-dimension among all variants. Secondly, the design of 
+dimensions of fields are determined by their \emph{maximum}
+dimension among all variants. In particular this is problematic
+for fields like PL in which the dimension depends 
+quadratically on the number of alleles (although practical
+solutions have been suggested that can be 
+adapted~\cite{poterba2024scalable}).
+Secondly, the design of 
 VCF Zarr emphasises efficiency of analysis for a fixed 
-dataset, and does not consider problems of ongoing updates
-(i.e, as new samples and their variants are added).
-Thirdly, Zarr is not suitable for handling unstructured
-string data, and for example likely not work well as a 
-basis for storing annotation data [CITES].
+dataset, and does not consider how samples (and the 
+corresponding novel variants) should be added.
+Thirdly, Zarr is not suitable for handling 
+unstructured data often included in VCF INFO 
+fields, and would likely be a poor choice
+for representing variant 
+annotations, for example.
 
 Nonetheless, there are numerous datasets that exist today
 what would benefit from cloud-native storage, 
