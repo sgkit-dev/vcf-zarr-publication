@@ -116,7 +116,7 @@ Biobank scale datasets currently available
 consist of hundreds of thousands of whole genomes 
 and hundreds of terabytes of compressed VCF.
 Row-based data storage is fundamentally unsuited to such datasets
-and these large VCFs represent a major computational bottleneck.
+and a more scalable, grid-based solution is needed.
 
 \textbf{Results:}
 We present the VCF Zarr specification, a columnar encoding of the 
@@ -242,7 +242,7 @@ Large files are currently stored in cloud environments, where the
 file systems that are required by classical file-oriented tools
 are expensively emulated on the basic building blocks
 of object storage. 
-These multiple layers of inefficiences around processing
+These multiple layers of inefficiencies around processing
 VCF data at scale in the cloud mean that it is 
 time-consuming and expensive, and these vast datasets are 
 not utilised to their full potential.
@@ -264,10 +264,10 @@ for quality control of large-scale variation datasets,
 and has been instrumental in the delivery of datasets such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
 While Hail is built on open components
-from the Hadoop distributed computing ecosytem~\citep{white2012hadoop},
+from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
 it is complex, vertically integrated software
 with custom storage formats that are not intended for reuse.
-Similarly, commerical solutions that have emerged to facilitate
+Similarly, commercial solutions that have emerged to facilitate
 the analysis of large-scale genetic variation data are either
 based on proprietary~[Terra? BigQuery?]
 or single-vendor technologies~\cite[e.g.][]{tiledb2024}.
@@ -295,7 +295,7 @@ file-based VCF compression tools.
 Moreover, we show that Zarr's storage of data in an analysis-ready 
 format greatly facilitates computation,
 with various benchmarks being substantially faster than
-\texttt{bcftools} based pipelines, and again competetive
+\texttt{bcftools} based pipelines, and again competitive
 with state-of-the-art file-oriented methods. Finally, we show the 
 utility of VCF Zarr on the Genomics England aggV2 dataset,
 demonstrating that common \texttt{bcftools} queries can be performed orders
@@ -353,7 +353,7 @@ row-wise, as are the majority of proposed alternative storage formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient,
 and works well when records are relatively small, 
-or when we typically want to analyse each record in its entirity.
+or when we typically want to analyse each record in its entirety.
 When we want to analyse only a subset of a record,
 row-wise storage can be inefficient because we will usually need to
 retrieve more information than required from storage. In the case 
@@ -377,7 +377,7 @@ storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cr
 the use of technologies such as Parquet for 
 storing and analysing variation data have had limited
 success~\citep{boufea2017managing,fan2020variant}.
-Columnar techologies tend to be 
+Columnar technologies tend to be 
 optimised for ``tall and narrow'' data where there is a large number of records
 for a relatively small number of columns. 
 Mapping VCF directly to a columnar layout, in which there is a 
@@ -539,7 +539,7 @@ methods have begun to provide Application Programming Interfaces
 wertenbroek2022xsi,zhang2023gbc}. By providing programmatic access,
 the data can be retrieved from storage, decoded and then analysed
 in the same memory space without additional copies and 
-interprocess communication through pipes.
+inter-process communication through pipes.
 
 To demonstrate the accessibility of genotype data and efficiency with 
 which calculations can be performed under the different formats,
@@ -903,7 +903,7 @@ If downstream software can
 use configurable masks (at variant, sample and call level) 
 rather than expecting full copies of the data, major storage savings
 and improvements in processing efficiency can be made.
-The transition from the manifold inefficiences of 
+The transition from the manifold inefficiencies of 
 present-day ``copy-oriented'' computing,
 to the ``mask-oriented'' analysis of large immutable, single-source
 datasets is a potentially transformational change enabled by Zarr.
@@ -976,7 +976,7 @@ engineering task.
 
 The second key piece of infrastructure required at this large 
 scale concerns distributed computation. Even with more efficient
-columnar data representations, computations that required examing 
+columnar data representations, computations that required examining 
 large volumes of per-call data must be distributed to complete 
 in a reasonable amount of time. [Dask, Xarray, sgkit?]
 
@@ -1018,7 +1018,7 @@ conversion.
 \subsection{Zarr and block-based compression}
 % Zarr is a simple layer on top of best-in-class, modern components
 In the interest of completeness it is useful to provide a high-level overview
-of Zarr and the techologies that it depends upon. Zarr is a specialised format
+of Zarr and the technologies that it depends upon. Zarr is a specialised format
 for storing large-scale $n$-dimensional data (arrays). Arrays
 are split into chunks, which are compressed and stored separately. Chunks are 
 addressed by their indexes along the dimensions of the array, and the 
