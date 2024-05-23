@@ -535,7 +535,10 @@ interprocess communication through pipes.
 
 To demonstrate the accessibility of genotype data and efficiency with 
 which calculations can be performed under the different formats,
-we use the \texttt{bcftools +af-dist} plugin as an example.
+we use the \texttt{bcftools +af-dist} plugin
+(which computes a table of
+deviations from Hardy-Weinberg expectations in 
+allele frequency bins) as an example.
 % The details of the \texttt{af-dist} operation are not important:
 % as an example of a whole-matrix operation. 
 We chose this particular operation for several reasons. 
@@ -543,12 +546,13 @@ First, it is a straightforward calculation that
 requires examining every element in the genotype matrix,
 and can be reproduced in different programming languages
 without too much effort.
-Secondly, it produces a small volume of output (a table of
-deviations from Hardy-Weinberg expectations in ten allele frequency
-bins) and therefore the time spent outputting results is negligible.
+Secondly, it produces a small volume of output  and therefore the 
+time spent outputting results is negligible.
 Finally, it has an efficient implementation written using the 
-\texttt{htslib} C API~\citep{bonfield2021htslib}, distributed as 
-a \texttt{bcftools} plugin. 
+\texttt{htslib} C API~\citep{bonfield2021htslib},
+and therefore running this command on a VCF or BCF file provides 
+a reasonable approximation of the limit of what can be achieved in terms 
+of whole-matrix computation on these formats.
 
 \begin{figure}
 \includegraphics{figures/whole-matrix-compute}
@@ -566,12 +570,13 @@ Fig~\ref{fig-whole-matrix-compute} shows timing results
 for running \texttt{bcftools +af-dist} and equivalent operations 
 on the data of Fig~\ref{fig-data-storage}. There is a large
 difference in the time required (note the log-log scale). 
-The slowest approach uses Genozip. Because genozip does not
+The slowest approach uses Genozip. Because Genozip does not
 provide an API and only outputs VCF text, the best approach available 
-is to pipe its output into \texttt{bcftools +af-dist}. Thus,
-not only must we decode the data from the genozip format, we must 
-then parse the large volumes of VCF text produced and then finally do the 
-actual calculation. 
+is to pipe its output into \texttt{bcftools +af-dist}. 
+This involves first decoding the data from Genozip format,
+then generating large volumes  of VCF text (terabytes, in the 
+largest examples here), which we must 
+subsequently parse before finally doing the actual calculation. 
 Running \texttt{bcftools +af-dist} directly on the gzipped VCF
 is substantially faster, indicating that Genozip's excellent
 compression performance comes at a substantial decompression cost.
