@@ -652,7 +652,7 @@ we must still retrieve and decompress the entire dataset.
 \includegraphics{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
 Total CPU time required to run the af-dist calculation for
-a subset of 10000 variants $\times$ 10 samples from the middle of the matrix
+a subset of 10,000 variants $\times$ 10 samples from the middle of the matrix
 for the data in Fig~\ref{fig-data-storage}.
 The \texttt{genozip} and \texttt{bcftools} pipelines involve
 multiple commands required to correctly calculate the AF INFO field
@@ -661,16 +661,16 @@ on the steps performed.
 \label{fig-subset-matrix-compute}}
 \end{figure}
 
-We illustrate the cost of row-wise encoding in
+We illustrate this cost of row-wise encoding in
 Fig~\ref{fig-subset-matrix-compute}, where we run the af-dist calculation
 on a small fixed-size subset of the genotype matrices of
 Fig~\ref{fig-data-storage}. The two-dimensional chunking of Zarr
-means that this small subset of the overall matrix can be efficiently
+means that this sub-matrix can be efficiently
 extracted, and therefore the execution time depends very weakly on 
-the overall dataset size, with the overall computation requiring around
+the overall dataset size, with the computation requiring around
 1 second for 1 million samples. Because of their 
-row-wise encoding for all the other methods CPU time
-scales with the number of samples.
+row-wise encoding, CPU time scales with the number of samples
+for all the other methods.
 Fig~\ref{fig-subset-matrix-compute-supplemental} shows performance
 for the same operation when selecting half of the samples in the 
 dataset.
@@ -682,9 +682,9 @@ Total CPU time required to extract the POS field for BCF,
 sav and Zarr formats
 for the data in Figure~\ref{fig-data-storage}.
 For the BCF file we used \texttt{bcftools query -f"\%POS$\backslash$n"}.
-For sav, we used the Savvy C++ API to extract just the position, 
+For sav, we used the Savvy C++ API to extract position for each variant
 and output text using the \texttt{std::cout} stream. For Zarr, we read 
-\texttt{variant\_position} into a NumPy array, and then wrote to
+the variant\_position array into a NumPy array, and then wrote to
 a text file using the Pandas \texttt{write\_csv} method. 
 Zarr CPU time is dominated by writing the text output; we also show
 the time required to populate a NumPy array with the data in Zarr,
@@ -715,17 +715,16 @@ Genomics England’s multi-sample VCF dataset (aggV2) is an
 aggregate of 78,195 gVCFs from rare disease and cancer participants 
 recruited as part of the 100,000 Genomes Project~\cite{turnbull2018100}. 
 The dataset comprises approximately 722 million annotated single-nucleotide 
-variants (SNVs) and small indels split into 1,371 roughly equal chunks and 
+variants and small indels split into 1,371 roughly equal chunks and 
 totalling 165.3 TiB of VCF data after \texttt{bgzip} compression. 
 The dataset is used for a variety of research purposes, ranging from 
-genome-wide association studies (GWAS)~\cite{kousathanas2022whole} and 
+GWAS~\cite{kousathanas2022whole} and 
 imputation~\cite{shi2023genomics} to 
 simple queries involving single gene 
 regions~\cite{leggatt2023genotype,lam2023repeat}.
 
 As described in the Methods, conversion to Zarr using 
-\texttt{vcf2zarr} is a two-step 
-process to limit memory usage and ensure reliability. We 
+\texttt{vcf2zarr} is a two-step process. We 
 first converted the 106 VCF files (12.81 TiB) for chromosome 2
 into the intermediate columnar format (ICF). This task was 
 split into 14,605 partitions, and distributed using the Genomics England
@@ -753,22 +752,22 @@ We also show the percentage of the overall storage that each array consumes
 \toprule
 {Field} & {type} & {storage} & {compress} & {\%total} \\
 \midrule
-/call\_AD & int16 & 658.4G & 26.0 & 25.35\% \\
-/call\_GQ & int16 & 654.5G & 13.0 & 25.20\% \\
-/call\_DP & int16 & 570.0G & 15.0 & 21.95\% \\
-/call\_DPF & int16 & 447.1G & 20.0 & 17.22\% \\
-/call\_PL & int16 & 162.6G & 160.0 & 6.26\% \\
-/call\_GQX & int16 & 41.0G & 210.0 & 1.58\% \\
-/call\_FT & string & 25.0G & 1400.0 & 0.96\% \\
-/call\_genotype & int8 & 21.5G & 410.0 & 0.83\% \\
-/call\_genotype\_mask & bool & 12.8G & 680.0 & 0.49\% \\
-/call\_genotype\_phased & bool & 2.4G & 1900.0 & 0.09\% \\
-/call\_PS & int8 & 383.4M & 12000.0 & 0.01\% \\
+/call\_AD & int16 & 658.4G & 26 & 25.35\% \\
+/call\_GQ & int16 & 654.5G & 13 & 25.20\% \\
+/call\_DP & int16 & 570.0G & 15 & 21.95\% \\
+/call\_DPF & int16 & 447.1G & 20 & 17.22\% \\
+/call\_PL & int16 & 162.6G & 160 & 6.26\% \\
+/call\_GQX & int16 & 41.0G & 210 & 1.58\% \\
+/call\_FT & string & 25.0G & 1400& 0.96\% \\
+/call\_genotype & int8 & 21.5G & 410& 0.83\% \\
+/call\_genotype\_mask & bool & 12.8G & 680& 0.49\% \\
+/call\_genotype\_phased & bool & 2.4G & 1900& 0.09\% \\
+/call\_PS & int8 & 383.4M & 12000& 0.01\% \\
 % /call\_ADF & int8 & 383.4M & 12000.0 & 0.01\% \\
 % /call\_ADR & int8 & 383.4M & 12000.0 & 0.01\% \\
-/variant\_position & int32 & 111.6M & 2.0 & \\
+/variant\_position & int32 & 111.6M & 2 & \\
 /variant\_quality & float32 & 87.4M & 2.6 & \\
-/variant\_allele & string & 69.3M & 13.0 & \\
+/variant\_allele & string & 69.3M & 13 & \\
 % /variant\_OLD\_MULTIALLELIC & object & 55.88M & 8.2 & 0.00\% \\
 /variant\_AN & int32 & 47.3M & 4.8 & \\
 % /variant\_AC & int32 & 47M & 4.9 & 0.00\% \\
@@ -785,7 +784,7 @@ We also show the percentage of the overall storage that each array consumes
 % /variant\_AC\_Hom & int32 & 11.12M & 21.0 & 0.00\% \\
 % /variant\_missingness & float32 & 9.3M & 25.0 & 0.00\% \\
 % /variant\_phwe\_eas & float32 & 7.12M & 32.0 & 0.00\% \\
-/variant\_filter & bool & 6.4M & 570.0 & \\
+/variant\_filter & bool & 6.4M & 570 & \\
 % /variant\_AC\_Hemi & int32 & 849.43 KiB & 280.0 & 0.00\% \\
 % /variant\_composite\_filter & bool & 433.38 KiB & 130.0 & 0.00\% \\
 % /variant\_OLD\_CLUMPED & object & 384.18 KiB & 1200.0 & 0.00\% \\
@@ -831,7 +830,9 @@ because they contain rare outliers that cannot be stored as
 a maximum of 127 with minimal loss of information, 
 the compression gains from doing so are relatively minor,
 and we therefore opt for fully lossless compression here 
-for simplicity.
+for simplicity. The call\_PS field here has an extremely high
+compression ratio because it consists entirely of missing data
+(i.e., it was listed in the header but never used in the VCF).
 
 To demonstrate the computational accessibility of Zarr on this 
 large human dataset, we performed some illustrative benchmarks.
@@ -886,7 +887,7 @@ of  11 min (63X faster).
 %689 / 11 = 62.6 = 63X
 There is an important distinction here between creating a copy
 of the data (an implicit part of VCF based workflows) and creating an
-an additional \emph{mask}. As Table~\ref{tab-genomics-england-data} 
+additional \emph{mask}. As Table~\ref{tab-genomics-england-data} 
 illustrates, call-level masks are cheap (the standard 
 missingness mask, call\_genotype\_mask, uses 0.49\% of the overall 
 storage) and variant or sample level masks requiring negligible storage.
@@ -894,9 +895,10 @@ If downstream software can
 use configurable masks (at variant, sample and call level) 
 rather than expecting full copies of the data, major storage savings
 and improvements in processing efficiency can be made.
-Such a transition from ``mask-oriented'' vs ``copy-oriented'' 
-analysis is one of the transformational changes enabled by Zarr.
-
+The transition from the manifold inefficiences of 
+present-day ``copy-oriented'' computing,
+to the ``mask-oriented'' analysis of large immutable, single-source
+datasets is a potentially transformational change enabled by Zarr.
 
 \section{Discussion}
 % Zarr is great
