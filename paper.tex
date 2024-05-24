@@ -196,7 +196,7 @@ browning2018one,
 kelleher2019inferring,
 % Has a "xcftools" package, but it still looks pretty experimental
 hofmeister2023accurate}.
-While PLINK and BGEN are more efficient to access than VCF, neither
+While PLINK and BGEN formats are more efficient to access than VCF, neither
 can accommodate the full flexibility of the VCF data model and conversion
 is lossy.
 PLINK's approach of storing the genotype matrix in uncompressed
@@ -336,7 +336,9 @@ zhang2023gbc}. %GBC
 Several specialised algorithms for compressing 
 the genotype matrix (i.e., just the genotype calls without additional
 VCF information) have been proposed
-\citep{deorowicz2013genome, %TGC
+\citep{qiao2012handling, % SpeedGene
+deorowicz2013genome, %TGC
+sambo2014compression, % snpack
 deorowicz2019gtshark, %GTShark
 deorowicz2021vcfshark, % VCFShark
 dehaas2024genotype} %  GRG
@@ -346,20 +348,27 @@ See~\citep{mcvean2019linkage} for a review of the techniques
 employed in genetic data compression.
 [FIXME need to work SeqArray~\citep{zheng2017seqarray,zheng2012high}
 in here.]
+The widely-used PLINK binary format stores genotypes in a 
+packed binary representation, supporting only biallelic
+variants without phase information.
+The PLINK 2 PGEN format~\citep{pgen2024} is more general
+and compact than PLINK, compressing data using specialised
+genotype compression methods~\cite{sambo2014compression}.
 Methods have also been developed which store variation data 
 along with annotations in databases to facilitate
 efficient queries~\cite[e.g.][]{
 paila2013gemini,%GEMINI
 lopez2017hgva} %OpenCGA
 which either limit to certain classes of variant~\cite[e.g.][]{greene2023genetic}
-or require storage larger 
+or have storage requirements larger
 than uncompressed VCF~\citep{al2023critical}. 
 
 VCF is a row-wise format in which 
 observations and metadata for a single variant are
 encoded as a line of text~\citep{danecek2011variant}.
 BCF (the standard binary representation of VCF) is similarly 
-row-wise, as are the majority of proposed alternative storage formats.
+row-wise, as are the majority of proposed alternative storage 
+formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient,
 and works well when records are relatively small, 
