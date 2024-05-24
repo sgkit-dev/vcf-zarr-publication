@@ -275,12 +275,14 @@ and has been instrumental in the delivery of datasets such as
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
 While Hail is built on open components
 from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
-it is complex, vertically integrated software
+it is complex, vertically integrated software 
+(i.e., consisting of tightly coupled components)
 with custom storage formats that are not intended for reuse.
 Similarly, commercial solutions that have emerged to facilitate
 the analysis of large-scale genetic variation data are either
-based on proprietary~[Terra? BigQuery?]
-or single-vendor technologies~\cite[e.g.][]{tiledb2024}.
+based on proprietary~\cite{basespace2024,graf2024,googlelifesciences2024,
+awshealthomics2024,microsoftgenomics2024}
+or single-vendor technologies~\cite[e.g.][]{tiledb2024,genomicsdb2024}.
 The next generation of VCF analysis methods requires
 an open, free and transparent data representation 
 with multiple independent implementations.
