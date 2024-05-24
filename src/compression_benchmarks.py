@@ -174,6 +174,57 @@ def test_compression_ratio_vs_shuffle(z_arr, dry_run=False):
     )
 
 
+def test_compression_ratio_vs_chunksize_finegrained(z_arr,
+                                                    min_chunksize=100,
+                                                    max_chunksize=256,
+                                                    dim='sample',
+                                                    dry_run=False):
+
+    dim_idx = ['variant', 'sample'].index(dim)
+
+    comp_results_table = []
+    if not dry_run:
+        # Extract the data
+        arr = z_arr[:]
+
+    for i in tqdm(range(min_chunksize, max_chunksize + 1),
+                  total=max_chunksize - min_chunksize):
+
+        chunksize = list(z_arr.chunks)
+        chunksize[dim_idx] = i
+        chunksize = tuple(chunksize)
+
+        if not dry_run:
+
+            z2 = zarr.empty_like(arr,
+                                 chunks=chunksize,
+                                 compressor=z_arr.compressor,
+                                 dtype=z_arr.dtype)
+            z2[:] = arr
+            nchunks = z2.nchunks
+            compress_ratio = float(dict(z2.info_items())["Storage ratio"])
+        else:
+            nchunks = None
+            compress_ratio = None
+
+        smallest_chunksize = z_arr.shape[dim_idx] % chunksize[dim_idx]
+
+        comp_results_table.append({
+             'chunksize': chunksize,
+            f'{dim}_chunksize': i,
+             'nchunks': nchunks,
+             'smallest_chunk_size': smallest_chunksize,
+             'CompressionRatio': compress_ratio
+        })
+
+    return pd.DataFrame(comp_results_table).sort_values(
+        "CompressionRatio", ascending=False
+    )
+
+
+
+
+
 def test_vcf2zarr_compression_variations(
     z_group,
     keys=("call_GQ", "call_DP", "call_AD", "call_AB", "call_genotype"),
@@ -213,6 +264,11 @@ def test_vcf2zarr_compression_variations(
             res = test_compression_ratio_vs_chunksize(z_group[k], dry_run=dry_run)
         elif test_config == "compressor":
             res = test_compression_ratio_vs_compressor(z_group[k], dry_run=dry_run)
+        elif test_config == "chunksize_finegrained":
+            # Test only call_genotype for now...
+            if k != 'call_genotype':
+                continue
+            res = test_compression_ratio_vs_chunksize_finegrained(z_group[k], dry_run=dry_run)
         else:
             res = test_compression_ratio_vs_shuffle(z_group[k], dry_run=dry_run)
 
@@ -240,7 +296,7 @@ if __name__ == "__main__":
         dest="test_config",
         type=str,
         default="chunksize",
-        choices={"chunksize", "compressor", "shuffle"},
+        choices={"chunksize", "compressor", "shuffle", "chunksize_finegrained"},
     )
     parser.add_argument(
         "-o",
