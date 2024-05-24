@@ -348,8 +348,6 @@ most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
 See~\citep{mcvean2019linkage} for a review of the techniques
 employed in genetic data compression.
-[FIXME need to work SeqArray~\citep{zheng2017seqarray,zheng2012high}
-in here.]
 The widely-used PLINK binary format stores genotypes in a 
 packed binary representation, supporting only biallelic
 variants without phase information.
@@ -364,12 +362,18 @@ lopez2017hgva} %OpenCGA
 which either limit to certain classes of variant~\cite[e.g.][]{greene2023genetic}
 or have storage requirements larger
 than uncompressed VCF~\citep{al2023critical}. 
+The SeqArray package~\citep{zheng2017seqarray} builds on the 
+Genomic Data Storage container format~\cite{zheng2012high}
+to store VCF genotype data in a packed and compressed format,
+and is used in several downstream R packages~\cite[e.g.][]{
+gogarten2019genetic,fernandes2020simplephenotypes}.
 
 VCF is a row-wise format in which 
 observations and metadata for a single variant are
 encoded as a line of text~\citep{danecek2011variant}.
-BCF (the standard binary representation of VCF) is similarly 
-row-wise, as are the majority of proposed alternative storage 
+BCF~\citep{li2011statistical}, the standard binary representation of VCF,
+is similarly row-wise, as 
+are the majority of proposed alternative storage 
 formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient,
