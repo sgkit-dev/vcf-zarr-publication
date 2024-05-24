@@ -151,7 +151,7 @@ Variant Call Format; Zarr; Analysis ready data.
 \begin{keypoints*}
 \begin{itemize}
 \item VCF is widely supported, and the underlying data model entrenched 
-in Bioinformatics pipelines.
+in bioinformatics pipelines.
 \item The standard row-wise encoding as text (or binary) is inherently
 inefficient for large-scale data processing.
 \item The Zarr format provides an efficient solution, by encoding fields
@@ -174,6 +174,9 @@ Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 and the All of Us research program~\citep{all2024genomic}
 collecting genome sequence data for hundreds of thousands of humans.
+Larger genome variation datasets are also being generated for other organisms
+and a variety of purposes including agriculture~\citep{wang2023rice}, conservation~\citep{shaffer2022landscape}
+and infectious disease surveillance~\citep{hamid2023pf7}.
 VCF's simple text-based design and widespread
 support~\cite{garrison2022spectrum} makes it an 
 excellent archival format, but it is an inefficient basis for analysis.
@@ -598,7 +601,7 @@ is based on custom programs written using their respective APIs
 to implement the \texttt{af-dist} operation. The Zarr program uses
 the Zarr-Python package to iterate over the decoded chunks of the 
 genotype matrix and classifies genotypes within a chunk using a 14 line Python
-function, accelerated using the Numba JIT compliler~\cite{lam2015numba}.
+function, accelerated using the Numba JIT compiler~\cite{lam2015numba}.
 The allele frequencies and genotype counts are then analysed to produce 
 the final counts within the allele frequency bins with 9 lines of 
 Python using NumPy~\cite{harris2020array} functions. Remarkably, this 
@@ -1103,7 +1106,13 @@ Recent additions using Zarr include the application of deep learning
 models to genomic sequence data~\citep{klie2023predictive} 
 and a browser for genetic variation data~\citep{konig2023divbrowse}.
 Zarr has in fact been in use in genomics for many years, and was originally 
-developed to [ALISTAIR - details and citations here!]
+developed to store data from the \textit{Anopheles gambiae} 1000 Genomes Project~\citep{anopheles2017genetic}.
+A successor project, the MalariaGEN Vector Observatory,
+currently uses Zarr to store data from whole-genome sequencing of 23,000 \textit{Anopheles} mosquitoes from 31 African countries.\footnote{\url{https://www.malariagen.net/malaria-vector-genome-observatory/}}
+These data are hosted in Google Cloud Storage and can be analysed interactively
+using free cloud computing services like Google Colab,
+democratising the use of data by scientists in malaria-endemic countries
+where access to local computing infrastructure and sufficient network bandwidth to download large datasets may be limited.
 
 \subsection{The VCF Zarr specification}
 The VCF Zarr specification is a direct mapping from the VCF data model
