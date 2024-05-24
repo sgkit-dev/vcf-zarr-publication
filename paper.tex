@@ -901,7 +901,9 @@ Finally, to illustrate performance on a common filtering task, we
 created a copy of the VCF chunk which contains only variants 
 that pass some common filtering criteria using
 \texttt{bcftools view -I --include "FORMAT/DP>10 \& FORMAT/GQ>20"},
-following standard practices~\citep[e.g.][]{chen2024genomic}.
+following standard practices~\citep[e.g.][]{bergstrom2020insights,
+kousathanas2022whole,
+chen2024genomic}.
 This took a total of 689 min CPU time, with the same elapsed time.
 In comparison, computing and storing a variant mask (i.e., a boolean value 
 for each variant denoting whether it should be considered or not
