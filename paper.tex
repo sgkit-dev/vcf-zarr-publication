@@ -174,8 +174,10 @@ Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 and the All of Us research program~\citep{all2024genomic}
 collecting genome sequence data for hundreds of thousands of humans.
-Larger genome variation datasets are also being generated for other organisms
-and a variety of purposes including agriculture~\citep{wang2023rice}, conservation~\citep{shaffer2022landscape}
+Large genome variation datasets are also being generated for other organisms
+and a variety of purposes including 
+agriculture~\citep{ros2020accuracy,wang2023rice}, 
+conservation~\citep{shaffer2022landscape}
 and infectious disease surveillance~\citep{hamid2023pf7}.
 VCF's simple text-based design and widespread
 support~\cite{garrison2022spectrum} makes it an 
@@ -185,17 +187,16 @@ either require conversion to the
 PLINK~\cite{purcell2007plink,chang2015second} 
 or BGEN~\citep{band2018bgen} 
 formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
-or use 
-bespoke binary formats~\citep[e.g.][]{
+or use bespoke binary formats 
+that support the required access patterns~\citep[e.g.][]{
 % Uses custom "bref3" format,
 % https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
 browning2018one, 
 % .samples Zarr format
 kelleher2019inferring,
 % Has a "xcftools" package, but it still looks pretty experimental
-hofmeister2023accurate} 
-that support the required access patterns.
-While PLINK and BGEN support efficient access to genotype data, neither
+hofmeister2023accurate}.
+While PLINK and BGEN formats are more efficient to access than VCF, neither
 can accommodate the full flexibility of the VCF data model and conversion
 is lossy.
 PLINK's approach of storing the genotype matrix in uncompressed
@@ -213,17 +214,23 @@ Processing of Biobank scale datasets can be split into a
 few broad categories. The most basic analysis 
 is quality control (QC). Variant QC is an 
 involved and multi-faceted 
-task [CITATIONS?], often requiring interactive, exploratory analysis
+task~\cite{marees2018tutorial,panoutsopoulou2018quality,chen2024genomic}, 
+often requiring interactive, exploratory analysis
 and incurring substantial computation over multiple QC fields.
 Genotype calls are often refined via statistical methods,
-% methods~\citep[e.g.][MORE and CHECK]{browning2021fast,browning2023statistical}
-for example by phasing~[CITES] and imputation[CITES], 
+for example by phasing~\citep{
+browning2021fast,browning2023statistical,hofmeister2023accurate,williams2024phasing},
+and imputation~\citep{browning2018one,rubinacci2020genotype,barton2021whole,
+rubinacci2023imputation}
 creating additional dataset copies.
 A common task to perform after QC is 
 a genome wide association study (GWAS)~\cite{uffelmann2021genome}. 
 The majority of tools for 
 performing GWAS and related analyses require
-data to be in PLINK format~\cite[e.g][]{chang2015second} [MORE],
+data to be in PLINK or BGEN formats~\cite[e.g][]{chang2015second,
+loh2015efficient,
+abraham2017flashpca2,
+mbatchou2021computationally},
 and so data must be ``hard-called'' according to some QC criteria
 and exported to additional copies.
 Finally, variation datasets are often queried in exploratory
@@ -329,7 +336,9 @@ zhang2023gbc}. %GBC
 Several specialised algorithms for compressing 
 the genotype matrix (i.e., just the genotype calls without additional
 VCF information) have been proposed
-\citep{deorowicz2013genome, %TGC
+\citep{qiao2012handling, % SpeedGene
+deorowicz2013genome, %TGC
+sambo2014compression, % snpack
 deorowicz2019gtshark, %GTShark
 deorowicz2021vcfshark, % VCFShark
 dehaas2024genotype} %  GRG
@@ -339,20 +348,27 @@ See~\citep{mcvean2019linkage} for a review of the techniques
 employed in genetic data compression.
 [FIXME need to work SeqArray~\citep{zheng2017seqarray,zheng2012high}
 in here.]
+The widely-used PLINK binary format stores genotypes in a 
+packed binary representation, supporting only biallelic
+variants without phase information.
+The PLINK 2 PGEN format~\citep{pgen2024} is more general
+and compact than PLINK, compressing variant data using specialised
+algorithms~\cite{sambo2014compression}.
 Methods have also been developed which store variation data 
 along with annotations in databases to facilitate
 efficient queries~\cite[e.g.][]{
 paila2013gemini,%GEMINI
 lopez2017hgva} %OpenCGA
 which either limit to certain classes of variant~\cite[e.g.][]{greene2023genetic}
-or require storage larger 
+or have storage requirements larger
 than uncompressed VCF~\citep{al2023critical}. 
 
 VCF is a row-wise format in which 
 observations and metadata for a single variant are
 encoded as a line of text~\citep{danecek2011variant}.
 BCF (the standard binary representation of VCF) is similarly 
-row-wise, as are the majority of proposed alternative storage formats.
+row-wise, as are the majority of proposed alternative storage 
+formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient,
 and works well when records are relatively small, 
@@ -894,7 +910,9 @@ Finally, to illustrate performance on a common filtering task, we
 created a copy of the VCF chunk which contains only variants 
 that pass some common filtering criteria using
 \texttt{bcftools view -I --include "FORMAT/DP>10 \& FORMAT/GQ>20"},
-following standard practices [citations?].
+following standard practices~\citep[e.g.][]{bergstrom2020insights,
+kousathanas2022whole,
+chen2024genomic}.
 This took a total of 689 min CPU time, with the same elapsed time.
 In comparison, computing and storing a variant mask (i.e., a boolean value 
 for each variant denoting whether it should be considered or not
