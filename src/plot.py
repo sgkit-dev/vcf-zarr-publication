@@ -450,6 +450,52 @@ def compression_chunksize(data, output):
     plt.savefig(output)
 
 
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def compression_chunksize_finegrained(data, output):
+    """
+    Plot figure showing the effect of finegrained chunksize settings on compression ratio.
+    """
+    
+    df = pd.read_csv(data)
+
+    markers = {'Odd': '.',
+               'Even': 'x',
+               'Multiple of 4': '+'}
+
+    remain_df = df.copy()
+
+    # Plot each category with a different marker
+    for category in ['Multiple of 4', 'Even', 'Odd']:
+
+        if category == 'Even':
+            cond = remain_df.sample_chunksize % 2 == 0
+            sub_df = remain_df.loc[cond]
+            remain_df = remain_df.loc[~cond]
+        elif category == 'Multiple of 4':
+            cond = remain_df.sample_chunksize % 4 == 0
+            sub_df = remain_df.loc[cond]
+            remain_df = remain_df.loc[~cond]
+        else:
+            sub_df = remain_df
+
+        plt.scatter(sub_df.sample_chunksize,
+                    sub_df.CompressionRatio,
+                    c=sub_df.smallest_chunk_size,
+                    marker=markers[category],
+                    label=category)
+
+    plt.xlabel("Sample Chunksize")
+    plt.ylabel("Compression Ratio")
+    plt.legend()
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel('Size of last chunk', rotation=270, labelpad=12)
+
+    plt.tight_layout()
+    plt.savefig(output)
+
+
 @click.group()
 def cli():
     pass
@@ -464,6 +510,7 @@ cli.add_command(subset_matrix_compute_supplemental)
 cli.add_command(compression_shuffle)
 cli.add_command(compression_chunksize)
 cli.add_command(compression_compressor)
+cli.add_command(compression_chunksize_finegrained)
 
 
 if __name__ == "__main__":

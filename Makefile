@@ -71,6 +71,11 @@ plot_data/chunksize_benchmarks.csv:
 		--test-config chunksize \
 		-o $@
 
+plot_data/chunksize_finegrained_benchmarks.csv:
+	python3 src/compression_benchmarks.py --input real_data/data/WGS/chr22.zarr \
+		--test-config chunksize_finegrained \
+		-o $@
+
 
 # TODO make rule for time-scaling
 
@@ -115,4 +120,8 @@ figures/compression-chunksize.pdf: plot_data/chunksize_benchmarks.csv
 		plot_data/chunksize_benchmarks.csv \
 		$@
 
+figures/compression-chunksize-finegrained.pdf: plot_data/chunksize_finegrained_benchmarks.csv
+	python3 src/plot.py compression-chunksize-finegrained \
+		plot_data/chunksize_finegrained_benchmarks.csv \
+		$@
 
