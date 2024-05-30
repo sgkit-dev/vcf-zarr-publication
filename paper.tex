@@ -161,9 +161,9 @@ in the VCF separately in chunk-compressed binary format.
 
 \section{Background}
 Variant Call Format (VCF) is the standard format for interchanging genetic
-variation data~\citep{danecek2011variant}, encoding information about 
+variation data, encoding information about 
 DNA sequence polymorphisms among a set of samples with associated 
-quality control metrics and metadata. 
+quality control metrics and metadata~\citep{danecek2011variant}. 
 Originally defined specifically as a text file,
 it has been refined and standardised~\citep{rehm2021ga4gh} and the 
 underlying data-model is now deeply embedded in bioinformatics practice.
@@ -174,7 +174,7 @@ Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 and the All of Us research program~\citep{all2024genomic}
 collecting genome sequence data for hundreds of thousands of humans.
-Large genome variation datasets are also being generated for other organisms
+Large genetic variation datasets are also being generated for other organisms
 and a variety of purposes including 
 agriculture~\citep{ros2020accuracy,wang2023rice}, 
 conservation~\citep{shaffer2022landscape}
@@ -217,13 +217,13 @@ involved and multi-faceted
 task~\cite{marees2018tutorial,panoutsopoulou2018quality,chen2024genomic}, 
 often requiring interactive, exploratory analysis
 and incurring substantial computation over multiple QC fields.
-Genotype calls are often refined via statistical methods,
+Genotype calls are sometimes refined via statistical methods,
 for example by phasing~\citep{
 browning2021fast,browning2023statistical,hofmeister2023accurate,williams2024phasing},
 and imputation~\citep{browning2018one,rubinacci2020genotype,barton2021whole,
 rubinacci2023imputation}
 creating additional dataset copies.
-A common task to perform after QC is 
+A common task to perform  is
 a genome wide association study (GWAS)~\cite{uffelmann2021genome}. 
 The majority of tools for 
 performing GWAS and related analyses require
@@ -237,10 +237,7 @@ Finally, variation datasets are often queried in exploratory
 analyses, to find regions or samples of interest for a particular 
 study~\cite[e.g.][]{chen2024novo}.
 
-VCF cannot support any of these workflows efficiently
-at the Biobank scale, and workarounds of copying subsets 
-of data (i.e., discarding QC metrics in VCF) or copying to 
-PLINK format have reached their limits.
+VCF cannot support any of these workflows efficiently at the Biobank scale.
 The most intrinsically limiting aspect of VCF's design 
 is its row-wise layout of data, which means that (for example)
 information for a particular sample or field cannot be obtained without
@@ -271,7 +268,7 @@ There is currently no efficient, FAIR representation of genetic variation
 data suitable for cloud deployments.
 Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
 for quality control of large-scale variation datasets, 
-and has been instrumental in the delivery of datasets such as 
+and has been instrumental in projects such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
 While Hail is built on open components
 from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
