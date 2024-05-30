@@ -666,7 +666,7 @@ functionality to aid with such storage schema tuning.
 
 \subsection{Subsetting the genotype matrix}
 As datasets grow ever larger, the ability to efficiently access subsets 
-of the data becomes more and more important. VCF/BCF achieve efficient 
+of the data becomes increasingly important. VCF/BCF achieve efficient 
 access to the data for genomic ranges 
 by compressing blocks of adjacent records using \texttt{bgzip},
 and storing secondary indexes alongside the original 
@@ -685,7 +685,8 @@ we must still retrieve and decompress the entire dataset.
 \includegraphics{figures/subset-matrix-compute}
 \caption{Compute performance on subsets of the matrix.
 Total CPU time required to run the af-dist calculation for
-a subset of 10,000 variants $\times$ 10 samples from the middle of the matrix
+a contiguous subset of 10,000 variants $\times$ 10 samples 
+from the middle of the matrix
 for the data in Fig~\ref{fig-data-storage}.
 The \texttt{genozip} and \texttt{bcftools} pipelines involve
 multiple commands required to correctly calculate the AF INFO field
