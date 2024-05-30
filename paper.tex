@@ -539,25 +539,22 @@ that consume and produce text~\citep[e.g.][]{buffalo2015bioinformatics}.
 Thus, many tools that compress VCF data provide a command line 
 utility with a query language to restrict the records
 examined, perform some pre-specified calculations and finally 
-output some text, typically VCF or tab/comma separated values
-[TODO check these citations]~\citep{
+output some text, typically VCF or tab/comma separated 
+values~\citep{
 layer2016efficient, %GQT
 li2016bgt, % BGT
-tatwawadi2016gtrac, % GTRAC
 danek2018gtc, % GTC
 lin2020sparse, % SpVCF
 lan2020genozip,lan2021genozip, %genozip
-lefaive2021sparse, % SAVVY
-wertenbroek2022xsi,% XSI
 zhang2023gbc}. %GBC
 These pre-defined calculations are by necessity limited in scope, however,
 and the volumes of text involved in Biobank scale datasets
 make the classical approach of custom
 analyses via Unix utilities in pipelines prohibitively slow. Thus, 
 methods have begun to provide Application Programming Interfaces
-(APIs), providing efficient access to genotype and other VCF data
-[TODO check these citations]~\cite[e.g.][]{kelleher2013processing,lefaive2021sparse,
-wertenbroek2022xsi,zhang2023gbc}. By providing programmatic access,
+(APIs), providing efficient access to genotype and other VCF 
+data~\cite[e.g.][]{kelleher2013processing,lefaive2021sparse,
+wertenbroek2022xsi}. By providing programmatic access,
 the data can be retrieved from storage, decoded and then analysed
 in the same memory space without additional copies and 
 inter-process communication through pipes.
@@ -684,8 +681,7 @@ files with a conventional suffix~\citep{li2011tabix}.
 Thus, for a given range query we 
 decompress only the necessary blocks and can quickly access
 the required records. 
-Methods like Savvy and XSI largely follow the same principles [TODO check and 
-be more concrete]. The row-wise nature of these methods, however, mean 
+The row-wise nature of VCF (and most proposed alternatives), however, means
 that we cannot efficiently subset \emph{by sample}
 (e.g., to calculate statistics within a particular cohort). In the extreme
 case, if we want to access only the genotypes for a single sample
