@@ -88,7 +88,14 @@ def plot_size(ax, df, label_y_offset=None, order=None):
 
 
 def plot_total_cpu(
-    ax, df, toolname=None, colours=None, time_units="h", extrapolate=None, order=None
+    ax,
+    df,
+    toolname=None,
+    colours=None,
+    time_units="h",
+    extrapolate=None,
+    order=None,
+    label_y_offset=None,
 ):
     if colours is None:
         colours = {
@@ -104,6 +111,7 @@ def plot_total_cpu(
     divisors = {"s": 1, "h": 3600, "m": 60}
     extrapolate = [] if extrapolate is None else extrapolate
 
+    label_y_offset = {} if label_y_offset is None else label_y_offset
     if order is None:
         order = colours.keys()
 
@@ -139,7 +147,7 @@ def plot_total_cpu(
             ax.annotate(
                 f"{time:.0f}{time_units}" if time > 1 else f"{time:.1f}{time_units}",
                 textcoords="offset points",
-                xytext=(15, 0),
+                xytext=(15, label_y_offset.get(tool, 0)),
                 xy=(row.num_samples, total_cpu[-1]),
                 xycoords="data",
             )
@@ -166,7 +174,7 @@ def plot_total_cpu(
         ax.annotate(
             f"{time:.0f}{time_units}*",
             textcoords="offset points",
-            xytext=(15, 0),
+            xytext=(15, label_y_offset.get(tool, 0)),
             xy=(num_samples[-1], fit[-1]),
             xycoords="data",
         )
@@ -260,18 +268,22 @@ def whole_matrix_decode(time_data, output):
     Plot the figure showing raw decode performance on whole-matrix afdist.
     """
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
-    print(df)
     df = df[df.storage == "hdd"]
 
     fig, ax1 = one_panel_fig()
 
     name_map = {
-        "zarr": "Zarr (Zstd + bit shuffle)",
+        "zarr": "Zarr (Zstd + BitShuffle)",
         "savvy": "Savvy",
         "zarr_nshf": "Zarr (Zstd)",
     }
     plot_total_cpu(
-        ax1, df, toolname=name_map, time_units="m", order=["zarr", "zarr_nshf", "savvy"]
+        ax1,
+        df,
+        toolname=name_map,
+        time_units="m",
+        order=["zarr", "zarr_nshf", "savvy"],
+        label_y_offset={"savvy": -2},
     )
     df["genotypes_per_second"] = df["total_genotypes"] / df["user_time"]
     for tool in name_map.keys():
@@ -316,7 +328,7 @@ def column_extract(time_data, output):
     plt.savefig(output)
 
 
-def run_subset_matrix_plot(data, output, subset, extrapolate):
+def run_subset_matrix_plot(data, output, subset, extrapolate, **kwargs):
     df = pd.read_csv(data, index_col=False).sort_values("num_samples")
     fig, ax1 = one_panel_fig()
 
@@ -334,6 +346,7 @@ def run_subset_matrix_plot(data, output, subset, extrapolate):
         time_units="s",
         extrapolate=extrapolate,
         order=["genozip", "bcftools", "savvy", "zarr"],
+        **kwargs,
     )
     plt.savefig(output)
 
@@ -345,7 +358,8 @@ def subset_matrix_compute(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n10", extrapolate=[])
+    run_subset_matrix_plot(data, output, "n10", extrapolate=[],
+            label_y_offset={"savvy":-1})
 
 
 @click.command()
@@ -355,7 +369,8 @@ def subset_matrix_compute_supplemental(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"])
+    run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"],
+            label_y_offset={"savvy": 2, "zarr": -2.5})
 
 
 @click.command()
@@ -505,7 +520,7 @@ def compression_chunksize_finegrained(data, output):
             c=sub_df.smallest_chunk_size,
             marker=markers[category],
             label=category,
-            cmap="plasma"
+            cmap="plasma",
         )
 
     ax.set_xlabel("Sample Chunksize")
@@ -513,8 +528,8 @@ def compression_chunksize_finegrained(data, output):
     plt.legend()
     leg = ax.get_legend()
     for handle in leg.legend_handles:
-        handle.set_color('black')
-    cbar = fig.colorbar(s)#, cax=ax)
+        handle.set_color("black")
+    cbar = fig.colorbar(s)  # , cax=ax)
     cbar.ax.set_ylabel("Size of last chunk", rotation=270, labelpad=12)
 
     plt.tight_layout()

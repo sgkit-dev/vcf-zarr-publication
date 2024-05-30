@@ -1478,10 +1478,10 @@ the ``No Commercial Data'' criterion.
 \begin{figure}
 \includegraphics{figures/whole-matrix-decode}
 \caption{Genotype decoding performance.
-Total CPU time required to decode genotypes into memory using the zarr-python
+Total CPU time required to decode genotypes into memory using the Zarr-Python
 and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
-This corresponds to maximum rate of 1.2GiB/s for Zarr and 5.7GiB/s
-for Savvy. [TODO add data for 1 million samples]
+This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
+3.9 GiB/s Zarr (Zstd), and 6.6 GiB/s for Savvy. 
 \label{fig-whole-matrix-decode}}
 \end{figure}
 
