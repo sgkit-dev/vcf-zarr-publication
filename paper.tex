@@ -983,8 +983,7 @@ corresponding novel variants) should be added.
 Thirdly, Zarr is not suitable for handling 
 the unstructured data often included in VCF INFO 
 fields, and would likely be a poor choice
-for representing variant 
-annotations, for example.
+for representing variant annotations, for example.
 
 Nonetheless, there are numerous datasets that exist today
 that would likely reap significant benefits from being deployed 
@@ -992,7 +991,7 @@ in a cloud-native fashion using Zarr. Object
 stores typically allow for individual objects (chunks, in
 Zarr) to be associated with ``tags'', which can then be 
 used to associate storage class, user access control
-and encryption keys on a chunk-by-chunk basis. 
+and encryption keys. 
 Aside from the performance benefits
 we have focused on here provided by Zarr, the ability
 to (for example) use high-performance storage for commonly
@@ -1015,51 +1014,59 @@ need for web API access~\cite{kelleher2019htsget}
 and cryptographic container formats~\citep{senf2021crypt4gh}
 in this setting.
 
-The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
+The draft VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
 provided here are a necessary starting point for such cloud-native
-biobank repositories, but significant investment and development
-would be needed 
+biobank repositories and open up many possibilities,
+but significant investment and development would be needed 
 to provide a viable alternative to standard bioinformatics workflows. 
-A few key pieces of relatively straightforward infrastructure, 
-however, would provide a starting point  and be
-sufficient to greatly improve researcher productivity on 
-large, centrally managed datasets such as Genomics England.
-Firstly, a ``\texttt{vcztools}'' command line utility which 
+Two initial directions for development, however, may provide 
+a sufficient starting point to both
+greatly improve researcher productivity on 
+large, centrally managed datasets such as Genomics England
+and motivate further development.
+The first direction is to provide compatibility with existing 
+workflows via a ``\texttt{vcztools}'' command line utility which 
 implements a subset of \texttt{bcftools} functionality (such as 
-\texttt{view} and \texttt{query}) on a VCF Zarr dataset 
-would speed up some common queries by orders of magnitude,
-and provide compatibility with existing workflows.
-Developing such a utility would be a non-trivial but routine
-engineering task.
+\texttt{view} and \texttt{query}) on a VCF Zarr dataset.
+Such a tool would speed up some common queries by orders 
+of magnitude, and reduce the need for user orchestration of 
+operations among manually split VCF chunks (large VCF datasets
+are typically split into hundreds of files; see the Genomics
+England case study). Datasets could then be hosted in cloud
+object stores, while still presenting file-like semantics
+for existing workflows. This could provide an evolutionary path,
+allowing established analysis workflows to coexist with new Zarr-native
+approaches, working from the same primary data.
 
-The second key piece of infrastructure required at this large 
-scale concerns distributed computation. Even with more efficient
-columnar data representations, computations that required examining 
-large volumes of per-call data must be distributed to complete 
-in a reasonable amount of time. [Dask, Xarray, sgkit?]
-
-
-% \item Vision. An ecosystem of tools that interoperate
-% based on an open, cloud-based format where distribution is naturally
-% managed by the stored chunks. Tools can be run on different datasets
-% with minimal tuning, not by writing a full layer of orchestration.
-% Tools read the data they need, not the entire dataset. Users read
-% directly from a single canonical dataset, and do not maintain
-% their own filtered copies. We suggest that the Zarr VCF approach
-% we have provided would be a good starting point for designing
-% such a compute platform.
-
-% \end{itemize}
-
-The Python data science ecosystem, 
-built on the foundations of efficient array-oriented 
-computing~\citep{harris2020array},
-has a rich suite of powerful tools~\cite{
+The second direction is then to develop new methods 
+working directly with the Zarr data, and can leverage 
+a rich ecosystem of powerful and efficient tools in 
+multiple programming languages (see Methods).
+The Python data science ecosystem, in particular,
+has a rich suite of powerful tools~\cite[e.g.][]{
+harris2020array,
 mckinney2010data,
-rocklin2015dask,
 kluyver2016jupyter,
-hoyer2017xarray,
-virtanen2020scipy} and is gaining increasing
+virtanen2020scipy} 
+and multiple Zarr implementations (see Methods).
+Of particular interest for large-scale datasets are
+Dask~\cite{rocklin2015dask} and 
+Xarray~\citep{hoyer2017xarray} which provide powerful abstractions
+for distributed computing and can be
+straightforwardly used to perform interactive analysis
+of VCF Zarr datasets,
+with computations transparently distributed over a cluster.
+As shown in our benchmarks, lower-level computations
+in which numerical operations are applied on a chunk-by-chunk
+basis are also straightforward to implement and highly performant.
+Thus, a range of possibilities exist in which developers can 
+choose the appropriate level of abstraction and tool chain
+on a case-by-case basis.
+
+[NOTE: still trying to figure out how to string this together. 
+Want to finish on a positive, not too technical note.]
+
+and is gaining increasing
 popularity in recent biological applications~\citep[e.g.][]{
 abdennur2020cooler,
 rand2022bionumpy,
@@ -1070,6 +1077,7 @@ efficient storage layer, freeing the next generation of
 bioinformatics tools
 from the traditional burdens of text parsing and format
 conversion.
+
 
 \section{Methods}
 
