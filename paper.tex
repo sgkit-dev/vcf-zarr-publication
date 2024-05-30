@@ -494,7 +494,7 @@ Note that while simulations cannot capture
 all the subtleties of real data, the allele frequency
 and population structure patterns in this dataset 
 have been shown to closely follow 
-observations~\cite{anderson2023on} and so provides 
+observations~\cite{anderson2023on} and so it provides 
 a reasonable and easily reproducible data point 
 when comparing such methods.
 The simulations only contain genotypes without any additional
@@ -504,7 +504,7 @@ for benchmarks on a large human dataset that includes
 many such fields). 
 Note, however, that such minimal, genotype-only data 
 is something of a best-case scenario for specialised genotype
-compression methods using row-based storage.
+compression methods using row-wise storage.
 
 Fig~\ref{fig-data-storage} shows compression performance 
 on up to a million samples for chromosome 21, with 
@@ -520,7 +520,7 @@ for 1 million samples.
 BCF provides a significant improvement in compression
 performance over VCF (note the log-log scale). Genozip has 
 superb compression, having far smaller file sizes that the 
-other methods (although somewhat losing its advantages at 
+other methods (although somewhat losing its advantage at 
 larger sample sizes). Zarr and Savvy have 
 almost identical compression performance in this example.
 It is remarkable that the simple approach of compressing
@@ -661,6 +661,20 @@ functionality to aid with such storage schema tuning.
 
 
 \subsection{Subsetting the genotype matrix}
+\begin{figure}[t]
+\includegraphics{figures/subset-matrix-compute}
+\caption{Compute performance on subsets of the matrix.
+Total CPU time required to run the af-dist calculation for
+a contiguous subset of 10,000 variants $\times$ 10 samples 
+from the middle of the matrix
+for the data in Fig~\ref{fig-data-storage}.
+The \texttt{genozip} and \texttt{bcftools} pipelines involve
+multiple commands required to correctly calculate the AF INFO field
+required by \texttt{bcftools +af-dist}. See the Methods for full details
+on the steps performed.
+\label{fig-subset-matrix-compute}}
+\end{figure}
+
 As datasets grow ever larger, the ability to efficiently access subsets 
 of the data becomes increasingly important. VCF/BCF achieve efficient 
 access to the data for genomic ranges 
@@ -677,20 +691,6 @@ that we cannot efficiently subset \emph{by sample}
 case, if we want to access only the genotypes for a single sample
 we must still retrieve and decompress the entire dataset.
 
-\begin{figure}
-\includegraphics{figures/subset-matrix-compute}
-\caption{Compute performance on subsets of the matrix.
-Total CPU time required to run the af-dist calculation for
-a contiguous subset of 10,000 variants $\times$ 10 samples 
-from the middle of the matrix
-for the data in Fig~\ref{fig-data-storage}.
-The \texttt{genozip} and \texttt{bcftools} pipelines involve
-multiple commands required to correctly calculate the AF INFO field
-required by \texttt{bcftools +af-dist}. See the Methods for full details
-on the steps performed.
-\label{fig-subset-matrix-compute}}
-\end{figure}
-
 We illustrate this cost of row-wise encoding in
 Fig~\ref{fig-subset-matrix-compute}, where we run the af-dist calculation
 on a small fixed-size subset of the genotype matrices of
@@ -705,6 +705,7 @@ Fig~\ref{fig-subset-matrix-compute-supplemental} shows performance
 for the same operation when selecting half of the samples in the 
 dataset.
 
+\subsection{Extracting fields}
 \begin{figure}
 \includegraphics{figures/column-extract}
 \caption{Time to extract the genome position and write to a text file.
@@ -723,8 +724,6 @@ in this case by file I/O. Time to output text for Savvy is not significant
 for $> 1000$ samples (not shown).
 \label{fig-column-extract}}
 \end{figure}
-
-\subsection{Extracting fields}
 We have focused on the genotype matrix up to this point, contrasting
 Zarr with existing row-wise methods.
 Real-world VCFs encapsulate much more than just the genotype
