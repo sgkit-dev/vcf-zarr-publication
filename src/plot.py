@@ -38,9 +38,7 @@ def two_panel_fig(**kwargs):
     return fig, ax
 
 
-def plot_size(ax, df, label_y_offset=None,
-              order=None):
-
+def plot_size(ax, df, label_y_offset=None, order=None):
     colour_map = {
         "2bit": two_bit_colour,
         "vcf": vcf_colour,
@@ -90,10 +88,8 @@ def plot_size(ax, df, label_y_offset=None,
 
 
 def plot_total_cpu(
-    ax, df, toolname=None, colours=None, time_units="h", extrapolate=None,
-    order=None
+    ax, df, toolname=None, colours=None, time_units="h", extrapolate=None, order=None
 ):
-
     if colours is None:
         colours = {
             "bcftools+vcf": vcf_colour,
@@ -245,8 +241,13 @@ def whole_matrix_compute(time_data, output):
         "zarr": "zarr-python API",
         "savvy": "savvy C++ API",
     }
-    plot_total_cpu(ax1, df, name_map, extrapolate=["genozip", "bcftools+vcf"],
-                   order=['genozip', 'bcftools+vcf', 'bcftools', 'zarr', 'savvy'])
+    plot_total_cpu(
+        ax1,
+        df,
+        name_map,
+        extrapolate=["genozip", "bcftools+vcf"],
+        order=["genozip", "bcftools+vcf", "bcftools", "zarr", "savvy"],
+    )
 
     plt.savefig(output)
 
@@ -269,8 +270,9 @@ def whole_matrix_decode(time_data, output):
         "savvy": "Savvy",
         "zarr_nshf": "Zarr (Zstd)",
     }
-    plot_total_cpu(ax1, df, toolname=name_map, time_units="m",
-                   order=['zarr', 'zarr_nshf', 'savvy'])
+    plot_total_cpu(
+        ax1, df, toolname=name_map, time_units="m", order=["zarr", "zarr_nshf", "savvy"]
+    )
     df["genotypes_per_second"] = df["total_genotypes"] / df["user_time"]
     for tool in name_map.keys():
         max_rate = df[df.tool == tool]["genotypes_per_second"].max()
@@ -296,8 +298,14 @@ def column_extract(time_data, output):
         "zarr": "Zarr + pandas to_csv",
     }
     fig, ax1 = one_panel_fig()
-    plot_total_cpu(ax1, df, toolname=toolname, time_units="s", extrapolate=["bcftools"],
-                   order=['bcftools', 'savvy', 'zarr'])
+    plot_total_cpu(
+        ax1,
+        df,
+        toolname=toolname,
+        time_units="s",
+        extrapolate=["bcftools"],
+        order=["bcftools", "savvy", "zarr"],
+    )
     plot_total_cpu(
         ax1,
         df_mem,
@@ -325,7 +333,7 @@ def run_subset_matrix_plot(data, output, subset, extrapolate):
         toolname=label_map,
         time_units="s",
         extrapolate=extrapolate,
-        order=['genozip', 'bcftools', 'savvy', 'zarr']
+        order=["genozip", "bcftools", "savvy", "zarr"],
     )
     plt.savefig(output)
 
@@ -468,40 +476,46 @@ def compression_chunksize_finegrained(data, output):
     """
     Plot figure showing the effect of finegrained chunksize settings on compression ratio.
     """
-    
-    df = pd.read_csv(data)
 
-    markers = {'Odd': '.',
-               'Even': 'x',
-               'Multiple of 4': '+'}
+    df = pd.read_csv(data)
+    fig, ax = one_panel_fig()
+
+    markers = {"Odd": ".", "Even": "x", "Multiple of 4": "+"}
 
     remain_df = df.copy()
 
-    # Plot each category with a different marker
-    for category in ['Multiple of 4', 'Even', 'Odd']:
+    norm = plt.Normalize(df.sample_chunksize.min(), df.sample_chunksize.max())
 
-        if category == 'Even':
+    # Plot each category with a different marker
+    for category in ["Multiple of 4", "Even", "Odd"]:
+        if category == "Even":
             cond = remain_df.sample_chunksize % 2 == 0
             sub_df = remain_df.loc[cond]
             remain_df = remain_df.loc[~cond]
-        elif category == 'Multiple of 4':
+        elif category == "Multiple of 4":
             cond = remain_df.sample_chunksize % 4 == 0
             sub_df = remain_df.loc[cond]
             remain_df = remain_df.loc[~cond]
         else:
             sub_df = remain_df
 
-        plt.scatter(sub_df.sample_chunksize,
-                    sub_df.CompressionRatio,
-                    c=sub_df.smallest_chunk_size,
-                    marker=markers[category],
-                    label=category)
+        s = ax.scatter(
+            sub_df.sample_chunksize,
+            sub_df.CompressionRatio,
+            c=sub_df.smallest_chunk_size,
+            marker=markers[category],
+            label=category,
+            cmap="plasma"
+        )
 
-    plt.xlabel("Sample Chunksize")
-    plt.ylabel("Compression Ratio")
+    ax.set_xlabel("Sample Chunksize")
+    ax.set_ylabel("Compression Ratio")
     plt.legend()
-    cbar = plt.colorbar()
-    cbar.ax.set_ylabel('Size of last chunk', rotation=270, labelpad=12)
+    leg = ax.get_legend()
+    for handle in leg.legend_handles:
+        handle.set_color('black')
+    cbar = fig.colorbar(s)#, cax=ax)
+    cbar.ax.set_ylabel("Size of last chunk", rotation=270, labelpad=12)
 
     plt.tight_layout()
     plt.savefig(output)

@@ -1133,7 +1133,8 @@ in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
 and multimodal spatial omics
 data~\citep{marconato2024spatialdata,baker2023emobject}.
 Recent additions using Zarr include the application of deep learning
-models to genomic sequence data~\citep{klie2023predictive}, storage and manipulation of large-scale Linkage-Disequilibrium (LD) matrices \cite{ZABAD2023741},  
+models to genomic sequence data~\citep{klie2023predictive}, storage and 
+manipulation of large-scale linkage disequilibrium matrices \cite{zabad2023fast},  
 and a browser for genetic variation data~\citep{konig2023divbrowse}.
 Zarr has in fact been in use in genomics for many years, and was originally 
 developed to store data from the \textit{Anopheles gambiae} 
@@ -1496,6 +1497,18 @@ Values are chosen to be evenly spaced on a linear scale
 between 100 and 2504 (the number of samples) in (A) and 
 evenly spaced between 100 and 96514 on a log scale in (B). 
 \label{fig-compression-chunksize}}
+\end{figure}
+
+\begin{figure}
+\includegraphics{figures/compression-chunksize-finegrained.pdf}
+\caption{Effects of sample chunk size on compression ratio on call\_genotype
+field in 1000 Genomes data.
+The same analysis as in Fig~\ref{fig-compression-chunksize}, except we only
+consider call\_genotype and we consider all sample chunk sizes from 
+100 to 256. Distinct trend-lines emerge for odd, even and multiple-of-four
+chunk sizes (shown by markers). The size of the final chunk also has a minor
+effect (shown by colour).
+\label{fig-compression-chunksize-finegrained}}
 \end{figure}
 
 \begin{figure}
