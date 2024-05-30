@@ -38,7 +38,9 @@ def two_panel_fig(**kwargs):
     return fig, ax
 
 
-def plot_size(ax, df, label_y_offset=None):
+def plot_size(ax, df, label_y_offset=None,
+              order=None):
+
     colour_map = {
         "2bit": two_bit_colour,
         "vcf": vcf_colour,
@@ -88,8 +90,10 @@ def plot_size(ax, df, label_y_offset=None):
 
 
 def plot_total_cpu(
-    ax, df, toolname=None, colours=None, time_units="h", extrapolate=None
+    ax, df, toolname=None, colours=None, time_units="h", extrapolate=None,
+    order=None
 ):
+
     if colours is None:
         colours = {
             "bcftools+vcf": vcf_colour,
@@ -104,8 +108,11 @@ def plot_total_cpu(
     divisors = {"s": 1, "h": 3600, "m": 60}
     extrapolate = [] if extrapolate is None else extrapolate
 
+    if order is None:
+        order = colours.keys()
+
     # for tool in df.tool.unique():
-    for tool in colours.keys():
+    for tool in order:
         dfs = df[(df.tool == tool)]
         if dfs.empty:
             continue
@@ -238,7 +245,8 @@ def whole_matrix_compute(time_data, output):
         "zarr": "zarr-python API",
         "savvy": "savvy C++ API",
     }
-    plot_total_cpu(ax1, df, name_map, extrapolate=["genozip", "bcftools+vcf"])
+    plot_total_cpu(ax1, df, name_map, extrapolate=["genozip", "bcftools+vcf"],
+                   order=['genozip', 'bcftools+vcf', 'bcftools', 'zarr', 'savvy'])
 
     plt.savefig(output)
 
@@ -261,7 +269,8 @@ def whole_matrix_decode(time_data, output):
         "savvy": "Savvy",
         "zarr_nshf": "Zarr (Zstd)",
     }
-    plot_total_cpu(ax1, df, toolname=name_map, time_units="m")
+    plot_total_cpu(ax1, df, toolname=name_map, time_units="m",
+                   order=['zarr', 'zarr_nshf', 'savvy'])
     df["genotypes_per_second"] = df["total_genotypes"] / df["user_time"]
     for tool in name_map.keys():
         max_rate = df[df.tool == tool]["genotypes_per_second"].max()
@@ -287,7 +296,8 @@ def column_extract(time_data, output):
         "zarr": "Zarr + pandas to_csv",
     }
     fig, ax1 = one_panel_fig()
-    plot_total_cpu(ax1, df, toolname=toolname, time_units="s", extrapolate=["bcftools"])
+    plot_total_cpu(ax1, df, toolname=toolname, time_units="s", extrapolate=["bcftools"],
+                   order=['bcftools', 'savvy', 'zarr'])
     plot_total_cpu(
         ax1,
         df_mem,
@@ -315,6 +325,7 @@ def run_subset_matrix_plot(data, output, subset, extrapolate):
         toolname=label_map,
         time_units="s",
         extrapolate=extrapolate,
+        order=['genozip', 'bcftools', 'savvy', 'zarr']
     )
     plt.savefig(output)
 
