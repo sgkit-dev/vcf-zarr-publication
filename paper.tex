@@ -270,11 +270,12 @@ Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
 for quality control of large-scale variation datasets, 
 and has been instrumental in projects such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
-While Hail is built on open components
+Glow~\cite{glow2024} has recently emerged as a similar approach
+to performing distributed analytics on genetic variation data.
+While Hail and Glow are built on open components
 from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
-it is complex, vertically integrated software 
-(i.e., consisting of tightly coupled components)
-with custom storage formats that are not intended for reuse.
+they are both complex projects consisting of 
+tightly coupled components that are not intended for external reuse.
 Similarly, commercial solutions that have emerged to facilitate
 the analysis of large-scale genetic variation data are either
 based on proprietary~\cite{basespace2024,graf2024,googlelifesciences2024,
@@ -374,8 +375,8 @@ are the majority of proposed alternative storage
 formats.
 Row-wise storage makes retrieving all information
 for a given record straightforward and efficient,
-and works well when records are relatively small, 
-or when we typically want to analyse each record in its entirety.
+and works well when records are either relatively small
+or we typically want to analyse each record in its entirety.
 When we want to analyse only a subset of a record,
 row-wise storage can be inefficient because we will usually need to
 retrieve more information than required from storage. In the case 
@@ -396,22 +397,20 @@ in alignment
 % Jeff: OK with the ADAM reference in here? You did some parquet based
 % alignment storage, right?
 storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
-the use of technologies such as Parquet for 
+the use of columnar technologies for
 storing and analysing variation data have had limited
 success~\citep{boufea2017managing,fan2020variant}.
-Columnar technologies tend to be 
-optimised for ``tall and narrow'' data where there is a large number of records
-for a relatively small number of columns. 
 Mapping VCF directly to a columnar layout, in which there is a 
 column for the genotypes (and other per-call QC metrics) 
-for each sample
-leads to millions of columns, and substantial technical challenges.
-Additionally, compression performance within columns tends to
-be poor because there is much less similarity among
-the genotypes for a given sample than there is among the genotypes
-for a given variant, requiring
-specialised haplotype compression 
-techniques~\citep{layer2016efficient,mcvean2019linkage}.
+for each sample leads to a large number of columns, which 
+can be cumbersome and cause scalability issues.
+Fundamentally, columnar methods are one-dimensional, storing a vector
+of values associated with a particular key, whereas 
+genetic variation data is usually modelled as a two-dimensional matrix
+in which we are interested in accessing both rows \emph{and} columns.
+Just as row-oriented storage makes accessing data for a given
+sample inefficient, columnar storage makes accessing all the data 
+for a given variant inefficient.
 
 \begin{figure}
 \resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
