@@ -88,7 +88,14 @@ def plot_size(ax, df, label_y_offset=None, order=None):
 
 
 def plot_total_cpu(
-    ax, df, toolname=None, colours=None, time_units="h", extrapolate=None, order=None
+    ax,
+    df,
+    toolname=None,
+    colours=None,
+    time_units="h",
+    extrapolate=None,
+    order=None,
+    label_y_offset=None,
 ):
     if colours is None:
         colours = {
@@ -104,6 +111,7 @@ def plot_total_cpu(
     divisors = {"s": 1, "h": 3600, "m": 60}
     extrapolate = [] if extrapolate is None else extrapolate
 
+    label_y_offset = {} if label_y_offset is None else label_y_offset
     if order is None:
         order = colours.keys()
 
@@ -139,7 +147,7 @@ def plot_total_cpu(
             ax.annotate(
                 f"{time:.0f}{time_units}" if time > 1 else f"{time:.1f}{time_units}",
                 textcoords="offset points",
-                xytext=(15, 0),
+                xytext=(15, label_y_offset.get(tool, 0)),
                 xy=(row.num_samples, total_cpu[-1]),
                 xycoords="data",
             )
@@ -166,7 +174,7 @@ def plot_total_cpu(
         ax.annotate(
             f"{time:.0f}{time_units}*",
             textcoords="offset points",
-            xytext=(15, 0),
+            xytext=(15, label_y_offset.get(tool, 0)),
             xy=(num_samples[-1], fit[-1]),
             xycoords="data",
         )
@@ -260,7 +268,6 @@ def whole_matrix_decode(time_data, output):
     Plot the figure showing raw decode performance on whole-matrix afdist.
     """
     df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
-    print(df)
     df = df[df.storage == "hdd"]
 
     fig, ax1 = one_panel_fig()
@@ -271,7 +278,12 @@ def whole_matrix_decode(time_data, output):
         "zarr_nshf": "Zarr (Zstd)",
     }
     plot_total_cpu(
-        ax1, df, toolname=name_map, time_units="m", order=["zarr", "zarr_nshf", "savvy"]
+        ax1,
+        df,
+        toolname=name_map,
+        time_units="m",
+        order=["zarr", "zarr_nshf", "savvy"],
+        label_y_offset={"savvy": -2},
     )
     df["genotypes_per_second"] = df["total_genotypes"] / df["user_time"]
     for tool in name_map.keys():
@@ -505,7 +517,7 @@ def compression_chunksize_finegrained(data, output):
             c=sub_df.smallest_chunk_size,
             marker=markers[category],
             label=category,
-            cmap="plasma"
+            cmap="plasma",
         )
 
     ax.set_xlabel("Sample Chunksize")
@@ -513,8 +525,8 @@ def compression_chunksize_finegrained(data, output):
     plt.legend()
     leg = ax.get_legend()
     for handle in leg.legend_handles:
-        handle.set_color('black')
-    cbar = fig.colorbar(s)#, cax=ax)
+        handle.set_color("black")
+    cbar = fig.colorbar(s)  # , cax=ax)
     cbar.ax.set_ylabel("Size of last chunk", rotation=270, labelpad=12)
 
     plt.tight_layout()
