@@ -974,37 +974,61 @@ dimensions of fields are determined by their \emph{maximum}
 dimension among all variants. In particular this is problematic
 for fields like PL in which the dimension depends 
 quadratically on the number of alleles (although practical
-solutions have been suggested that can be 
-adapted~\cite{poterba2024scalable}).
+solutions have been suggested that we plan to 
+implement~\cite{poterba2024scalable}).
 Secondly, the design of 
 VCF Zarr emphasises efficiency of analysis for a fixed 
 dataset, and does not consider how samples (and the 
 corresponding novel variants) should be added.
 Thirdly, Zarr is not suitable for handling 
-unstructured data often included in VCF INFO 
+the unstructured data often included in VCF INFO 
 fields, and would likely be a poor choice
 for representing variant 
 annotations, for example.
 
 Nonetheless, there are numerous datasets that exist today
-what would benefit from cloud-native storage, 
-inherent parallelism and granular storage.
-[Mention benefits of fine-grained access control to 
-different parts of the dataset using native storage access
-control mechanism?]
+that would likely reap significant benefits from being deployed 
+in a cloud-native fashion using Zarr. Object 
+stores typically allow for individual objects (chunks, in
+Zarr) to be associated with ``tags'', which can then be 
+used to associate storage class, user access control
+and encryption keys on a chunk-by-chunk basis. 
+Aside from the performance benefits
+we have focused on here provided by Zarr, the ability
+to (for example) use high-performance storage for commonly
+used data such as the variant position and 
+more cost-effective storage classes
+for infrequently used bulk QC data should provide 
+significant operational benefits.
+Granular access controls would similarly allow non-identifiable
+variant-level data to be shared relatively freely,
+with genotype and other data more tightly controlled
+as required.
+Even finer granularity is possible if samples are grouped according
+to access level within chunks (i.e, by padding partially filled 
+chunks and using an appropriate sample mask). 
+Delegating access control to the cloud provider in this way
+and providing client applications direct access to
+the data in an efficiently analysable form, 
+largely negates the 
+need for web API access~\cite{kelleher2019htsget} 
+and cryptographic container formats~\citep{senf2021crypt4gh}
+in this setting.
 
-The VCF Zarr specification and scalable vcf2zarr conversion utility
-that we have provided here are the starting points of such 
-an ecosystem, but much more would be needed to make a viable 
-alternative for everyday bioinformatics workflows. However, a few key
-pieces of infrastructure would provide a starting point, and would 
-be sufficient to greatly improve researcher productivity on 
+The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
+provided here are a necessary starting point for such cloud-native
+biobank repositories, but significant investment and development
+would be needed 
+to provide a viable alternative to standard bioinformatics workflows. 
+A few key pieces of relatively straightforward infrastructure, 
+however, would provide a starting point  and be
+sufficient to greatly improve researcher productivity on 
 large, centrally managed datasets such as Genomics England.
-Firstly, a \texttt{vcfzarrtools} command line utility which 
+Firstly, a ``\texttt{vcztools}'' command line utility which 
 implements a subset of \texttt{bcftools} functionality (such as 
-\texttt{view} and \texttt{query}) would immediately speed up 
-limited region and field specific queries by orders of magnitude,
-and would provide compatibility with existing workflows.
+\texttt{view} and \texttt{query}) on a VCF Zarr dataset 
+would speed up some common queries by orders of magnitude,
+and provide compatibility with existing workflows.
 Developing such a utility would be a non-trivial but routine
 engineering task.
 
