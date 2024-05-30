@@ -59,7 +59,7 @@
 \affil[2]{The New Zealand Institute for Plant \& Food Research Ltd, Lincoln,
 New Zealand}
 \affil[3]{Department of Biochemistry, School of Biomedical Sciences, University of Otago, Dunedin, New Zealand}
-\affil[4]{Tom's Institute}
+\affil[4]{Tom White Consulting Ltd.}
 \affil[5]{Big Data Institute, Li Ka Shing Centre for Health Information and Discovery, 
 University of Oxford, UK}
 \affil[6]{Wellcome Sanger Institute}
@@ -1133,7 +1133,7 @@ in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
 and multimodal spatial omics
 data~\citep{marconato2024spatialdata,baker2023emobject}.
 Recent additions using Zarr include the application of deep learning
-models to genomic sequence data~\citep{klie2023predictive} 
+models to genomic sequence data~\citep{klie2023predictive}, storage and manipulation of large-scale Linkage-Disequilibrium (LD) matrices \cite{ZABAD2023741},  
 and a browser for genetic variation data~\citep{konig2023divbrowse}.
 Zarr has in fact been in use in genomics for many years, and was originally 
 developed to store data from the \textit{Anopheles gambiae} 
@@ -1196,7 +1196,7 @@ number of alternative alleles, the third dimension of the
 \texttt{call\_AD} array
 is padded with a sentinel value (-2 for integers and a specific
 non-signalling NaN for floats). While this is not a problem 
-in practise for datasets in which all four bases are observed, 
+in practice for datasets in which all four bases are observed, 
 it is a substantial issue for
 fields that have a quadratic dependency on the number of alleles
 (Number=G) such as PL. Such fields are already known to cause 
@@ -1330,7 +1330,7 @@ the vast majority of genotype calls will be 0 or 1, and therefore
 bits 1 to 7 will be 0. Thus, grouping these bits together will 
 lead to significantly better compression. This strategy also 
 works well when compressing boolean fields stored as 
-8 bit integers, where the top 7 bits are always 0. In practise,
+8 bit integers, where the top 7 bits are always 0. In practice,
 boolean fields stored in this way have very similar compression
 to using a bit-packing pre-compression filter (data not shown).
 Although byte shuffle leads to somewhat better compression for call\_AD
