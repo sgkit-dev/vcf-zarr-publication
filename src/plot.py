@@ -273,7 +273,7 @@ def whole_matrix_decode(time_data, output):
     fig, ax1 = one_panel_fig()
 
     name_map = {
-        "zarr": "Zarr (Zstd + bit shuffle)",
+        "zarr": "Zarr (Zstd + BitShuffle)",
         "savvy": "Savvy",
         "zarr_nshf": "Zarr (Zstd)",
     }
@@ -328,7 +328,7 @@ def column_extract(time_data, output):
     plt.savefig(output)
 
 
-def run_subset_matrix_plot(data, output, subset, extrapolate):
+def run_subset_matrix_plot(data, output, subset, extrapolate, **kwargs):
     df = pd.read_csv(data, index_col=False).sort_values("num_samples")
     fig, ax1 = one_panel_fig()
 
@@ -346,6 +346,7 @@ def run_subset_matrix_plot(data, output, subset, extrapolate):
         time_units="s",
         extrapolate=extrapolate,
         order=["genozip", "bcftools", "savvy", "zarr"],
+        **kwargs,
     )
     plt.savefig(output)
 
@@ -357,7 +358,8 @@ def subset_matrix_compute(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n10", extrapolate=[])
+    run_subset_matrix_plot(data, output, "n10", extrapolate=[],
+            label_y_offset={"savvy":-1})
 
 
 @click.command()
@@ -367,7 +369,8 @@ def subset_matrix_compute_supplemental(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"])
+    run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"],
+            label_y_offset={"savvy": 2, "zarr": -2.5})
 
 
 @click.command()
