@@ -939,11 +939,11 @@ VCF is a central element of modern genomics, facilitating
 the exchange of data in a large ecosystem of interoperating tools. 
 Its current row-oriented form, however,
 is fundamentally inefficient,
-profoundly limiting the scalability of the current generation
+profoundly limiting the scalability of the present generation
 of bioinformatics tools. Large scale VCF data cannot 
 currently be 
 processed without incurring a substantial economic
-and likely environmental cost~\cite{grealey2022carbon}.
+(and environmental~\cite{grealey2022carbon}) cost.
 We have shown here that this is not a necessary situation,
 and that greatly improved efficiency can be achieved by 
 using more appropriate storage representations tuned
@@ -971,10 +971,9 @@ Secondly, the design of
 VCF Zarr emphasises efficiency of analysis for a fixed 
 dataset, and does not consider how samples (and the 
 corresponding novel variants) should be added.
-Thirdly, Zarr is not suitable for handling 
-the unstructured data often included in VCF INFO 
-fields, and would likely be a poor choice
-for representing variant annotations, for example.
+Thirdly, Zarr works best for numerical data of a fixed 
+dimension, and therefore may not suitable for representing
+the unstructured data often included in VCF INFO fields.
 
 Nonetheless, there are numerous datasets that exist today
 that would likely reap significant benefits from being deployed 
@@ -994,27 +993,25 @@ Granular access controls would similarly allow non-identifiable
 variant-level data to be shared relatively freely,
 with genotype and other data more tightly controlled
 as required.
-Even finer granularity is possible if samples are grouped according
-to access level within chunks (i.e, by padding partially filled 
-chunks and using an appropriate sample mask). 
-Delegating access control to the cloud provider in this way
-and providing client applications direct access to
-the data in an efficiently analysable form, 
-largely negates the 
-need for web API access~\cite{kelleher2019htsget} 
+Even finer granularity is possible if samples are grouped by
+access level within chunks (padding partially filled 
+chunks as needed and using an appropriate sample mask). 
+Providing client applications direct access to 
+the data over HTTP
+and delegating access control to the cloud provider
+makes custom web APIs~\cite{kelleher2019htsget} 
 and cryptographic container formats~\citep{senf2021crypt4gh}
-in this setting.
+largely unnecessary.
 
-The draft VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
+The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
 provided here are a necessary starting point for such cloud-native
 biobank repositories and open up many possibilities,
 but significant investment and development would be needed 
 to provide a viable alternative to standard bioinformatics workflows. 
-Two initial directions for development, however, may provide 
-a sufficient starting point to both
-greatly improve researcher productivity on 
+Two initial directions for development, however, may quickly
+yield sufficient results to both greatly improve researcher productivity on 
 large, centrally managed datasets such as Genomics England
-and motivate further development.
+and motivate further research and development.
 The first direction is to provide compatibility with existing 
 workflows via a ``\texttt{vcztools}'' command line utility which 
 implements a subset of \texttt{bcftools} functionality (such as 
@@ -1029,40 +1026,37 @@ for existing workflows. This could provide an evolutionary path,
 allowing established analysis workflows to coexist with new Zarr-native
 approaches, working from the same primary data.
 
-The second direction is then to develop new methods 
-working directly with the Zarr data, and can leverage 
-a rich ecosystem of powerful and efficient tools in 
-multiple programming languages (see Methods).
+The second natural direction for development is to create
+these Zarr-native applications, which can take advantage
+of the efficient data representation
+across multiple programming languages (see Methods).
 The Python data science ecosystem, in particular,
 has a rich suite of powerful tools~\cite[e.g.][]{
-harris2020array,
 mckinney2010data,
+lam2015numba,
 kluyver2016jupyter,
+harris2020array,
 virtanen2020scipy} 
-and multiple Zarr implementations (see Methods).
-Of particular interest for large-scale datasets are
+and is increasingly
+popular in recent biological applications~\citep[e.g.][]{
+abdennur2020cooler,
+rand2022bionumpy,
+open2c2024bioframe,
+hou2024admix}.
 Dask~\cite{rocklin2015dask} and 
-Xarray~\citep{hoyer2017xarray} which provide powerful abstractions
-for distributed computing and can be
-straightforwardly used to perform interactive analysis
-of VCF Zarr datasets,
+Xarray~\citep{hoyer2017xarray} provide powerful abstractions
+for large-scale data analysis and can be
+used to perform interactive analysis
+of large VCF Zarr datasets,
 with computations transparently distributed over a cluster.
 As shown in our benchmarks, lower-level computations
-in which numerical operations are applied on a chunk-by-chunk
+in which optimised kernels are applied on a chunk-by-chunk
 basis are also straightforward to implement and highly performant.
 Thus, a range of possibilities exist in which developers can 
 choose the appropriate level of abstraction and tool chain
 on a case-by-case basis.
 
-[NOTE: still trying to figure out how to string this together. 
-Want to finish on a positive, not too technical note.]
 
-and is gaining increasing
-popularity in recent biological applications~\citep[e.g.][]{
-abdennur2020cooler,
-rand2022bionumpy,
-open2c2024bioframe,
-hou2024admix}.
 Zarr has the potential to act as a unified, cloud-native 
 efficient storage layer, freeing the next generation of 
 bioinformatics tools
