@@ -1135,8 +1135,8 @@ Blosc is a ``meta-compressor'' because it provides
 access to several different compression codecs. The 
 Zstandard codec is of particular 
 interest here as it achieves very high compression ratios
-with good decompression speeds. See Fig~\ref{fig-whole-matrix-decode}
-for a comparison of Zstandard with LZ4 on decoding performance.
+with good decompression speeds (Figs~\ref{fig-whole-matrix-decode},
+\ref{fig-compression-compressor}).
 % This may seem a bit off topic, but want to reassure reader that 
 % this isn't some niche technology
 Zstandard is also used in several recent VCF compression 
@@ -1177,7 +1177,7 @@ and a browser for genetic variation data~\citep{konig2023divbrowse}.
 \subsection{The VCF Zarr specification}
 The VCF Zarr specification is a direct mapping from the VCF data model
 to a chunked binary array format using Zarr,
-and is evolution of the Zarr format used in the \texttt{scikit-allel}
+and is an evolution of the Zarr format used in the \texttt{scikit-allel}
 package~\citep{miles2023scikit}.
 VCF Zarr takes advantage
 of Zarr's hierarchical structure by representing a VCF file as a top-level
@@ -1230,7 +1230,7 @@ fields that have a quadratic dependency on the number of alleles
 significant problems, and the ``local alleles'' proposal 
 provides an elegant solution~\cite{poterba2024scalable}.
 As this approach is on a likely path to 
-standardisation~\cite{danecek2021twelve}, we would aim to 
+standardisation~\cite{danecek2021twelve}, we plan to 
 include support in later versions of VCF Zarr.
 
 The VCF Zarr specification can represent anything described by BCF
@@ -1294,11 +1294,11 @@ Once the VCF data has been converted to the intermediate columnar format,
 it can then be converted to Zarr using the \texttt{vcf2zarr encode}
 command. By default we choose integer widths based on the maximum
 and minimum values observed during conversion to ICF
-along with reasonable compressor defaults (see next section), 
-but these can be
-modified by generating a JSON-formatted storage schema, 
+along with reasonable compressor defaults (see next section).
+Default choices can be 
+modified by generating a JSON-formatted storage schema,
 which can be edited and supplied as an argument to \texttt{encode}.
-Encoding a given column (for example, \texttt{call\_AD})
+Encoding a given field (for example, \texttt{call\_AD})
 involves creating a buffer to hold a full variant-chunk of the 
 array in question, and then sequentially filling this buffer with 
 values read from ICF and flushing to file.
@@ -1465,9 +1465,17 @@ requires a \texttt{+fill-tags} step in the pipeline.
 
 \section{Availability of source code and requirements}
 
-\section{Data availability}
-
-\section{Declarations}
+The VCF Zarr specification is available on GitHub at 
+\url{https://github.com/sgkit-dev/vcf-zarr-spec/}.
+All source code for running benchmarks, analyses and creating 
+"
+plots in this article is available at
+\url{https://github.com/sgkit-dev/vcf-zarr-publication}.
+Vcf2zarr is freely available under the terms of the Apache 2.0 
+license as part of the \texttt{bio2zarr} 
+suite (\url{https://github.com/sgkit-dev/bio2zarr/}) 
+and can be installed from the Python Package Index
+(\url{https://pypi.org/project/bio2zarr/}).
 
 \subsection{List of abbreviations}
 % If abbreviations are used in the text they should be defined in the text at
@@ -1475,17 +1483,41 @@ requires a \texttt{+fill-tags} step in the pipeline.
 % order.
 
 \begin{itemize}
-    \item VCF: Variant Call Format;
+    \item ICF: Intermediate Columnar Format
+    \item GWAS: Genome Wide Association Study
+    \item PBWT: Positional Burrows-Wheeler Transform
+    \item QC: Quality Control
     \item UKB: UK Biobank
+    \item VCF: Variant Call Format
     \item WGS: Whole Genome Sequence
 \end{itemize}
 
-\subsection{Competing Interests}
+% \subsection{Competing Interests}
 \subsection{Funding}
+JK acknowledges support from the Robertson Foundation, 
+NIH (research grants HG011395 and HG012473), 
+and Bill \& Melinda Gates Foundation (INV-001927; Sanger subaward G3594).
+AM acknowledges support from the Bill \& Melinda Gates Foundation 
+(INV-001927).
 
-\subsection{Author's Contributions}
+% \subsection{Author's Contributions}
 
 \section{Acknowledgements}
+This research was made possible through access to data in the National Genomic
+Research Library, which is managed by Genomics England Limited (a wholly owned
+company of the Department of Health and Social Care). The National Genomic
+Research Library holds data provided by patients and collected by the NHS as
+part of their care and data collected as part of their participation in
+research. The National Genomic Research Library is funded by the National
+Institute for Health Research and NHS England. The Wellcome Trust, Cancer
+Research UK and the Medical Research Council have also funded research
+infrastructure.
+
+Computation used the Oxford Biomedical Research Computing (BMRC) facility, a
+joint development between the Wellcome Centre for Human Genetics and the Big
+Data Institute supported by Health Data Research UK and the NIHR Oxford
+Biomedical Research Centre. The views expressed are those of the author(s) and
+not necessarily those of the NHS, the NIHR or the Department of Health.
 
 Genozip was used under the terms of the free Genozip Academic license.
 Genozip was only used on simulated data, in compliance with
