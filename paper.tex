@@ -107,19 +107,19 @@ University of Oxford, UK}
 \textbf{Background:}
 Variant Call Format (VCF) is the standard file format for interchanging
 genetic variation data and associated quality control metrics.
-It provides a well-defined data model and is central to a large ecosystem
-of interoperating tools.
-The standard row-wise encoding of the VCF data model (either as text
+% It provides a well-defined data model and is central to a large ecosystem
+% of interoperating tools.
+The usual row-wise encoding of the VCF data model (either as text
 or packed binary) emphasises efficient retrieval of all data for a given
-variant, but accessing subsets of the data within rows is inefficient.
+variant, but accessing data on a field or sample basis is inefficient.
 Biobank scale datasets currently available 
 consist of hundreds of thousands of whole genomes 
 and hundreds of terabytes of compressed VCF.
-Row-based data storage is fundamentally unsuited to such datasets
-and a more scalable, grid-based solution is needed.
+Row-wise data storage is fundamentally unsuitable
+and a more scalable approach is needed.
 
 \textbf{Results:}
-We present the VCF Zarr specification, a columnar encoding of the 
+We present the VCF Zarr specification, an encoding of the 
 VCF data model using Zarr which makes retrieving subsets of the 
 data much more efficient. Zarr is a cloud-native format for storing 
 multi-dimensional data, widely used in scientific computing.
@@ -129,13 +129,14 @@ and competitive with specialised methods for
 storing genotype data in terms of compression ratios
 and calculation performance.
 We demonstrate the VCF Zarr format (and the vcf2zarr conversion utility) 
-on the Genomics England dataset of XX,XXX,XXX samples, showing
-an overall reduction in storage of XX, and a reduction in processing 
-time of common queries of up to XX fold.
+on a subset of the Genomics England aggV2 dataset comprising
+78,195 samples and 59,880,903 variants,
+with a 5X reduction in storage and greater than 300X reduction in CPU usage
+in some representative benchmarks.
 
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and 
-storing and processing these files incurs a substantial economic cost.
+storing and processing these files incurs a substantial cost.
 The VCF Zarr specification, building on widely-used, open-source technologies
 has the potential to greatly reduce these costs, 
 and may enable a diverse ecosystem of next-generation tools for analysing 
@@ -867,15 +868,13 @@ compression ratio because it consists entirely of missing data
 
 To demonstrate the computational accessibility of Zarr on this 
 large human dataset, we performed some illustrative benchmarks.
-Firstly, we ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
-and~\ref{fig-subset-matrix-compute}) on one 132GiB VCF file covering
-positions 58,219,159--60,650,943 (562,640 variants) using \texttt{bcftools
-+af-dist} as before. The elapsed time for this operation was 716 min
-user+sys time almost exactly equal). We repeated this operation for the 
-same genome coordinates in Zarr (using Python code described in previous sections) 
-% 716 minutes / 4.25 = 168X
-with a total CPU time of 2min 19s and elapsed time of 4min 15s (168X faster).
-Second, we extracted the genome position for each variant in this single VCF 
+As these benchmarks take some time to run, we focus 
+on a single 132GiB compressed VCF file covering
+positions 58,219,159--60,650,943 (562,640 variants) 
+from the middle of the set of 106 files for chromosome 2.
+We report both the total CPU time and elapsed wall-clock time here
+as both are relevant.
+First, we extracted the genome position for each variant in this single VCF 
 chunk using \texttt{bcftools query} and Python Zarr code as described in 
 Fig~\ref{fig-column-extract}. The \texttt{bcftools} command required 
 % def parse_time(time_str):
@@ -891,18 +890,45 @@ Fig~\ref{fig-column-extract}. The \texttt{bcftools} command required
 % real  85m51.013s
 % user  54m39.986s
 % sys 0m45.277s
-55.42 min total CPU (85.85 min elapsed).
+55.42 min CPU and 85.85 min elapsed.
 % CPU times: user 846 ms, sys: 1.93 s, total: 2.78 s
 % Wall time: 1min 44s
-% 85.85 / 1.73 = 49.62 = 50X
-The Zarr code required 2.78 sec total CPU and 1.73 min elapsed (50X faster).
-Note that the Zarr code here is heavily I/O bound [TODO say something 
-about the GEL cluster?]. When we subsequently time the operation of 
-just populating an array of the variant positions in specified region,
-this is reduced to 1.13 sec, with an elapsed time of 20.9 sec.
-[Note: this is crazy that we still have a 19 second I/O wait. The
-5989 files for the POS chunks must be in cache already, so the delay
-has to be the file system checking cache coherency.]
+% 55.42 * 60 / 2.78  = 1196
+% 85.85 / 1.73 = 49.62 
+The Zarr code required 2.78 sec CPU and 1.73 min elapsed.
+This is a 1196X smaller CPU burden and a 50X speed-up in elapsed time.
+The major difference between CPU time and wall-time is noteworthy 
+here, and indicates some opportunities for improvement in VCF Zarr
+in high-latency environments such as the shared file system in the
+Genomics England HPC system. Currently VCF Zarr does not store any
+specialised index to map genomic coordinates to array positions
+along the variants dimension. Instead, to find the relevant slice
+of records corresponding to the range of positions in the target
+VCF file, we read in the entire variant\_position array and 
+binary search. This entails reading 5,989 chunk files
+(the chunk size is 100,000 variants) which incurs a substantial
+latency penalty on this system. Later versions of the specification
+may solve this problem by either storing a combined variant\_contig,
+variant\_position array as a single chunk, or use a specialised
+index that supports overlap queries.
+
+% When we subsequently time the operation of 
+% just populating an array of the variant positions in specified region,
+% this is reduced to 1.13 sec, with an elapsed time of 20.9 sec.
+% [Note: this is crazy that we still have a 19 second I/O wait. The
+% 5989 files for the POS chunks must be in cache already, so the delay
+% has to be the file system checking cache coherency.]
+
+We then ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
+and~\ref{fig-subset-matrix-compute}) on the VCF file
+\texttt{bcftools +af-dist} as before. 
+The elapsed time for this operation was 716.28 min CPU, 716.3 min elapsed.
+Repeating this operation for the same coordinates in Zarr 
+(using Python code described in previous sections) 
+% 716.28 / 2.32 = 308.74
+% 716.3 / 4.25 = 168.54
+with a total CPU time of 2.32 min and elapsed time of 4.25 min.
+This is a 309X reduction in CPU burden and a 169X speed-up in elapsed time.
 
 Finally, to illustrate performance on a common filtering task, we 
 created a copy of the VCF chunk which contains only variants 
@@ -911,13 +937,14 @@ that pass some common filtering criteria using
 following standard practices~\citep[e.g.][]{bergstrom2020insights,
 kousathanas2022whole,
 chen2024genomic}.
-This took a total of 689 min CPU time, with the same elapsed time.
+This used 689.46 min CPU time, with an elapsed time of 689.48 min.
 In comparison, computing and storing a variant mask (i.e., a boolean value 
 for each variant denoting whether it should be considered or not
 for analysis) based on the same criteria using Zarr 
-required a total of 1.96 min CPU time with an elapsed time 
-of  11 min (63X faster).
-%689 / 11 = 62.6 = 63X
+consumed 1.96 min CPU time with an elapsed time of 11 min.
+This is a 358X reduction in CPU usage, and 63X reduction in elapsed time.
+% 689.46 / 1.96 = 351.76
+% 689.48 / 11 = 62.6 = 63X
 There is an important distinction here between creating a copy
 of the data (an implicit part of VCF based workflows) and creating an
 additional \emph{mask}. As Table~\ref{tab-genomics-england-data} 
@@ -939,11 +966,11 @@ VCF is a central element of modern genomics, facilitating
 the exchange of data in a large ecosystem of interoperating tools. 
 Its current row-oriented form, however,
 is fundamentally inefficient,
-profoundly limiting the scalability of the current generation
+profoundly limiting the scalability of the present generation
 of bioinformatics tools. Large scale VCF data cannot 
 currently be 
 processed without incurring a substantial economic
-and likely environmental cost~\cite{grealey2022carbon}.
+(and environmental~\cite{grealey2022carbon}) cost.
 We have shown here that this is not a necessary situation,
 and that greatly improved efficiency can be achieved by 
 using more appropriate storage representations tuned
@@ -971,10 +998,9 @@ Secondly, the design of
 VCF Zarr emphasises efficiency of analysis for a fixed 
 dataset, and does not consider how samples (and the 
 corresponding novel variants) should be added.
-Thirdly, Zarr is not suitable for handling 
-the unstructured data often included in VCF INFO 
-fields, and would likely be a poor choice
-for representing variant annotations, for example.
+Thirdly, Zarr works best for numerical data of a fixed 
+dimension, and therefore may not suitable for representing
+the unstructured data often included in VCF INFO fields.
 
 Nonetheless, there are numerous datasets that exist today
 that would likely reap significant benefits from being deployed 
@@ -994,27 +1020,25 @@ Granular access controls would similarly allow non-identifiable
 variant-level data to be shared relatively freely,
 with genotype and other data more tightly controlled
 as required.
-Even finer granularity is possible if samples are grouped according
-to access level within chunks (i.e, by padding partially filled 
-chunks and using an appropriate sample mask). 
-Delegating access control to the cloud provider in this way
-and providing client applications direct access to
-the data in an efficiently analysable form, 
-largely negates the 
-need for web API access~\cite{kelleher2019htsget} 
+Even finer granularity is possible if samples are grouped by
+access level within chunks (padding partially filled 
+chunks as needed and using an appropriate sample mask). 
+Providing client applications direct access to 
+the data over HTTP
+and delegating access control to the cloud provider
+makes custom web APIs~\cite{kelleher2019htsget} 
 and cryptographic container formats~\citep{senf2021crypt4gh}
-in this setting.
+largely unnecessary.
 
-The draft VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
+The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
 provided here are a necessary starting point for such cloud-native
 biobank repositories and open up many possibilities,
 but significant investment and development would be needed 
 to provide a viable alternative to standard bioinformatics workflows. 
-Two initial directions for development, however, may provide 
-a sufficient starting point to both
-greatly improve researcher productivity on 
+Two initial directions for development, however, may quickly
+yield sufficient results to both greatly improve researcher productivity on 
 large, centrally managed datasets such as Genomics England
-and motivate further development.
+and motivate further research and development.
 The first direction is to provide compatibility with existing 
 workflows via a ``\texttt{vcztools}'' command line utility which 
 implements a subset of \texttt{bcftools} functionality (such as 
@@ -1029,46 +1053,62 @@ for existing workflows. This could provide an evolutionary path,
 allowing established analysis workflows to coexist with new Zarr-native
 approaches, working from the same primary data.
 
-The second direction is then to develop new methods 
-working directly with the Zarr data, and can leverage 
-a rich ecosystem of powerful and efficient tools in 
-multiple programming languages (see Methods).
+The second natural direction for development is to create
+these Zarr-native applications, which can take advantage
+of the efficient data representation
+across multiple programming languages (see Methods).
 The Python data science ecosystem, in particular,
 has a rich suite of powerful tools~\cite[e.g.][]{
-harris2020array,
 mckinney2010data,
+lam2015numba,
 kluyver2016jupyter,
+harris2020array,
 virtanen2020scipy} 
-and multiple Zarr implementations (see Methods).
-Of particular interest for large-scale datasets are
+and is increasingly
+popular in recent biological applications~\citep[e.g.][]{
+abdennur2020cooler,
+rand2022bionumpy,
+open2c2024bioframe,
+hou2024admix}.
 Dask~\cite{rocklin2015dask} and 
-Xarray~\citep{hoyer2017xarray} which provide powerful abstractions
-for distributed computing and can be
-straightforwardly used to perform interactive analysis
-of VCF Zarr datasets,
+Xarray~\citep{hoyer2017xarray} provide powerful abstractions
+for large-scale data analysis and can be
+used to perform interactive analysis
+of large VCF Zarr datasets,
 with computations transparently distributed over a cluster.
 As shown in our benchmarks, lower-level computations
-in which numerical operations are applied on a chunk-by-chunk
+in which optimised kernels are applied on a chunk-by-chunk
 basis are also straightforward to implement and highly performant.
 Thus, a range of possibilities exist in which developers can 
 choose the appropriate level of abstraction and tool chain
 on a case-by-case basis.
 
-[NOTE: still trying to figure out how to string this together. 
-Want to finish on a positive, not too technical note.]
-
-and is gaining increasing
-popularity in recent biological applications~\citep[e.g.][]{
-abdennur2020cooler,
-rand2022bionumpy,
-open2c2024bioframe,
-hou2024admix}.
-Zarr has the potential to act as a unified, cloud-native 
-efficient storage layer, freeing the next generation of 
-bioinformatics tools
-from the traditional burdens of text parsing and format
-conversion.
-
+While Zarr is now widely used across the sciences (see Methods)
+it was originally 
+developed to store genetic variation data from the 
+\textit{Anopheles gambiae} 
+1000 Genomes Project~\citep{anopheles2017genetic}
+and is in active use in this 
+setting~\cite[e.g.][]{ahouidi2021open,trimarsanto2022molecular}.
+The VCF Zarr specification presented here builds on this real-world 
+experience but is still a draft proposal that would benefit 
+from wider input across a range of applications. With some 
+refinements and sufficient uptake it may be suitable 
+for standardisation~\cite{rehm2021ga4gh}.
+The benefits of Zarr are substantial, and, in certain settings,
+worth the cost of retooling away from classical file-oriented workflows.
+For example, the MalariaGEN Vector Observatory
+currently uses Zarr to store data from whole-genome sequencing 
+of 23,000 \textit{Anopheles} mosquitoes from 31 African 
+countries~\cite{mvgo2024}.
+The data is hosted in Google Cloud Storage and can be analysed interactively
+using free cloud computing services like Google Colab,
+enabling the use of data by scientists in malaria-endemic countries
+where access to local computing infrastructure and sufficient network 
+bandwidth to download large datasets may be limited.
+VCF Zarr could similarly reduce the costs of analysing large-scale
+human data, and effectively open access to biobanks
+for a much broader group of researchers than currently possible.
 
 \section{Methods}
 
@@ -1122,8 +1162,8 @@ Blosc is a ``meta-compressor'' because it provides
 access to several different compression codecs. The 
 Zstandard codec is of particular 
 interest here as it achieves very high compression ratios
-with good decompression speeds. See Fig~\ref{fig-whole-matrix-decode}
-for a comparison of Zstandard with LZ4 on decoding performance.
+with good decompression speeds (Figs~\ref{fig-whole-matrix-decode},
+\ref{fig-compression-compressor}).
 % This may seem a bit off topic, but want to reassure reader that 
 % this isn't some niche technology
 Zstandard is also used in several recent VCF compression 
@@ -1160,29 +1200,18 @@ Recent additions using Zarr include the application of deep learning
 models to genomic sequence data~\citep{klie2023predictive}, storage and 
 manipulation of large-scale linkage disequilibrium matrices \cite{zabad2023fast},  
 and a browser for genetic variation data~\citep{konig2023divbrowse}.
-Zarr has in fact been in use in genomics for many years, and was originally 
-developed to store data from the \textit{Anopheles gambiae} 
-1000 Genomes Project~\citep{anopheles2017genetic}.
-A successor project, the MalariaGEN Vector Observatory,
-currently uses Zarr to store data from whole-genome sequencing 
-of 23,000 \textit{Anopheles} mosquitoes from 31 African 
-countries~\cite{mvgo2024}.
-The data is hosted in Google Cloud Storage and can be analysed interactively
-using free cloud computing services like Google Colab,
-democratising the use of data by scientists in malaria-endemic countries
-where access to local computing infrastructure and sufficient network 
-bandwidth to download large datasets may be limited.
 
 \subsection{The VCF Zarr specification}
 The VCF Zarr specification is a direct mapping from the VCF data model
-to a chunked binary array format using Zarr. VCF Zarr takes advantage
+to a chunked binary array format using Zarr,
+and is an evolution of the Zarr format used in the \texttt{scikit-allel}
+package~\citep{miles2023scikit}.
+VCF Zarr takes advantage
 of Zarr's hierarchical structure by representing a VCF file as a top-level
 Zarr group containing Zarr arrays. Each VCF field (fixed fields, INFO fields,
 and FORMAT fields) is represented as a separate array in the Zarr hierarchy.
 Some of the structures from the VCF header are also represented as arrays,
 including contigs, filters, and samples.
-
-% Do we need to say that VCF Zarr is an evolution of the Zarr format in scikit-allel?
 
 The specification defines the name, shape, dimension names, and data type
 for each array in the Zarr store. These ``logical'' properties are mandated,
@@ -1228,7 +1257,7 @@ fields that have a quadratic dependency on the number of alleles
 significant problems, and the ``local alleles'' proposal 
 provides an elegant solution~\cite{poterba2024scalable}.
 As this approach is on a likely path to 
-standardisation~\cite{danecek2021twelve}, we would aim to 
+standardisation~\cite{danecek2021twelve}, we plan to 
 include support in later versions of VCF Zarr.
 
 The VCF Zarr specification can represent anything described by BCF
@@ -1292,11 +1321,11 @@ Once the VCF data has been converted to the intermediate columnar format,
 it can then be converted to Zarr using the \texttt{vcf2zarr encode}
 command. By default we choose integer widths based on the maximum
 and minimum values observed during conversion to ICF
-along with reasonable compressor defaults (see next section), 
-but these can be
-modified by generating a JSON-formatted storage schema, 
+along with reasonable compressor defaults (see next section).
+Default choices can be 
+modified by generating a JSON-formatted storage schema,
 which can be edited and supplied as an argument to \texttt{encode}.
-Encoding a given column (for example, \texttt{call\_AD})
+Encoding a given field (for example, \texttt{call\_AD})
 involves creating a buffer to hold a full variant-chunk of the 
 array in question, and then sequentially filling this buffer with 
 values read from ICF and flushing to file.
@@ -1463,9 +1492,17 @@ requires a \texttt{+fill-tags} step in the pipeline.
 
 \section{Availability of source code and requirements}
 
-\section{Data availability}
-
-\section{Declarations}
+The VCF Zarr specification is available on GitHub at 
+\url{https://github.com/sgkit-dev/vcf-zarr-spec/}.
+All source code for running benchmarks, analyses and creating 
+"
+plots in this article is available at
+\url{https://github.com/sgkit-dev/vcf-zarr-publication}.
+Vcf2zarr is freely available under the terms of the Apache 2.0 
+license as part of the \texttt{bio2zarr} 
+suite (\url{https://github.com/sgkit-dev/bio2zarr/}) 
+and can be installed from the Python Package Index
+(\url{https://pypi.org/project/bio2zarr/}).
 
 \subsection{List of abbreviations}
 % If abbreviations are used in the text they should be defined in the text at
@@ -1473,17 +1510,41 @@ requires a \texttt{+fill-tags} step in the pipeline.
 % order.
 
 \begin{itemize}
-    \item VCF: Variant Call Format;
+    \item ICF: Intermediate Columnar Format
+    \item GWAS: Genome Wide Association Study
+    \item PBWT: Positional Burrows-Wheeler Transform
+    \item QC: Quality Control
     \item UKB: UK Biobank
+    \item VCF: Variant Call Format
     \item WGS: Whole Genome Sequence
 \end{itemize}
 
-\subsection{Competing Interests}
+% \subsection{Competing Interests}
 \subsection{Funding}
+JK acknowledges support from the Robertson Foundation, 
+NIH (research grants HG011395 and HG012473), 
+and Bill \& Melinda Gates Foundation (INV-001927; Sanger subaward G3594).
+AM acknowledges support from the Bill \& Melinda Gates Foundation 
+(INV-001927).
 
-\subsection{Author's Contributions}
+% \subsection{Author's Contributions}
 
 \section{Acknowledgements}
+This research was made possible through access to data in the National Genomic
+Research Library, which is managed by Genomics England Limited (a wholly owned
+company of the Department of Health and Social Care). The National Genomic
+Research Library holds data provided by patients and collected by the NHS as
+part of their care and data collected as part of their participation in
+research. The National Genomic Research Library is funded by the National
+Institute for Health Research and NHS England. The Wellcome Trust, Cancer
+Research UK and the Medical Research Council have also funded research
+infrastructure.
+
+Computation used the Oxford Biomedical Research Computing (BMRC) facility, a
+joint development between the Wellcome Centre for Human Genetics and the Big
+Data Institute supported by Health Data Research UK and the NIHR Oxford
+Biomedical Research Centre. The views expressed are those of the author(s) and
+not necessarily those of the NHS, the NIHR or the Department of Health.
 
 Genozip was used under the terms of the free Genozip Academic license.
 Genozip was only used on simulated data, in compliance with
