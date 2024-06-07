@@ -271,8 +271,6 @@ Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
 for quality control of large-scale variation datasets, 
 and has been instrumental in projects such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
-% Glow~\cite{glow2024} has recently emerged as a similar approach
-% to performing distributed analytics on genetic variation data.
 While Hail is built on open components
 from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
 the details of its MatrixTable format are not documented
@@ -1050,7 +1048,7 @@ the data over HTTP
 and delegating access control to the cloud provider
 makes custom web APIs~\cite{kelleher2019htsget} 
 and cryptographic container formats~\citep{senf2021crypt4gh}
-largely unnecessary.
+largely unnecessary in this setting.
 
 The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
 provided here are a necessary starting point for such cloud-native
@@ -1092,20 +1090,28 @@ abdennur2020cooler,
 rand2022bionumpy,
 open2c2024bioframe,
 hou2024admix}.
-Dask~\cite{rocklin2015dask} and 
-Xarray~\citep{hoyer2017xarray} provide powerful abstractions
-for large-scale data analysis and can be
-used to perform interactive analysis
-of large VCF Zarr datasets,
-with computations transparently distributed over a cluster.
-As shown in our benchmarks, lower-level computations
-in which optimised kernels are applied on a chunk-by-chunk
-basis are also straightforward to implement and highly performant.
-Thus, a range of possibilities exist in which developers can 
-choose the appropriate level of abstraction and tool chain
-on a case-by-case basis. These abstractions will extend, hopefully, to
-include more convenient primitives for genomics workflows through
-projects like sgkit in the future.
+Xarray~\cite{hoyer2017xarray} provides a unified interface for working 
+with multi-dimensional arrays
+in Python, and libraries like Dask~\cite{rocklin2015dask}  
+and Cubed~\cite{cubed2024} allow these operations to be
+scaled out transparently across processors and clusters. 
+This scaling is achieved by distributing calculations over 
+grid-based array representations like Zarr, where chunks
+provide the basic unit for parallel computation.
+The VCF Zarr specification introduced here was created 
+to facilitate work on a scalable genetics toolkit for 
+Python~\cite{sgkit2024} built on Xarray. 
+While the high-level facilities for distributed 
+computation provided by Xarray 
+are very powerful, they are not needed or indeed
+appropriate in all contexts. Our benchmarks here 
+illustrate that working at the lowest level, 
+by sequentially applying optimised kernels on a chunk-by-chunk
+basis is both straightforward to implement and highly performant.
+Thus, a range of possibilities exist in which developers 
+can build utilities using the VCF Zarr specification
+using the appropriate level of abstraction and tool chain
+on a case-by-case basis.
 
 While Zarr is now widely used across the sciences (see Methods)
 it was originally 
