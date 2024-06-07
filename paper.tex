@@ -734,7 +734,7 @@ add or update variant IDs in a VCF using a reference database
 such as dbSNP \cite{Sherry2001dbSNP}. The standard approach to this
 (using e.g.\ \texttt{bcftools annotate}) is to create a \emph{copy} of 
 the VCF which includes these new annotations. Thus, even though 
-we many only be altering a single field comprising a tiny fraction 
+we may only be altering a single field comprising a tiny fraction 
 of the data, we still read, decompress, update, compress and 
 write the entire dataset to a new file. With Zarr,
 we can update an existing field or add arbitrary additional
