@@ -21,12 +21,6 @@
 \usepackage{tikz}
 \usetikzlibrary{quotes,arrows.meta,3d}
 
-% Local definitions to systematise tool naming
-\newcommand{\sgapi}[1]{\texttt{#1}}
-\newcommand{\toolname}[1]{\texttt{#1}}
-\newcommand{\sgkit}{\texttt{sgkit}}
-
-
 %%% Flushend: You can add this package to automatically balance the final page, but if things go awry (e.g. section contents appearing out-of-order or entire blocks or paragraphs are coloured), remove it!
 % \usepackage{flushend}
 
@@ -1305,7 +1299,7 @@ integers). However, if -1 and -2 need to be stored, a float field
 can be used without issues.
 
 The VCF Zarr specification is general and can be mapped to 
-file formats such as \toolname{plink}~\citep{purcell2007plink,chang2015second}
+file formats such as PLINK~\citep{purcell2007plink,chang2015second}
 and BGEN~\citep{band2018bgen} with some minor extensions.
 
 \subsection{vcf2zarr}

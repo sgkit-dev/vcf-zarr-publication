@@ -60,7 +60,7 @@
 \RequirePackage{lscape}
 \RequirePackage{afterpage}
 \RequirePackage[absolute]{textpos}
-\RequirePackage{url}
+\RequirePackage[hyphens]{url}
 \RequirePackage{newfloat}
 \RequirePackage{mdframed}
 \RequirePackage{titlesec}
