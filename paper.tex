@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%,%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Please note that whilst this template provides a
 % preview of the typeset manuscript for submission, it
 % will not necessarily be the final publication layout.
@@ -271,12 +271,13 @@ Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
 for quality control of large-scale variation datasets, 
 and has been instrumental in projects such as 
 gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
-Glow~\cite{glow2024} has recently emerged as a similar approach
-to performing distributed analytics on genetic variation data.
-While Hail and Glow are built on open components
+% Glow~\cite{glow2024} has recently emerged as a similar approach
+% to performing distributed analytics on genetic variation data.
+While Hail is built on open components
 from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
-they are both complex projects consisting of 
-tightly coupled components that are not intended for external reuse.
+the details of its MatrixTable format are not documented
+or intended for external reuse. 
+% cite? https://dev.hail.is/t/matrixtable-file-format-reference/173/6
 Similarly, commercial solutions that have emerged to facilitate
 the analysis of large-scale genetic variation data are either
 based on proprietary~\cite{basespace2024,graf2024,googlelifesciences2024,
