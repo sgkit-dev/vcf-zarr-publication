@@ -871,7 +871,7 @@ large human dataset, we performed some illustrative benchmarks.
 As these benchmarks take some time to run, we focus 
 on a single 132GiB compressed VCF file covering
 positions 58,219,159--60,650,943 (562,640 variants) 
-from the middle of the set of 106 files for chromosome 2.
+from the middle of the list of 106 files for chromosome 2.
 We report both the total CPU time and elapsed wall-clock time here
 as both are relevant.
 First, we extracted the genome position for each variant in this single VCF 
@@ -904,13 +904,14 @@ Genomics England HPC system. Currently VCF Zarr does not store any
 specialised index to map genomic coordinates to array positions
 along the variants dimension. Instead, to find the relevant slice
 of records corresponding to the range of positions in the target
-VCF file, we read in the entire variant\_position array and 
+VCF file, we load the entire variant\_position array and 
 binary search. This entails reading 5,989 chunk files
 (the chunk size is 100,000 variants) which incurs a substantial
 latency penalty on this system. Later versions of the specification
-may solve this problem by either storing a combined variant\_contig,
-variant\_position array as a single chunk, or use a specialised
-index that supports overlap queries.
+may solve this problem by storing an array of size 
+(approximately) the number variant chunks 
+which maps ranges of genome coordinates to chunk indexes,
+or a more specialised structure that supports overlap queries.
 
 % When we subsequently time the operation of 
 % just populating an array of the variant positions in specified region,
@@ -921,14 +922,20 @@ index that supports overlap queries.
 
 We then ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
 and~\ref{fig-subset-matrix-compute}) on the VCF file
-\texttt{bcftools +af-dist} as before. 
+using \texttt{bcftools +af-dist} as before. 
 The elapsed time for this operation was 716.28 min CPU, 716.3 min elapsed.
 Repeating this operation for the same coordinates in Zarr 
 (using Python code described in previous sections) 
 % 716.28 / 2.32 = 308.74
 % 716.3 / 4.25 = 168.54
-with a total CPU time of 2.32 min and elapsed time of 4.25 min.
+gave a total CPU time of 2.32 min and elapsed time of 4.25 min.
 This is a 309X reduction in CPU burden and a 169X speed-up in elapsed time.
+It is worth noting here that \texttt{bcftools +af-dist} cannot be 
+performed in parallel across multiple slices of a chromosome, and if 
+we did want to run it on all of chromosome 2 we would need to 
+concatenate the 106 VCF files. While af-dist itself is not a common operation,
+many tasks share this property
+of not being straightforwardly decomposable across multiple VCF files.
 
 Finally, to illustrate performance on a common filtering task, we 
 created a copy of the VCF chunk which contains only variants 
