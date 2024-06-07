@@ -702,7 +702,7 @@ Fig~\ref{fig-subset-matrix-compute-supplemental} shows performance
 for the same operation when selecting half of the samples in the 
 dataset.
 
-\subsection{Extracting fields}
+\subsection{Extracting, inserting and updating fields}
 \begin{figure}
 \includegraphics{figures/column-extract}
 \caption{Time to extract the genome position and write to a text file.
@@ -733,6 +733,20 @@ here, the row-wise storage strategy that they share means that
 the entire dataset must be read into memory and 
 decompressed to extract just one field from each record. Zarr
 excels at these tasks: we only read and decompress the information required.
+
+Many of the additional fields that we find in real-world VCFs are 
+variant-level annotations, extensively used in downstream applications.
+For example, a common workflow is to 
+add or update variant IDs in a VCF using a reference database
+such as dbSNP \cite{Sherry2001dbSNP}. The standard approach to this
+(using e.g.\ \texttt{bcftools annotate}) is to create a \emph{copy} of 
+the VCF which includes these new annotations. Thus, even though 
+we many only be altering a single field comprising a tiny fraction 
+of the data, we still read, decompress, update, compress and 
+write the entire dataset to a new file. With Zarr,
+we can update an existing field or add arbitrary additional
+fields without touching the rest of the data or creating redundant
+copies.
 
 \subsection{Case study: Genomics England 100,000 genomes}
 In this section we demonstrate the utility of VCF Zarr on a large human dataset
