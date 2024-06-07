@@ -127,6 +127,11 @@
     \jlogo{example-grid-100x100pt.png}%
     \definecolor{jcolour}{RGB}{128,0,0}%
   }
+  \ifstrequal{#1}{preprint}{%
+    \jname{Preprint}%
+    \jlogo{}%
+    \definecolor{jcolour}{RGB}{128,0,0}%
+  }
 }
 
 \RequirePackage[flushmargin,bottom,norule]{footmisc}
@@ -222,10 +227,10 @@
   \IfFileExists{\@ouplogo}{%
     \includegraphics[height=\@gsheadboxheight]{\@ouplogo}%
   }{%
-    \fbox{\begin{minipage}[b][\@gsheadboxheight]{\@gsheadboxheight}
-    \raggedright
-    Placeholder for OUP logo \@ouplogo
-    \end{minipage}}%
+    % \fbox{\begin{minipage}[b][\@gsheadboxheight]{\@gsheadboxheight}
+    % \raggedright
+    % % Placeholder for OUP logo \@ouplogo
+    % \end{minipage}}%
   }
   \hspace{12pt}%
   %% Do absolutely nothing if \@jlogo is empty string
