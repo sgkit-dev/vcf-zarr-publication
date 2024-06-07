@@ -1574,7 +1574,7 @@ the ``No Commercial Data'' criterion.
 
 \bibliography{paper}
 
-\clearpage
+%\clearpage
 \renewcommand\thefigure{S\arabic{figure}}
 \setcounter{figure}{0}
 \renewcommand\thetable{S\arabic{table}}
@@ -1582,7 +1582,7 @@ the ``No Commercial Data'' criterion.
 
 \section*{Supplementary Material}
 
-\begin{figure}
+\begin{figure}[h]
 \includegraphics{figures/whole-matrix-decode}
 \caption{Genotype decoding performance.
 Total CPU time required to decode genotypes into memory using the Zarr-Python
@@ -1592,7 +1592,7 @@ This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
 \label{fig-whole-matrix-decode}}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h]
 \includegraphics{figures/subset-matrix-compute-supplemental}
 \caption{Compute performance on a large subset of the genotype matrix.
 Total CPU time required to run the af-dist calculation for
@@ -1604,7 +1604,7 @@ sample IDs, and the command line was therefore too long for the shell
 to execute. 
 \label{fig-subset-matrix-compute-supplemental}}
 \end{figure}
-\begin{figure}
+\begin{figure}[h]
 
 \includegraphics{figures/compression-compressor}
 \caption{Effects of Blosc compression codec on compression ratio on call-level 
@@ -1615,7 +1615,7 @@ Bit shuffle was used for call\_genotype, and no shuffle used for the other field
 \label{fig-compression-compressor}}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h]
 \includegraphics{figures/compression-shuffle}
 \caption{Effects of Blosc shuffle settings on compression ratio on call-level 
 fields in 1000 Genomes data. 
@@ -1624,7 +1624,7 @@ chunk size of 10,000 and sample chunk size of 1,000.
 \label{fig-compression-shuffle}}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h]
 \includegraphics{figures/compression-chunksize}
 \caption{Effects of chunk sizes on compression ratio on call-level 
 fields in 1000 Genomes data.
@@ -1638,7 +1638,7 @@ evenly spaced between 100 and 96514 on a log scale in (B).
 \label{fig-compression-chunksize}}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h]
 \includegraphics{figures/compression-chunksize-finegrained.pdf}
 \caption{Effects of sample chunk size on compression ratio on the call\_genotype
 field in 1000 Genomes data.
