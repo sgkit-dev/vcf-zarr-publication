@@ -1,57 +1,45 @@
 # vcf-zarr-publication
 
-This repo contains the manuscript for the publication describing the vcf-zarr 
+This repo contains the manuscript for the publication describing the vcf-zarr
 specification and its compression and query performance on several datasets.
-All code required to generate figures and example analyses.
+All code required to generate figures and example analyses is in this
+repo.
 
-## Contribution
+## Layout
 
-Writing occurs either via this repo and the standard GitHub workflows,
-or using the linked
-[Overleaf project](https://www.overleaf.com/project/65e8387b792e2d6e5065b7a6).
-Both are useful for different things, and so will be used in parallel.
+- The main text is in the paper.tex/paper.bib files.
 
-Please contact Jerome Kelleher if you want to get edit access on
-Overleaf.
+- Building the document and creating plots is automated using the
+Makefile. Building datasets and running benchmarks are also semi-automated
+using the main Makefile (but not entirely, as these benchmarks take a lot
+of time to run, and needed to be done bit-by-bit). Run python3
+``src/collect_data.py --help`` to see the available commands.
 
-## Contributing via Overleaf
+- Code for generating all plots is in ``src/plot.py``, and the data for these
+plots is stored in CVS form in ``plot_data``.
 
-GitHub syncing on Overleaf can be somewhat fragile, and the process needs
-to be manually curated (Jerome Kelleher will manage).
-From previous experience, the following protocols work reasonably well:
+- Code for running the data compression analysis on 1000 Genomes data
+is in ``src/compression_benchmarks.py``. The dataset is downloaded
+and managed in the ``real_data`` directory. See the Makefile there
+for details on downloading and converting to the inital Zarr.
 
-- **DO NOT USE** Overleaf's "Visual Editor". This can change the source LaTeX
-  in arbitrary ways, and really muck things up for those of us using
-  line-oriented editors. Please stick to the default "Code Editor" view.
-- Only edit the files ``paper.tex`` and ``paper.bib`` on Overleaf. For anything
-  else, please use GitHub.
+- The ``gel_example`` directory contains the Jupyter notebooks used to run the
+benchmarks for the Genomics England example.
 
+- Code for running simulation-based scaling benchmarks ``src/collect_data.py``,
+  and the actual Zarr-Python benchmarks used in ``src/zarr_afdist.py``. The
+``software`` directory contains the ``savvy-afdist`` C++ code used in the
+benchmarks, along with downloaded versions of bcftools etc. The Makefile in
+this directory should take care of downloading and compiling all of these. The
+Makefile is the starting point here, which should take care of downloading
+dataset, doing the subsetting and running the various conversion tools. The
+simulated dataset and various copies are stored in ``scaling``, along with some
+utilities.
 
-## General contributing guidelines
+To run the simulation based benchmarks:
 
-- Please insert line-breaks before 90-100 characters, ideally at semantic
-  break points. (Less necessary on Overleaf, but it makes keeping track of changes
-  on git easier, and also helps people using old-school editors).
-
-- When adding to the bibliography, please use Google Scholar's key format
-  (e.g. `garud2015recent`), or preferably use Google Scholar's bibtex export
-  (click the "cite" link for a particular paper, and the Bibtex option is on the
-  bottom).
-
-
-## Use of Issues/Discussions/Overleaf comments
-
-All of these routes are useful for different things. Here are some rough
-guidelines on when they might be used:
-
-- GitHub Discussions should be used for high-level topics, where there isn't
-  any particular action to be taken and the threaded nature can be useful
-  (e.g., https://github.com/sgkit-dev/sgkit-publication/discussions/51)
-- GitHub issues should be designed to be closed by some action---issues
-  keep track of specific problems that need to be resolved. Ultimately
-  we should have 0 issues open when the paper is submitted/published.
-- Overleaf comments are useful for short comments on the text. These should
-  also be designed to be closed, as the value of text comments drops quickly
-  when there are lots lying around unresolved.
-  Any longer discussions arising from the text should move to GitHub.
+1. cd to the ``software`` directory and ``make`` (you may need to install some dependencies).
+2. cd to the ``scaling`` directory and ``make``. This will take a *long* time and need a
+lot of storage space.
+3. Run the various benchmarks using ``python src/collect_data.py``
 
