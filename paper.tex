@@ -15,7 +15,7 @@
 
 \usepackage{graphicx}
 \usepackage{siunitx}
-\usepackage{lineno}
+\usepackage[switch]{lineno}
 
 \linenumbers
 
@@ -662,6 +662,7 @@ Total CPU time required to run the af-dist calculation for
 a contiguous subset of 10,000 variants $\times$ 10 samples 
 from the middle of the matrix
 for the data in Fig~\ref{fig-data-storage}.
+Elapsed time is also reported (dotted line). 
 The \texttt{genozip} and \texttt{bcftools} pipelines involve
 multiple commands required to correctly calculate the AF INFO field
 required by \texttt{bcftools +af-dist}. See the Methods for full details
@@ -1549,8 +1550,8 @@ and can be installed from the Python Package Index
 JK acknowledges the Robertson Foundation and 
 NIH (research grants HG011395 and HG012473). 
 JK and AM acknowledge the Bill \& Melinda Gates Foundation (INV-001927).
-
-TM acknowledges funding from The New Zealand Institute for Plant \& Food Research Ltd Kiwifruit Royalty Investment Programme.
+TM acknowledges funding from The New Zealand Institute for Plant \& Food
+Research Ltd Kiwifruit Royalty Investment Programme.
 
 % \subsection{Author's Contributions}
 
@@ -1590,6 +1591,7 @@ the ``No Commercial Data'' criterion.
 \caption{Genotype decoding performance.
 Total CPU time required to decode genotypes into memory using the Zarr-Python
 and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
+Elapsed time is also reported (dotted line). 
 This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
 3.9 GiB/s Zarr (Zstd), and 6.6 GiB/s for Savvy. 
 \label{fig-whole-matrix-decode}}
@@ -1601,6 +1603,7 @@ This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
 Total CPU time required to run the af-dist calculation for
 a subset of half of the samples and 10000 variants from the middle of the matrix
 for the data in Figure~\ref{fig-data-storage}.
+Elapsed time is also reported (dotted line). 
 Genozip did not run for
 $n > 10^4$ samples because it does not support a file to specify
 sample IDs, and the command line was therefore too long for the shell
