@@ -1,46 +1,26 @@
-Dear Editors,
 
 Please see enclosed our manuscript "Analysis-ready VCF at Biobank scale using
 Zarr" which addresses critical problems in the storage and analysis of the very
-large genetic variation datasets currently available. These biobank-scale
-datasets have been collected on a national level through initiatives such as
-the UK Biobank, and comprise hundreds of thousands of whole genome sequences.
-The standard file format for representing genetic variation data, the Variant Call
-Format (VCF), was developed during the 1000 Genomes project and emphasises
-simplicity and ease of analysis through sequential pipelines. We demonstrate
-that this approach is wholly unsuitable for current datasets and the realities
-of contemporary cloud-based computing, and that VCF is now a major
-computational bottleneck. Moreover, we show that any method of representing
-VCF data that shares its row-wise arrangement of data (and many have been
-proposed) is also fundamentally inefficient in accessing individual fields or
-subsets of the samples.
-
-We argue that storage of large-scale VCF data is much more suited to 
-array (or "tensor") storage, where fields are stored separately as 
-multidimensional arrays, and in favour of the widely-used Zarr
-format. We present the VCF Zarr specification that losslessly
-maps VCF data into this array-oriented format, and the vcf2zarr program
-that performs the conversion in a reliable and scalable manner. We show
-that this approach is competitive with state of the art file-based approaches 
-in terms of compression ratios and sequential processing performance,
-while having far superior performance when accessing subsets of the 
-data. We emphasise that Zarr is also suitable for deployment in cloud object stores and 
-distributed computation, and therefore intrinsically far more scalable than
-current file-based methods.
+large genetic variation datasets currently available. We show that the standard
+format for genetic variation data, VCF, is now a major computational
+bottleneck. We argue that storage of large-scale VCF data is much more suited
+to array (or "tensor") storage, and in favour of the widely-used Zarr format.
+We present the VCF Zarr specification that losslessly maps VCF data into this
+format, and the vcf2zarr conversion program. We show that this approach is
+competitive with state of the art file-based approaches in terms of compression
+ratios and sequential processing performance, while having far superior
+performance when accessing subsets of the data.
 
 We believe that GigaScience is the ideal venue for this manuscript for several
 reasons. Firstly, storing and analysing the vast genomic datasets currently
 available is a key challenge in biomedical big data, and of core interest to
 the readers of GigaScience. Secondly, several of the key contributions related
 to storing and processing genetic variation data cited here have been published
-in GigaScience (Second-generation PLINK: rising to the challenge of larger and
-richer datasets. Gigascience 2015; HTSlib: C library for reading/writing
-high-throughput sequencing data. Gigascience 2021; Twelve years of SAMtools and
-BCFtools. Gigascience 2021; DivBrowse–interactive visualization and exploratory
-data analysis of variant call matrices. GigaScience 2023). Thirdly, we share a
-belief in the importance of open and FAIR data that are a core principle for
-GigaScience, and argue that our approach lays the foundations for a FAIR and
-equitable representation of genetic variation data.
+in GigaScience (10.1186/s13742-015-0047-8, 10.1093/gigascience/giab007,
+10.1093/gigascience/giad025). Thirdly, we share a belief in the importance of
+open and FAIR data that are a core principle for GigaScience, and argue that
+our approach lays the foundations for a FAIR and equitable representation of
+genetic variation data.
 
 We hope that the combination of illustrative simulation-based benchmarks along
 with our real-world example using the Genomics England dataset will convince
@@ -49,7 +29,6 @@ of a new generation of cloud-based variant processing tools using an efficient,
 FAIR data representation.
 
 We would suggest the following reviewers:
-
 
 - Brent Pedersen (bpederse@gmail.com). Author of cyvcf2, slivar and several
   other popular VCF processing tools. 
