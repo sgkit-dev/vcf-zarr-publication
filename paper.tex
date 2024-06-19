@@ -1153,11 +1153,18 @@ storage backends are supported including cloud object stores
 and NoSQL databases;
 in principle, Zarr can store data in any key-value store.
 Metadata describing the array and its properties is then stored 
-in JSON format along with the chunks. The simplicity and transparency
-of this design has substantial advantages over other technologies
-such as HDF5~\citep{folk2011overview} which are relatively complex and opaque.
-This simplicity has led to numerous implementations of the Zarr specification
-being developed, ranging from the mature Zarr-Python~\citep{zarrpython}
+in JSON format along with the chunks. 
+The simplicity and transparency
+of this design has substantial advantages over technologies
+such as HDF~\citep{folk2011overview} and 
+NetCDF~\citep{rew1990netcdf} which are based on complex
+layouts of multidimensional data within a single file,
+and cannot be accessed in practice without the corresponding library.
+(See~\cite{abernathey2021cloud} for further discussion of the benefits
+of Zarr over these monolithic file-oriented formats.)
+In contrast, there are numerous implementations 
+of the Zarr specification, ranging 
+from the mature Zarr-Python~\citep{zarrpython}
 and TensorStore~\citep{tensorstore} implementations
 to more experimental extensions to packages like
 GDAL~\citep{gdal_zarr},
