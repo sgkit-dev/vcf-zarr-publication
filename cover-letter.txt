@@ -1,0 +1,30 @@
+
+Please see enclosed our manuscript "Analysis-ready VCF at Biobank scale using
+Zarr" which addresses critical problems in the storage and analysis of the very
+large genetic variation datasets currently available. We show that the standard
+format for genetic variation data, VCF, is now a major computational
+bottleneck. We argue that storage of large-scale VCF data is much more suited
+to array (or "tensor") storage, and in favour of the widely-used Zarr format.
+We present the VCF Zarr specification that losslessly maps VCF data into this
+format, and the vcf2zarr conversion program. We show that this approach is
+competitive with state of the art file-based approaches in terms of compression
+ratios and sequential processing performance, while having far superior
+performance when accessing subsets of the data.
+
+We believe that GigaScience is the ideal venue for this manuscript for several
+reasons. Firstly, storing and analysing the vast genomic datasets currently
+available is a key challenge in biomedical big data, and of core interest to
+the readers of GigaScience. Secondly, several of the key contributions related
+to storing and processing genetic variation data cited here have been published
+in GigaScience (10.1186/s13742-015-0047-8, 10.1093/gigascience/giab007,
+10.1093/gigascience/giad025). Thirdly, we share a belief in the importance of
+open and FAIR data that are a core principle for GigaScience, and argue that
+our approach lays the foundations for a FAIR and equitable representation of
+genetic variation data.
+
+We hope that the combination of illustrative simulation-based benchmarks along
+with our real-world example using the Genomics England dataset will convince
+readers of the transformative potential of Zarr, and catalyse the development
+of a new generation of cloud-based variant processing tools using an efficient,
+FAIR data representation.
+
