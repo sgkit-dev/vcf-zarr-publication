@@ -28,18 +28,3 @@ readers of the transformative potential of Zarr, and catalyse the development
 of a new generation of cloud-based variant processing tools using an efficient,
 FAIR data representation.
 
-We would suggest the following reviewers:
-
-- Brent Pedersen (bpederse@gmail.com). Author of cyvcf2, slivar and several
-  other popular VCF processing tools. 
-  GitHub profile: https://github.com/brentp
-
-- Josh Moore (josh@openmicroscopy.org). First author of OME-Zarr paper.
-  ORCID: https://orcid.org/0000-0003-4028-811X
-
-- Patrick König (koenig@ipk-gatersleben.de). First author of DivBrowse 
-  GigaScience paper which also represents genetic variation data using Zarr.
-
-- John Marshall (jmarshall@hey.com). htslib core developer; author on
-  GigaScience HTSlib paper. Email address is associated with GitHub
-  account: https://github.com/jmarshall
