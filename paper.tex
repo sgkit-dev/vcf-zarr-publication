@@ -137,7 +137,8 @@ storing and processing these files incurs a substantial cost.
 The VCF Zarr specification, building on widely-used, open-source technologies
 has the potential to greatly reduce these costs, 
 and may enable a diverse ecosystem of next-generation tools for analysing 
-genetic variation data directly from cloud-based object stores.
+genetic variation data directly from cloud-based object stores,
+while maintaining compatibility with existing file-oriented workflows.
 \end{abstract}
 
 \begin{keywords}
@@ -212,7 +213,7 @@ Processing of Biobank scale datasets can be split into a
 few broad categories. The most basic analysis 
 is quality control (QC). Variant QC is an 
 involved and multi-faceted 
-task~\cite{marees2018tutorial,panoutsopoulou2018quality,chen2024genomic}, 
+task~\cite{marees2018tutorial,panoutsopoulou2018quality,chen2024genomic,hemstrom2024next}, 
 often requiring interactive, exploratory analysis
 and incurring substantial computation over multiple QC fields.
 Genotype calls are sometimes refined via statistical methods,
@@ -1153,11 +1154,18 @@ storage backends are supported including cloud object stores
 and NoSQL databases;
 in principle, Zarr can store data in any key-value store.
 Metadata describing the array and its properties is then stored 
-in JSON format along with the chunks. The simplicity and transparency
-of this design has substantial advantages over other technologies
-such as HDF5~\citep{folk2011overview} which are relatively complex and opaque.
-This simplicity has led to numerous implementations of the Zarr specification
-being developed, ranging from the mature Zarr-Python~\citep{zarrpython}
+in JSON format along with the chunks. 
+The simplicity and transparency
+of this design has substantial advantages over technologies
+such as HDF~\citep{folk2011overview} and 
+NetCDF~\citep{rew1990netcdf} which are based on complex
+layouts of multidimensional data within a single file,
+and cannot be accessed in practice without the corresponding library.
+(See~\cite{abernathey2021cloud} for further discussion of the benefits
+of Zarr over these monolithic file-oriented formats.)
+In contrast, there are numerous implementations 
+of the Zarr specification, ranging 
+from the mature Zarr-Python~\citep{zarrpython}
 and TensorStore~\citep{tensorstore} implementations
 to more experimental extensions to packages like
 GDAL~\citep{gdal_zarr},
@@ -1556,6 +1564,8 @@ Research Ltd Kiwifruit Royalty Investment Programme.
 % \subsection{Author's Contributions}
 
 \section{Acknowledgements}
+We would like to thank Gil McVean for helpful comments on the manuscript.
+
 This research was made possible through access to data in the National Genomic
 Research Library, which is managed by Genomics England Limited (a wholly owned
 company of the Department of Health and Social Care). The National Genomic
