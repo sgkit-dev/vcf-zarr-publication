@@ -11,24 +11,26 @@ project(
   VERSION 1.0
   LANGUAGES CXX)
 
-# If you set any CMAKE_ variables, that can go here.
-# (But usually don't do this, except maybe for C++ standard)
-
-# Find packages go here.
-
-# You should usually split this into folders, but this is a simple example
-
-# This is a "default" library, and will match the *** variable setting.
-# Other common choices are STATIC, SHARED, and MODULE
-# Including header files here helps IDEs but is not required.
-# Output libname matches target name, with the usual extensions on your system
-# add_library(MyLibExample simple_lib.cpp simple_lib.hpp)
-
-# Link each target with other targets or add options, etc.
 
 # Adding something we can run - Output name matches target name
 add_executable(ts_afdist ts_afdist.cpp)
 
-# # Make sure you link your targets with this command. It can also link libraries and
-# # even flags, so linking a target that does not exist will not give a configure-time error.
-# target_link_libraries(MyExample PRIVATE MyLibExample)
+include(FetchContent)
+
+FetchContent_Declare(
+    tensorstore
+    URL "https://github.com/google/tensorstore/archive/refs/tags/v0.1.64.tar.gz"
+    URL_HASH SHA256=1dc632c6e9f83c033a2a16fe1a67ca38825902083ea0efe314769eee980c3126
+)
+
+# Additional FetchContent_Declare calls as needed...
+
+FetchContent_MakeAvailable(tensorstore)
+
+# Define a target that depends on TensorStore...
+
+target_link_libraries(
+    ts_afdist
+    PRIVATE
+    tensorstore::tensorstore tensorstore::all_drivers
+    )
