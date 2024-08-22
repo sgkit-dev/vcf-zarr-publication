@@ -11,6 +11,10 @@ project(
   VERSION 1.0
   LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 
 # Adding something we can run - Output name matches target name
 add_executable(ts_afdist ts_afdist.cpp)

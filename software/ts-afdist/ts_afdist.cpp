@@ -1,128 +1,104 @@
 
 #include <iostream>
+
 #include "absl/status/status.h"
 #include "tensorstore/array.h"
+#include "tensorstore/chunk_layout.h"
+#include "tensorstore/index_space/dim_expression.h"
 #include "tensorstore/open.h"
 #include "tensorstore/spec.h"
+#include "tensorstore/tensorstore.h"
 
-/* #include "tensorstore/index.h" */
-#include "tensorstore/index_space/dim_expression.h"
-/* #include "tensorstore/index_space/transformed_array.h" */
-/* #include "tensorstore/util/iterate_over_index_range.h" */
-/* #include "tensorstore/util/status.h" */
-
-using ::tensorstore::Context;
 using ::tensorstore::Index;
+using ::tensorstore::TensorStore;
 
-/* void count_alleles(tensorstore::Array array) */
-/* { */
-
-/* } */
-
-absl::Status Run(tensorstore::Spec input_spec, std::string output_filename) {
-
-    auto context = Context::Default();
+absl::Status Run(tensorstore::Spec input_spec) {
+    TensorStore<int8_t, tensorstore::dynamic_rank, tensorstore::ReadWriteMode::dynamic> store;
     TENSORSTORE_ASSIGN_OR_RETURN(
-        auto input,
-        tensorstore::Open(input_spec, context, tensorstore::OpenMode::open,
-                          tensorstore::ReadWriteMode::read)
-            .result());
+        store,
+        tensorstore::Open<int8_t>(input_spec, tensorstore::OpenMode::open, tensorstore::ReadWriteMode::read).result());
 
-    auto shape = input.domain().shape();
-    auto num_variants = shape[0];
-    auto num_samples = shape[1];
-    auto ploidy = shape[2];
-    auto chunk_shape = input.chunk_layout().value().read_chunk_shape();
-    auto v_chunk_size = chunk_shape[0];
-    auto s_chunk_size = chunk_shape[1];
+    tensorstore::IndexDomainView<tensorstore::dynamic_rank> domain = store.domain();
+    tensorstore::span<const Index, tensorstore::dynamic_rank> shape = domain.shape();
+    const Index variant_count = shape[0];
+    const Index sample_count = shape[1];
 
-    /* if (ploidy != 2) { */
-    /*     std::cerr << "Ploidy must be 2"; */
-    /*     return */
+    // tensorstore::ChunkLayout chunk_layout;
+    // TENSORSTORE_ASSIGN_OR_RETURN(
+    //     chunk_layout, store.chunk_layout());
 
-    /* } */
-    std::cout <<  typeid(chunk_shape).name() << std::endl;
-    std::cout << "input shape = " << shape << " chunk shape = " << chunk_shape << std::endl;
+    // tensorstore::ChunkLayout::ReadChunkShape chunk_shape = chunk_layout.read_chunk_shape();
+    // const Index variant_chunk_size = chunk_shape[0];
+    // const Index sample_chunk_size = chunk_shape[1];
 
-    for (auto v_chunk_offset = 0; v_chunk_offset < num_variants;
-            v_chunk_offset += v_chunk_size) {
+    tensorstore::SharedArray<int8_t, tensorstore::dynamic_rank, tensorstore::offset_origin> array;
 
-        for (auto s_chunk_offset = 0; s_chunk_offset < num_samples;
-                s_chunk_offset += s_chunk_size) {
-            std::cout << "Get chunk at " << v_chunk_offset << ", " << s_chunk_offset
-                << std::endl;
-            auto slice = tensorstore::Dims(0, 1).HalfOpenInterval(
-                        {v_chunk_offset, v_chunk_offset + v_chunk_size},
-                        {s_chunk_offset, s_chunk_offset + s_chunk_size});
-            /* auto x = tensorstore::Read<tensorstore::zero_origin>(input | slice).result(); */
+    TENSORSTORE_ASSIGN_OR_RETURN(array, tensorstore::Read(store).result());
 
-            std::vector<int8_t> vec(v_chunk_size * s_chunk_size * ploidy);
-            auto arr = tensorstore::Array(
-                vec.data(), {v_chunk_size, s_chunk_size, ploidy},
-                tensorstore::c_order);
-            /* tensorstore::Read(input , tensorstore::UnownedToShared(arr)).value(); */
-                    /* std::cout << "x = " << slice << std::endl; */
-            /* count_alleles(arr); */
-            // FIXME breaking here. Trying to get tensorstore to read this slice
-            // into the std vector memory allocated above.
-            auto z = tensorstore::Read(input |
-                    tensorstore::Dims(0, 1).HalfOpenInterval(
-                        {v_chunk_offset, v_chunk_offset + v_chunk_size},
-                        {s_chunk_offset, s_chunk_offset + s_chunk_size})
-                    ).result();
-            /* std::cout << "Got " << z << std::endl; */
+    std::vector<uint64_t> bin_counts(11);
 
+    for (Index variant_index = 0; variant_index < variant_count; variant_index++) {
+        uint64_t hom_ref_count = 0;
+        uint64_t hom_alt_count = 0;
+        uint64_t het_count = 0;
+        uint64_t ref_count = 0;
+
+        for (Index sample_index = 0; sample_index < sample_count; sample_index++) {
+            const int8_t a = array(variant_index, sample_index, 0);
+            const int8_t b = array(variant_index, sample_index, 1);
+
+            if (a == b)
+                if (a == 0)
+                    hom_ref_count += 1;
+                else
+                    hom_alt_count += 1;
+            else
+                het_count += 1;
+
+            if (a == 0) ref_count += 1;
+            if (b == 0) ref_count += 1;
         }
+
+        const uint64_t alt_count = 2 * sample_count - ref_count;
+        const double alt_freq = alt_count / (2.0 * sample_count);
+        const double het_ref_freq = 2 * alt_freq * (1 - alt_freq);
+        const double hom_alt_freq = alt_freq * alt_freq;
+        Index bin_index = 10 * het_ref_freq;
+
+        bin_counts[bin_index] += het_count;
+
+        bin_index = 10 * hom_alt_freq;
+
+        bin_counts[bin_index] += hom_alt_count;
     }
 
+    bin_counts[9] += bin_counts[10];
+    bin_counts.pop_back();
 
-    /* return absl::OkStatus(); */
+    std::cout << "# PROB_DIST, genotype probability distribution, assumes HWE" << std::endl;
 
-    /* TENSORSTORE_ASSIGN_OR_RETURN( */
-    /*     auto data, */
-    /*    tensorstore::Read(input).result()); */
+    for (Index bin_index = 0; bin_index < bin_counts.size(); bin_index++) {
+        const double bin_start = bin_index / 10.0;
+        const double bin_end = bin_start + 0.1;
 
-    /* /1* const auto max = data.shape()[data.rank() - 1] - 1; *1/ */
-    /* auto dtype = data.dtype(); */
-    /* std::cout << "dtype = " << dtype << std::endl; */
-
-    /* /1* Read the data into a std::vector of the right size, based on */
-    /*  * https://github.com/google/tensorstore/issues/36#issuecomment-1292757434 */
-    /*  *1/ */
-    /* std::vector<int8_t> vec(num_variants * num_samples * ploidy); */
-    /* auto arr = tensorstore::Array(vec.data(), {num_variants, num_samples, ploidy}, */
-    /*         tensorstore::c_order); */
-    /* tensorstore::Read(input, tensorstore::UnownedToShared(arr)).value(); */
-
-
-    /* auto offset = 0; */
-    /* for (auto v = 0; v < num_variants; v++) { */
-    /*     for (auto s = 0; s < num_samples; s++) { */
-    /*         for (auto z = 0; z < ploidy; z++) { */
-    /*             /1* For some mysterious reason std::cout won't show these values, */
-    /*              * but printf works fine?? *1/ */
-    /*             /1* std::cout << offset << " value = " << p[offset] << std::endl; *1/ */
-    /*             printf("vec[%d] = %d\n", (int) offset, (int) vec[offset]); */
-    /*             offset ++; */
-    /*         } */
-    /*     } */
-    /* } */
+        std::cout << "PROB_DIST\t" << bin_start << "\t" << bin_end << "\t" << bin_counts[bin_index] << std::endl;
+    }
 
     return absl::OkStatus();
 }
 
-int main(int argc, char* argv[]) {
-    auto path = argv[1];
-    tensorstore::Spec input_spec =
-        tensorstore::Spec::FromJson(
-            {
-                {"driver", "zarr"}, {"kvstore", {{"driver", "file"}, {"path", path}}},
-                /* {"path", "input"}, */
-            })
-            .value();
-    auto status = Run(input_spec, "tmp.txt");
+int main(int argc, char *argv[]) {
+    char *path = argv[1];
+    tensorstore::Spec input_spec = tensorstore::Spec::FromJson({
+                                                                   {"driver", "zarr"},
+                                                                   {"kvstore", {{"driver", "file"}, {"path", path}}},
+                                                               })
+                                       .value();
+    absl::Status status = Run(input_spec);
+
     if (!status.ok()) {
         std::cerr << status << std::endl;
     }
+
     return 0;
 }
