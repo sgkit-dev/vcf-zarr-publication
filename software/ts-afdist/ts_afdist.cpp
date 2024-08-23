@@ -53,6 +53,8 @@ absl::Status Run(tensorstore::Spec input_spec) {
                     const int8_t a = array(variant_index, sample_index, 0);
                     const int8_t b = array(variant_index, sample_index, 1);
 
+                    if (std::min(a, b) < 0) continue;
+
                     if (a == b)
                         if (a == 0)
                             hom_ref_count += 1;
