@@ -6,6 +6,8 @@
 # Data / outputs:
 real_data/data/
 scaling/data/
+scaling/simulated_chrom_21.ts*
+
 temp/
 
 # Software:
@@ -13,6 +15,8 @@ software/*
 !software/Makefile
 !software/savvy-afdist/CMakeLists.txt
 !software/savvy-afdist/main.cpp
+!software/ts-afdist/ts_afdist.cpp
+!software/ts-afdist/CMakeLists.txt
 
 # custom:
 .idea/
