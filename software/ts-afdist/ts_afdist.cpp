@@ -36,7 +36,7 @@ absl::Status Run(tensorstore::Spec &input_spec) {
         chunk_layout.read_chunk_shape();
     const auto variant_chunk_size = std::min(chunk_shape[0], variant_count);
     const auto sample_chunk_size = std::min(chunk_shape[1], sample_count);
-    std::cout << "Chunk size: " << variant_chunk_size << ", " << sample_chunk_size  << std::endl;
+    /* std::cout << "Chunk size: " << variant_chunk_size << ", " << sample_chunk_size  << std::endl; */
     std::vector<uint64_t> bin_counts(11);
     std::vector<int8_t> data_vector(variant_chunk_size * sample_chunk_size * 2);
 
@@ -45,7 +45,6 @@ absl::Status Run(tensorstore::Spec &input_spec) {
         const auto variant_chunk_end =
             std::min(variant_count, variant_chunk_start + variant_chunk_size);
         const auto variant_chunk_len = variant_chunk_end - variant_chunk_start;
-        /* std::cout << "Chunk : " << variant_chunk_start << " len = " << variant_chunk_len << std::endl; */
         std::vector<uint64_t> ref_counts(variant_chunk_len);
         std::vector<uint64_t> het_counts(variant_chunk_len);
         std::vector<uint64_t> hom_alt_counts(variant_chunk_len);
@@ -108,7 +107,7 @@ absl::Status Run(tensorstore::Spec &input_spec) {
     std::cout << "# PROB_DIST, genotype probability distribution, assumes HWE"
               << std::endl;
 
-    for (auto bin_index = 0; bin_index < bin_counts.size(); bin_index++) {
+    for (Index bin_index = 0; bin_index < bin_counts.size(); bin_index++) {
         const double bin_start = bin_index / 10.0;
         const double bin_end = bin_start + 0.1;
 
