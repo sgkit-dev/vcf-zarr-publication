@@ -208,6 +208,14 @@ def run_savvy_afdist(path, *, debug=False):
     return time_cli_command(cmd, debug)
 
 
+def run_ts_afdist(path, *, debug=False):
+    cmd = (
+        "/usr/bin/time -f'%S %U' "
+        f"software/ts-afdist/build/ts_afdist {path}/call_genotype"
+    )
+    return time_cli_command(cmd, debug)
+
+
 def run_savvy_decode(path, *, debug=False):
     cmd = (
         "/usr/bin/time -f'%S %U' "
@@ -422,6 +430,13 @@ all_tools_vcf = all_tools + [
         run_bcftools_afdist,
         run_bcftools_afdist_subset,
         bcftools_version,
+    ),
+    Tool(
+        "ts_cpp",
+        ".zarr",
+        run_ts_afdist,
+        None,
+        None,
     ),
 ]
 
@@ -763,9 +778,8 @@ def site_allele_report(path):
     ds = sg.load_dataset(path)
     variant_allele = ds["variant_allele"].values
     for j in range(variant_allele.shape[1]):
-        non_missing = np.sum(variant_allele[:, j] != '')
+        non_missing = np.sum(variant_allele[:, j] != "")
         print(f"{j} alleles: {non_missing / variant_allele.shape[0] * 100: .2f}%")
-
 
 
 @click.command()
