@@ -23,6 +23,7 @@ import sgkit as sg
 
 # yuck - but simplest way to avoid changing directory structure
 sys.path.insert(0, "src")
+from ts_afdist import ts_afdist
 from zarr_afdist import zarr_afdist, classify_genotypes_subset_filter, zarr_decode
 
 
@@ -214,6 +215,30 @@ def run_ts_afdist(path, *, debug=False):
         f"software/ts-afdist/build/ts_afdist {path}/call_genotype"
     )
     return time_cli_command(cmd, debug)
+
+
+def py_ts_afdist_worker(path, debug, conn):
+    before = time.time()
+    df = ts_afdist(path / "call_genotype")
+    wall_time = time.time() - before
+    cpu_times = psutil.Process().cpu_times()
+    conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
+
+    if debug:
+        print(df)
+
+
+def run_py_ts_afdist(path, *, debug: bool = False):
+    conn1, conn2 = multiprocessing.Pipe()
+    p = multiprocessing.Process(target=py_ts_afdist_worker, args=(path, debug, conn2))
+    p.start()
+    value = conn1.recv()
+    wall_time, user_time, sys_time = map(float, value.split())
+    p.join()
+    if p.exitcode != 0:
+        raise ValueError()
+    p.close()
+    return ProcessTimeResult(wall_time, sys_time, user_time)
 
 
 def run_savvy_decode(path, *, debug=False):
@@ -435,6 +460,13 @@ all_tools_vcf = all_tools + [
         "ts_cpp",
         ".zarr",
         run_ts_afdist,
+        None,
+        None,
+    ),
+    Tool(
+        "ts_py",
+        ".zarr",
+        run_py_ts_afdist,
         None,
         None,
     ),
