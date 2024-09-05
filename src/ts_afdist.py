@@ -36,10 +36,6 @@ def ts_afdist(path):
 
     for variant_chunk_start in range(0, variant_count, variant_chunk_size):
         variant_chunk_end = min(variant_count, variant_chunk_start + variant_chunk_size)
-        variant_chunk_len = variant_chunk_end - variant_chunk_start
-        ref_counts = np.zeros((variant_chunk_len,), dtype=int)
-        het_counts = np.zeros((variant_chunk_len,), dtype=int)
-        hom_alt_counts = np.zeros((variant_chunk_len,), dtype=int)
 
         for sample_chunk_start in range(0, sample_count, sample_chunk_size):
             sample_chunk_end = min(sample_count, sample_chunk_start + sample_chunk_size)
