@@ -39,15 +39,19 @@ absl::Status Run(tensorstore::Spec &input_spec) {
     /* std::cout << "Chunk size: " << variant_chunk_size << ", " << sample_chunk_size  << std::endl; */
     std::vector<uint64_t> bin_counts(11);
     std::vector<int8_t> data_vector(variant_chunk_size * sample_chunk_size * 2);
+    std::vector<uint64_t> ref_counts(variant_chunk_size);
+    std::vector<uint64_t> het_counts(variant_chunk_size);
+    std::vector<uint64_t> hom_alt_counts(variant_chunk_size);
 
     for (auto variant_chunk_start = 0; variant_chunk_start < variant_count;
          variant_chunk_start += variant_chunk_size) {
         const auto variant_chunk_end =
             std::min(variant_count, variant_chunk_start + variant_chunk_size);
         const auto variant_chunk_len = variant_chunk_end - variant_chunk_start;
-        std::vector<uint64_t> ref_counts(variant_chunk_len);
-        std::vector<uint64_t> het_counts(variant_chunk_len);
-        std::vector<uint64_t> hom_alt_counts(variant_chunk_len);
+
+        std::fill(ref_counts.begin(), ref_counts.begin() + variant_chunk_len, 0);
+        std::fill(het_counts.begin(), het_counts.begin() + variant_chunk_len, 0);
+        std::fill(hom_alt_counts.begin(), hom_alt_counts.begin() + variant_chunk_len, 0);
 
         for (auto sample_chunk_start = 0; sample_chunk_start < sample_count;
              sample_chunk_start += sample_chunk_size) {
