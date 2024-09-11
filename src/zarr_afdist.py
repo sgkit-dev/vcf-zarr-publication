@@ -236,8 +236,7 @@ def classify_genotypes_subset_filter(zarr_ds, variant_mask=None, sample_mask=Non
     return GenotypeCounts(hom_ref, hom_alt, het, ref_count)
 
 
-def zarr_afdist(path, num_bins=10, variant_slice=None, sample_slice=None):
-    root = zarr.open(path)
+def zarr_afdist(root, num_bins=10, variant_slice=None, sample_slice=None):
     call_genotype = root["call_genotype"]
     m = call_genotype.shape[0]
     n = call_genotype.shape[1]

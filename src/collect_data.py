@@ -300,8 +300,20 @@ def _zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn
     conn.send(f"{wall_time} {cpu_times.user} {cpu_times.system}")
 
 
-def zarr_afdist_worker(ds_path, debug, conn):
-    return _zarr_afdist_subset_worker(ds_path, None, None, debug, conn)
+def zarr_afdist_worker(ds_path, debug, conn, azure=False):
+    if azure:
+        from azure.identity import DefaultAzureCredential
+        from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+        connect_str = "FIXME"
+
+        service_client = BlobServiceClient.from_connection_string(connect_str)
+        container_client = service_client.get_container_client("data")
+        
+        store = zarr.storage.ABSStore(client=container_client)
+
+    assert azure is False
+    root = zarr.open(ds_path)
+    return _zarr_afdist_subset_worker(root, None, None, debug, conn)
 
 
 def zarr_decode_worker(ds_path, debug, conn):
@@ -341,6 +353,19 @@ def zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn)
 def run_zarr_afdist(ds_path, *, debug=False):
     conn1, conn2 = multiprocessing.Pipe()
     p = multiprocessing.Process(target=zarr_afdist_worker, args=(ds_path, debug, conn2))
+    p.start()
+    value = conn1.recv()
+    wall_time, user_time, sys_time = map(float, value.split())
+    p.join()
+    if p.exitcode != 0:
+        raise ValueError()
+    p.close()
+    return ProcessTimeResult(wall_time, sys_time, user_time)
+
+
+def run_zarr_afdist_azure(ds_path, *, debug=False):
+    conn1, conn2 = multiprocessing.Pipe()
+    p = multiprocessing.Process(target=zarr_afdist_worker, args=(ds_path, debug, conn2, True))
     p.start()
     value = conn1.recv()
     wall_time, user_time, sys_time = map(float, value.split())
@@ -467,6 +492,13 @@ all_tools_vcf = all_tools + [
         "ts_py",
         ".zarr",
         run_py_ts_afdist,
+        None,
+        None,
+    ),
+    Tool(
+        "zarr_azure",
+        ".zarr",
+        run_zarr_afdist_azure,
         None,
         None,
     ),
