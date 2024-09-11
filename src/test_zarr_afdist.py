@@ -5,7 +5,7 @@ import pandas as pd
 import numpy.testing as nt
 import msprime
 import sgkit as sg
-import bio2zarr.vcf
+from bio2zarr import vcf2zarr
 import pysam
 
 
@@ -44,11 +44,12 @@ class TestSimulations:
         # This also compresses the input file
         pysam.tabix_index(str(vcf_file), preset="vcf")
         out = tmp_path / "example.vcf.zarr"
-        bio2zarr.vcf.convert(
+        vcf2zarr.convert(
             [tmp_path / "sim.vcf.gz"],
             out,
-            chunk_length=variant_chunk_size,
-            chunk_width=sample_chunk_size,
+            variants_chunk_size=variant_chunk_size,
+            samples_chunk_size=sample_chunk_size,
+            worker_processes=0
         )
         return out
 
@@ -62,7 +63,7 @@ class TestSimulations:
     @pytest.mark.parametrize("seed", range(1, 10))
     def test_afdist(self, tmp_path, n, L, seed):
         zarr_path = self.run_simulation(tmp_path, n, L, seed)
-        afdist1 = zarr_afdist.zarr_afdist(zarr_path, 8)
+        afdist1 = zarr_afdist.zarr_afdist(zarr.open(zarr_path), 8)
         ds = sg.load_dataset(zarr_path)
         afdist2 = sgkit_afdist(ds, 8)
         nt.assert_array_equal(afdist1.start, afdist2.start)
@@ -81,7 +82,7 @@ class TestSimulations:
     def test_afdist_subset(self, tmp_path, n, L, v_slice, s_slice):
         zarr_path = self.run_simulation(tmp_path, n, L, 1234)
         afdist1 = zarr_afdist.zarr_afdist(
-            zarr_path, variant_slice=v_slice, sample_slice=s_slice
+            zarr.open(zarr_path), variant_slice=v_slice, sample_slice=s_slice
         )
         ds = sg.load_dataset(zarr_path)
         ds = ds.isel(variants=v_slice, samples=s_slice)
