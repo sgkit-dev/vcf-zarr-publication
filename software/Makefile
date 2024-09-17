@@ -25,8 +25,12 @@ savvy-afdist/savvy-afdist: savvy
 		-DCMAKE_BUILD_TYPE=Release -B savvy-afdist savvy-afdist
 	make -C savvy-afdist
 
+java-afdist/target/afdist-1.0.jar:
+	mvn clean package -f java-afdist/pom.xml
+
 clean:
 	rm -fR bcftools* savvy* geno*
+	mvn clean -f java-afdist/pom.xml
 
 
     
