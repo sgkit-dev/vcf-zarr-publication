@@ -17,6 +17,8 @@ software/*
 !software/savvy-afdist/main.cpp
 !software/ts-afdist/ts_afdist.cpp
 !software/ts-afdist/CMakeLists.txt
+!software/java-afdist/pom.xml
+!software/java-afdist/src/main/java/dev/tskit/afdist/AFDist.java 
 
 # custom:
 .idea/

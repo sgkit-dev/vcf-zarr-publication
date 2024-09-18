@@ -216,6 +216,13 @@ def run_ts_afdist(path, *, debug=False):
     )
     return time_cli_command(cmd, debug)
 
+def run_java_afdist(path, *, debug=False):
+    cmd = (
+        "/usr/bin/time -f'%S %U' "
+        f"java -jar software/java-afdist/target/afdist-1.0.jar {path}/call_genotype"
+    )
+    return time_cli_command(cmd, debug)
+
 
 def py_ts_afdist_worker(path, debug, conn):
     before = time.time()
@@ -485,6 +492,13 @@ all_tools_vcf = all_tools + [
         "ts_cpp",
         ".zarr",
         run_ts_afdist,
+        None,
+        None,
+    ),
+    Tool(
+        "zarr_java",
+        ".zarr",
+        run_java_afdist,
         None,
         None,
     ),
