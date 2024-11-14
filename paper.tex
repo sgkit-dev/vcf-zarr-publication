@@ -1010,16 +1010,16 @@ the genotypes include the PL field.
 %% More chunk files despite smaller input data: could selection of
 %% chunk size matter here?
 Following the conversion process detailed in the previous section, we
-first converted the 165 VCF files (7.4TiB) to ICF, followed by
+first converted the 165 VCF files (7.33TiB) to ICF, followed by
 conversion to Zarr. The tasks were run as single jobs on a compute
 node with 2,048 GB RAM and 128 cores. Conversion to ICF required
-13h45min runtime. The ICF representation used a total of 6.8 TiB over
-1,394,080 data storage files. Conversion to Zarr required 18h51min
-runtime, generating a dataset with 32 arrays, consuming a total of 6.7
+13h45min runtime. The ICF representation used a total of 6.77 TiB over
+1,342,569 data storage files. Conversion to Zarr required 18h51min
+runtime, generating a dataset with 32 arrays, consuming a total of 6.6
 TiB storage over 11,984,581 chunk files. The reduction in total
-storage (1.1X) is negligible, presumably due to the small sample size.
-The top fields in terms of storage are detailed in
-Table~\ref{tab-spruce-data}.
+storage (1.1X) is negligible, mainly due to the inherent difficulty in
+compressing the PL field. The top fields in terms of storage are
+detailed in Table~\ref{tab-spruce-data}.
 
 \begin{table}
 \caption{Summary for a selection of the largest VCF Zarr columns produced for 
@@ -1030,38 +1030,26 @@ default settings. For column details see the caption of Table~\ref{tab-genomics-
 \toprule
 {Field} & {type} & {storage} & {compress} & {\%total} \\
   \midrule
-  /call\_PL &	int16 &	6.1T &	12 & 92.75\%\\
-  /call\_genotype & int8 & 282.5G & 26 & 4.18\%\\
-  /call\_genotype\_mask & bool& 42.2G & 180 & 0.62\%\\
-  /variant\_DP4 & int32 & 26.2G & 2.1 & 0.39\%\\
-  /variant\_MQSBZ & float32 & 13.1G & 1.1 & 0.19\%\\
-  /variant\_RPBZ & float32 & 13.0G & 1.1 & 0.19\%\\
-  /variant\_MQBZ & float32 & 13.0G & 1.1 & 0.19\%\\
-  /variant\_SCBZ & float32 & 12.9G & 1.1 & 0.19\%\\
-  /variant\_VDB & float32 & 12.8G & 1.1 & 0.19\%\\
-  /variant\_quality & float32 &12.8G & 1.1 & 0.19\%\\
-  /variant\_BQBZ & float32 & 12.6G & 1.1 & 0.19\%\\
-  /variant\_SGB & float32 & 12.1G & 1.2 & 0.18\%\\
-  /variant\_position & int32 & 9.7G & 1.4 & 0.14\%\\
-  /variant\_AC & int16 & 7.4G & 2.8 & 0.11\%\\
-  /variant\_DP & int32 & 6.7G & 2.1 & 0.10\%\\
-  /variant\_allele & object & 5.4G & 21 & 0.08\%\\
-  /variant\_AN & int16 & 3.1G & 2.3 & 0.05\%\\
-  /call\_genotype\_phased & bool & 2.0G & 1800 & 0.03\%\\
-  /variant\_filter & bool & 1.5G & 2.4 & 0.02\%\\
-  /variant\_MQ & int8 &	489.8M & 7.3 &	0.01\%\\
-%   "/variant_IMF"	"float32"	"161.37 MiB"	89	"0.00%"
-% "/variant_IDV"	"int16"	"121.14 MiB"	59	"0.00%"
-% "/variant_INDEL"	"bool"	"72.6 MiB"	49	"0.00%"
-% "/variant_id"	"object"	"34.95 MiB"	820	"0.00%"
-% "/variant_id_mask"	"bool"	"33.16 MiB"	110	"0.00%"
-% "/variant_contig"	"int16"	"32.44 MiB"	220	"0.00%"
-% "/variant_FS"	"float32"	"32.09 MiB"	450	"0.00%"
-% "/variant_MQ0F"	"float32"	"32.09 MiB"	450	"0.00%"
-% "/contig_length"	"int64"	"6.77 KiB"	1.2	"0.00%"
-% "/contig_id"	"object"	"6.2 KiB"	1.3	"0.00%"
-% "/sample_id"	"object"	"5.46 KiB"	1.5	"0.00%"
-% "/filter_id"	"object"	"4.43 KiB"	0	"0.00%"
+  /call\_PL & int16 & 6.12 TiB & 12.0 & 92.75\% \\
+  /call\_genotype & int8 & 282.45 GiB & 26.0 & 4.18\% \\
+  /call\_genotype\_mask & bool & 42.15 GiB & 180.0 & 0.62\% \\
+  /variant\_DP4 & int32 & 26.24 GiB & 2.1 & 0.39\% \\
+  /variant\_MQSBZ & float32 & 13.08 GiB & 1.1 & 0.19\% \\
+  /variant\_RPBZ & float32 & 13.04 GiB & 1.1 & 0.19\% \\
+  /variant\_MQBZ & float32 & 12.97 GiB & 1.1 & 0.19\% \\
+  /variant\_SCBZ & float32 & 12.94 GiB & 1.1 & 0.19\% \\
+  /variant\_VDB & float32 & 12.84 GiB & 1.1 & 0.19\% \\
+  /variant\_quality & float32 & 12.84 GiB & 1.1 & 0.19\% \\
+  /variant\_BQBZ & float32 & 12.64 GiB & 1.1 & 0.19\% \\
+  /variant\_SGB & float32 & 12.12 GiB & 1.2 & 0.18\% \\
+  /variant\_position & int32 & 9.65 GiB & 1.4 & 0.14\% \\
+  /variant\_AC & int16 & 7.42 GiB & 2.8 & 0.11\% \\
+  /variant\_DP & int32 & 6.71 GiB & 2.1 & 0.10\% \\
+  /variant\_allele & object & 5.37 GiB & 21.0 & 0.08\% \\
+  /variant\_AN & int16 & 3.05 GiB & 2.3 & 0.05\% \\
+  /call\_genotype\_phased & bool & 2.03 GiB & 1800.0 & 0.03\% \\
+  /variant\_filter & bool & 1.46 GiB & 2.4 & 0.02\% \\
+  /variant\_MQ & int8 & 489.83 MiB & 7.3 & 0.01\% \\
   \bottomrule
 \end{tabular}
 \end{table}
