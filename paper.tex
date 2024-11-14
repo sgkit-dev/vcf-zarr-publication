@@ -987,21 +987,24 @@ genome properties differ substantially from human. The conifer Norway
 spruce, \emph{Picea abies}, is one of the largest and most
 ecologically important species on Earth and is distributed over large
 parts of the Northern hemisphere. One of its features is its large
-genome, consisting of 12 autosomes with a haploid genome assembly size
-of 17.7 Gbp. Here, we assess the performance of \texttt{vcf2zarr} as
-applied to 1,063 whole-genome resequenced spruce individuals from a
-recent study (in preparation). The dataset consists of approximately
-3,745 million single-nucleotide variants and small indels from the 12
-autosomes (15.9 Gbp) totalling 7.4TiB of VCF data after \texttt{bgzip}
-compression, distributed over 165 VCF files. For computational and
-storage reasons, the genotypes only include the `PL` field.
+genome, consisting of 12 autosomes with a genome size of 19.6
+Gb~\cite{nystedt_NorwaySpruceGenome_2013}. Here, we assess the
+performance of \texttt{vcf2zarr} as applied to 1,063 whole-genome
+resequenced spruce individuals from a recent study (in preparation),
+where resequencing data has been mapped to a chromosome-scale
+reference genome. The dataset consists of approximately 3,745 million
+single-nucleotide variants and small indels from the 12 autosomes
+totalling 7.4TiB of VCF data after \texttt{bgzip} compression,
+distributed over 165 VCF files. Since the dataset originally was
+generated for downstream analyses that require genotype likelihoods,
+the genotypes include the PL field.
 
 %% Regarding data storage files, which to use?
 %% find spruce.icf -name "*" | wc -l -> 1394080
 %% # chunks in spruce.icf.inspect.txt -> 1342569
 %% du -hs spruce.icf -> 6.8TiB
 %% sum size in spruce.icf.inspect.txt -> 6.8TiB
-%% du -hs spruce.vcz -> 
+%% du -hs spruce.vcz -> 6.7TiB
 %% sum size in spruce.vcz.inspect.txt -> 6.6TiB
 %% # chunks in spruce.vcz.inspect.txt -> 11984581
 %% More chunk files despite smaller input data: could selection of
@@ -1012,10 +1015,11 @@ conversion to Zarr. The tasks were run as single jobs on a compute
 node with 2,048 GB RAM and 128 cores. Conversion to ICF required
 13h45min runtime. The ICF representation used a total of 6.8 TiB over
 1,394,080 data storage files. Conversion to Zarr required 18h51min
-runtime, generating a dataset with 32 arrays, consuming a total of XXX
-TiB storage over 11,984,581 chunk files. The reduction in total storage (XX)
-is negligible, presumably due to the small sample size. The top fields
-in terms of storage are detailed in Table~\ref{tab-spruce-data}.
+runtime, generating a dataset with 32 arrays, consuming a total of 6.7
+TiB storage over 11,984,581 chunk files. The reduction in total
+storage (1.1X) is negligible, presumably due to the small sample size.
+The top fields in terms of storage are detailed in
+Table~\ref{tab-spruce-data}.
 
 \begin{table}
 \caption{Summary for a selection of the largest VCF Zarr columns produced for 
