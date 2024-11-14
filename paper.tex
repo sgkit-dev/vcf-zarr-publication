@@ -979,6 +979,103 @@ present-day ``copy-oriented'' computing,
 to the ``mask-oriented'' analysis of large immutable, single-source
 datasets is a potentially transformational change enabled by Zarr.
 
+\subsection{Case study: 1,063 spruce whole-genome samples}
+
+To demonstrate the versatility of \texttt{vcf2zarr}, in this section
+we include a case study of a dataset originating from a species whose
+genome properties differ substantially from human. The conifer Norway
+spruce, \emph{Picea abies}, is one of the largest and most
+ecologically important species on Earth and is distributed over large
+parts of the Northern hemisphere. One of its features is its large
+genome, consisting of 12 autosomes with a haploid genome assembly size
+of 17.7 Gbp. Here, we assess the performance of \texttt{vcf2zarr} as
+applied to 1,063 whole-genome resequenced spruce individuals from a
+recent study (in preparation). The dataset consists of approximately
+3,745 million single-nucleotide variants and small indels from the 12
+autosomes (15.9 Gbp) totalling 7.4TiB of VCF data after \texttt{bgzip}
+compression, distributed over 165 VCF files. For computational and
+storage reasons, the genotypes only include the `PL` field.
+
+%% Regarding data storage files, which to use?
+%% find spruce.icf -name "*" | wc -l -> 1394080
+%% # chunks in spruce.icf.inspect.txt -> 1342569
+%% du -hs spruce.icf -> 6.8TiB
+%% sum size in spruce.icf.inspect.txt -> 6.8TiB
+%% du -hs spruce.vcz -> 
+%% sum size in spruce.vcz.inspect.txt -> 6.6TiB
+%% # chunks in spruce.vcz.inspect.txt -> 11984581
+%% More chunk files despite smaller input data: could selection of
+%% chunk size matter here?
+Following the conversion process detailed in the previous section, we
+first converted the 165 VCF files (7.4TiB) to ICF, followed by
+conversion to Zarr. The tasks were run as single jobs on a compute
+node with 2,048 GB RAM and 128 cores. Conversion to ICF required
+13h45min runtime. The ICF representation used a total of 6.8 TiB over
+1,394,080 data storage files. Conversion to Zarr required 18h51min
+runtime, generating a dataset with 32 arrays, consuming a total of XXX
+TiB storage over 11,984,581 chunk files. The reduction in total storage (XX)
+is negligible, presumably due to the small sample size. The top fields
+in terms of storage are detailed in Table~\ref{tab-spruce-data}.
+
+\begin{table}
+\caption{Summary for a selection of the largest VCF Zarr columns produced for 
+1,063 VCFs on 12 spruce chromosomes using \texttt{vcf2zarr}
+default settings. For column details see the caption of Table~\ref{tab-genomics-england-data}.
+\label{tab-spruce-data}}
+\begin{tabular}{llS[table-format=3.1]S[table-format=3.2]S[table-format=3.2]}
+\toprule
+{Field} & {type} & {storage} & {compress} & {\%total} \\
+  \midrule
+  /call\_PL &	int16 &	6.1T &	12 & 92.75\%\\
+  /call\_genotype & int8 & 282.5G & 26 & 4.18\%\\
+  /call\_genotype\_mask & bool& 42.2G & 180 & 0.62\%\\
+  /variant\_DP4 & int32 & 26.2G & 2.1 & 0.39\%\\
+  /variant\_MQSBZ & float32 & 13.1G & 1.1 & 0.19\%\\
+  /variant\_RPBZ & float32 & 13.0G & 1.1 & 0.19\%\\
+  /variant\_MQBZ & float32 & 13.0G & 1.1 & 0.19\%\\
+  /variant\_SCBZ & float32 & 12.9G & 1.1 & 0.19\%\\
+  /variant\_VDB & float32 & 12.8G & 1.1 & 0.19\%\\
+  /variant\_quality & float32 &12.8G & 1.1 & 0.19\%\\
+  /variant\_BQBZ & float32 & 12.6G & 1.1 & 0.19\%\\
+  /variant\_SGB & float32 & 12.1G & 1.2 & 0.18\%\\
+  /variant\_position & int32 & 9.7G & 1.4 & 0.14\%\\
+  /variant\_AC & int16 & 7.4G & 2.8 & 0.11\%\\
+  /variant\_DP & int32 & 6.7G & 2.1 & 0.10\%\\
+  /variant\_allele & object & 5.4G & 21 & 0.08\%\\
+  /variant\_AN & int16 & 3.1G & 2.3 & 0.05\%\\
+  /call\_genotype\_phased & bool & 2.0G & 1800 & 0.03\%\\
+  /variant\_filter & bool & 1.5G & 2.4 & 0.02\%\\
+  /variant\_MQ & int8 &	489.8M & 7.3 &	0.01\%\\
+%   "/variant_IMF"	"float32"	"161.37 MiB"	89	"0.00%"
+% "/variant_IDV"	"int16"	"121.14 MiB"	59	"0.00%"
+% "/variant_INDEL"	"bool"	"72.6 MiB"	49	"0.00%"
+% "/variant_id"	"object"	"34.95 MiB"	820	"0.00%"
+% "/variant_id_mask"	"bool"	"33.16 MiB"	110	"0.00%"
+% "/variant_contig"	"int16"	"32.44 MiB"	220	"0.00%"
+% "/variant_FS"	"float32"	"32.09 MiB"	450	"0.00%"
+% "/variant_MQ0F"	"float32"	"32.09 MiB"	450	"0.00%"
+% "/contig_length"	"int64"	"6.77 KiB"	1.2	"0.00%"
+% "/contig_id"	"object"	"6.2 KiB"	1.3	"0.00%"
+% "/sample_id"	"object"	"5.46 KiB"	1.5	"0.00%"
+% "/filter_id"	"object"	"4.43 KiB"	0	"0.00%"
+  \bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab-spruce-data} shows that the dataset storage size is
+dominated by a major component, call\_PL, which accounts for nearly
+93\% of the total. call\_PL is yet another field with low compression potential due to inherent noisiness.
+
+%% FIXME: reference regarding VCF POS?
+The spruce data set poses an interesting challenge to the VCF storage
+format due to the large chromosome sizes (>1Gbp). The VCF POS field is
+encoded in 32-bit format (corresponding to a maximum of approximately
+537Mbp), which mandates splitting up larger chromosomes into chunks,
+adding additional complexity to downstream analyses. Zarr does not
+impose this limitation, and we therefore demonstrate the versatility
+of Zarr by updating contig information and the coordinate system for
+the spruce dataset.
+
 \section{Discussion}
 % Zarr is great
 VCF is a central element of modern genomics, facilitating
