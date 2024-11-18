@@ -999,16 +999,6 @@ distributed over 165 VCF files. Since the dataset originally was
 generated for downstream analyses that require genotype likelihoods,
 the genotypes include the PL field.
 
-%% Regarding data storage files, which to use?
-%% find spruce.icf -name "*" | wc -l -> 1394080
-%% # chunks in spruce.icf.inspect.txt -> 1342569
-%% du -hs spruce.icf -> 6.8TiB
-%% sum size in spruce.icf.inspect.txt -> 6.8TiB
-%% du -hs spruce.vcz -> 6.7TiB
-%% sum size in spruce.vcz.inspect.txt -> 6.6TiB
-%% # chunks in spruce.vcz.inspect.txt -> 11984581
-%% More chunk files despite smaller input data: could selection of
-%% chunk size matter here?
 Following the conversion process detailed in the previous section, we
 first converted the 165 VCF files (7.33TiB) to ICF, followed by
 conversion to Zarr. The tasks were run as single jobs on a compute
