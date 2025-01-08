@@ -1055,15 +1055,22 @@ dominated by a major component, call\_PL, which accounts for nearly
 93\% of the total. call\_PL is yet another field with low compression
 potential due to inherent noisiness.
 
-%% FIXME: reference regarding VCF POS?
-The spruce data set poses an interesting challenge to the VCF storage
-format due to the large chromosome sizes (>1Gbp). The VCF POS field is
-encoded in 32-bit format (corresponding to a maximum of approximately
-537Mbp), which mandates splitting up larger chromosomes into chunks,
-adding additional complexity to downstream analyses. Zarr does not
-impose this limitation, and we therefore demonstrate the versatility
-of Zarr by updating contig information and the coordinate system for
-the spruce dataset.
+Large genomes from non-model organisms pose particular problems for
+analysis workflows that often are tailored for human conditions. For
+instance, the binary Sequence Alignment/Map index format BAI has a 512
+Mbp limit, but spruce chromosomes range in size from 1.0 to 1.7 Gbp.
+The spruce BAM files used for variant calling were BAI indexed, which
+motivated the partitioning into multiple VCF files in the first place,
+adding complexity to downstream processing.
+
+A similar limitation is imposed by the VCF POS field which is encoded
+in 32-bit format and can hold chromomosomes up to 2.14 Gbp. Although
+spruce does not have chromosomes that exceed the limit, other species
+do, such as the recently sequence mistletoe, with chromosomes larger
+than 8 Gbp. Zarr does not impose this limitation, and we therefore
+demonstrate the versatility of Zarr by updating contig information and
+the coordinate system for the spruce dataset. This updating procedure
+could be applied to any other species.
 
 \section{Discussion}
 % Zarr is great
