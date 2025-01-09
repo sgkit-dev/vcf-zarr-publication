@@ -38,6 +38,11 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 	vcf2zarr mkschema $< | sed 's/"shuffle": 2/"shuffle": 0/g' > $@.schema.json
 	vcf2zarr encode -f $< $@ -s $@.schema.json -p8 --max-memory=200GiB -v
 
+%.lz4.noshuffle.zarr: %.icf
+	vcf2zarr mkschema $< | sed 's/"shuffle": 2/"shuffle": 0/g' \
+		| sed 's/zstd/lz4/g' > $@.schema.json
+	vcf2zarr encode $< $@ -s $@.schema.json -p8 -v
+
 # Compute some minimal INFO summaries to support the af-dist computation
 %.tags.bcf: %.bcf
 	BCFTOOLS_PLUGINS=${BCFTOOLS_PLUGINS} ${BCFTOOLS} \
