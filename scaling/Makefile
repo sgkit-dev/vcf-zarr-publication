@@ -10,12 +10,10 @@ simulated_chrom_21.ts.tsz:
 %.ts: %.ts.tsz
 	tsunzip -k $<
 
-all: data/chr21_10_1.zarr data/chr21_10_1.sav data/chr21_10_1.genozip data/chr21_10_1.tags.genozip \
-	data/chr21_10_2.zarr data/chr21_10_2.sav data/chr21_10_2.genozip data/chr21_10_2.tags.genozip \
-	data/chr21_10_3.zarr data/chr21_10_3.sav data/chr21_10_3.genozip data/chr21_10_3.tags.genozip \
-	data/chr21_10_4.zarr data/chr21_10_4.sav data/chr21_10_4.genozip data/chr21_10_4.tags.genozip \
-	data/chr21_10_5.zarr data/chr21_10_5.sav data/chr21_10_5.genozip data/chr21_10_5.tags.genozip \
-	data/chr21_10_6.zarr data/chr21_10_6.sav data/chr21_10_6.genozip data/chr21_10_6.tags.genozip
+all: data/chr21_10_1.zarr  \
+	data/chr21_10_2.icf  \
+	data/chr21_10_3.icf  \
+	data/chr21_10_4.icf
 
 .PRECIOUS: %.tags.bcf %.bcf %.vcf.gz %.icf %.ts
 

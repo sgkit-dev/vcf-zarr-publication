@@ -86,6 +86,39 @@ def plot_size(ax, df, label_y_offset=None, order=None):
     ax.set_ylabel("Storage size (bytes)")
     plt.tight_layout()
 
+def plot_s3_throughput(ax, df):
+    ax.loglog(
+        df["processes"].values,
+        df["throughput_decompress"].values,
+        marker=".",
+        label="Decompression only"
+    )
+    ax.annotate(
+        f"{df['throughput_decompress'][6]:.0f} MB/s",
+        textcoords="offset points",
+        xytext=(-8, -10),
+        xy=(df['processes'][6], df['throughput_decompress'][6]),
+        xycoords="data",
+    )
+    ax.loglog(
+        df["processes"].values,
+        df["throughput_afdist"].values,
+        marker=".",
+        label="AF Dist"
+    )
+    ax.annotate(
+        f"{df['throughput_afdist'][6]:.0f} MB/s",
+        textcoords="offset points",
+        xytext=(-8, -10),
+        xy=(df['processes'][6], df['throughput_afdist'][6]),
+        xycoords="data",
+    )
+
+    ax.legend()
+    ax.set_xlabel("Number of processes")
+    ax.set_ylabel("Genotype data throughput (MB/s)")
+    plt.tight_layout()
+
 
 def plot_total_cpu(
     ax,
@@ -227,6 +260,23 @@ def data_scaling(size_data, output):
     # I tried putting an inset axis showing the ratio, but it was too small.
     # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
     # ax_inset.semilogx(sav["num_samples"], ratio)
+
+    plt.savefig(output)
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def s3_throughput(data, output):
+    """
+    Plot the figure showing compute performance on whole-matrix afdist.
+    """
+    df = pd.read_csv(data, index_col=False).sort_values("processes")
+
+    fig, ax1 = one_panel_fig()
+    plot_s3_throughput(
+        ax1,
+        df,
+    )
 
     plt.savefig(output)
 
@@ -542,6 +592,7 @@ def cli():
 
 
 cli.add_command(data_scaling)
+cli.add_command(s3_throughput)
 cli.add_command(whole_matrix_compute)
 cli.add_command(whole_matrix_decode)
 cli.add_command(column_extract)
