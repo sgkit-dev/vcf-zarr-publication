@@ -315,7 +315,7 @@ def zarr_afdist_worker(ds_path, debug, conn, azure=False):
 
         service_client = BlobServiceClient.from_connection_string(connect_str)
         container_client = service_client.get_container_client("data")
-        
+
         store = zarr.storage.ABSStore(client=container_client)
 
     assert azure is False
@@ -621,6 +621,15 @@ decode_tools = all_tools[:2] + [
     Tool(
         "zarr_nshf",
         ".noshuffle.zarr",
+        run_zarr_afdist,
+        run_zarr_afdist_subset,
+        None,
+        run_zarr_decode,
+        run_zarr_pos_extract,
+    ),
+    Tool(
+        "zarr_lz4_nshf",
+        ".lz4.noshuffle.zarr",
         run_zarr_afdist,
         run_zarr_afdist_subset,
         None,
