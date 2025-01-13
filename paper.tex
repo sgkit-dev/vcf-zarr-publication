@@ -353,7 +353,7 @@ employed in genetic data compression.
 The widely-used PLINK binary format stores genotypes in a 
 packed binary representation, supporting only biallelic
 variants without phase information.
-The PLINK 2 PGEN format~\citep{pgen2024} is more general
+The PLINK 2 PGEN format~\citep{rivas2024efficient} is more general
 and compact than PLINK, compressing variant data using specialised
 algorithms~\cite{sambo2014compression}.
 Methods have also been developed which store variation data 
@@ -1262,7 +1262,8 @@ GDAL~\citep{gdal_zarr},
 NetCDF~\citep{netcfd_c},
 N5~\citep{n5zarr}
 and xtensor~\citep{xtensor_zarr}
-as well as  standalone libraries for JavaScript~\cite{zarrjs},
+as well as  standalone libraries for 
+C++~\citep{ruan2024image}, JavaScript~\cite{zarrjs},
 Julia~\cite{zarrjl}, Rust~\citep{zarrs}
 and R~\cite{pizzarr}.
 
@@ -1317,8 +1318,9 @@ The Open Microscopy Environment has developed OME-Zarr~\cite{moore2023ome} as on
 of its ``next generation'' cloud ready file formats~\citep{moore2021ome}.
 OME-Zarr already has a rich suite of supporting
 tools~\cite{moore2023ome,rzepka2023toward}. 
-Zarr has also seen recent uptake 
-in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
+Zarr has also seen recent uptake in other large-scale processing for
+microscopy applications~\citep{ruan2024image}, as well as 
+single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
 and multimodal spatial omics
 data~\citep{marconato2024spatialdata,baker2023emobject}.
 Recent additions using Zarr include the application of deep learning
@@ -1703,7 +1705,7 @@ Total CPU time required to decode genotypes into memory using the Zarr-Python
 and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
 Elapsed time is also reported (dotted line). 
 This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
-3.9 GiB/s Zarr (Zstd), and 6.6 GiB/s for Savvy. 
+3.9 GiB/s Zarr (Zstd), 4.1 GiB/s Zarr (LZ4), and 6.6 GiB/s for Savvy. 
 \label{fig-whole-matrix-decode}}
 \end{figure}
 
