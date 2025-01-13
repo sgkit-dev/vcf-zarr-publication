@@ -474,9 +474,7 @@ arrays and chunks are stored hierarchically in directories
 and files (storage as a single Zip archive is also supported).
 To enable comparison with the existing file-based ecosystem
 of tools, we focus on Zarr's file system chunk storage in a series of illustrative 
-benchmarks in the following sections. 
-(See \citep{durbin2020task,moore2021ome,gowan2022using} for Zarr
-benchmarks in cloud settings.)
+benchmarks in the following sections before presenting cloud-based benchmarks. 
 We compare primarily with
 VCF/BCF based workflows using \texttt{bcftools} because this
 is the standard practice, used in the vast majority of cases.
@@ -941,6 +939,8 @@ or a more specialised structure that supports overlap queries.
 % [Note: this is crazy that we still have a 19 second I/O wait. The
 % 5989 files for the POS chunks must be in cache already, so the delay
 % has to be the file system checking cache coherency.]
+% [Note BJ: The compute is on EC2 and storage is on-prem, I believe there is
+% no ec2-side cache and the link is saturated, hence the latency.]
 
 We then ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
 and~\ref{fig-subset-matrix-compute}) on the VCF file
@@ -959,7 +959,7 @@ concatenate the 106 VCF files. While af-dist itself is not a common operation,
 many tasks share this property
 of not being straightforwardly decomposable across multiple VCF files.
 
-Finally, to illustrate performance on a common filtering task, we 
+Additionally, to illustrate performance on a common filtering task, we 
 created a copy of the VCF chunk which contains only variants 
 that pass some common filtering criteria using
 \texttt{bcftools view -I --include "FORMAT/DP>10 \& FORMAT/GQ>20"},
@@ -988,6 +988,30 @@ The transition from the manifold inefficiencies of
 present-day ``copy-oriented'' computing,
 to the ``mask-oriented'' analysis of large immutable, single-source
 datasets is a potentially transformational change enabled by Zarr.
+
+Finally, to explore the use of cloud computing services with VCF Zarr,
+the zarr files for chromosome 2 were uploaded to an AWS S3 standard bucket.
+Using a single-threaded process on an EC2 instance the benchmarks above were
+repeated. Extracting the position array required 15s CPU, 23.8s elapsed.
+The af-dist calculation required 2.70min CPU, 5.23min elapsed. Creating the filter mask
+required 3.05min CPU, 11.15min elapsed. These times are comparable to the on-premises
+HPC system above.
+
+This single-threaded approach is not optimal for cloud computing, as to optimise
+both runtime and costs parallel processing is required. Using 64 parallel processes
+on a single c5.24xlarge EC2 instance with 96 vCPUs (48 physical) the zarr chunks of
+genotype array could be retrived from S3 and decompressed at a rate of 50.8 GB/s.
+The network data rate was 127 MB/s, far below the capbility of the instance,
+indicating that this process was compute-constrained. When calculating af-dist after
+decompression the throughput was 24.6 GB/s. With this parallel approach the 
+af-dist calculation above was then completed in 4.12s elapsed time.
+This level of throughput would complete af-dist for all chromosomes for all samples
+% compute: $4.08 * 1.27
+% io: (((722000000/10000)*(79000/1000))/1000)*$0.0004
+in 1.27 hours for a compute cost of \$5.18 and an io cost of \$2.28.
+(See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
+benchmarks in cloud settings.)
+
 
 \subsection{Case study: 1,063 spruce whole-genome samples}
 
