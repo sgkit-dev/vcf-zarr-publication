@@ -19,6 +19,7 @@ sav_colour = "tab:red"
 genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
 zarr_nshf_colour = "tab:cyan"
+zarr_lz4_nshf_colour = "tab:purple"
 two_bit_colour = "tab:pink"
 
 
@@ -137,6 +138,7 @@ def plot_total_cpu(
             "genozip": genozip_colour,
             "zarr": zarr_colour,
             "zarr_nshf": zarr_nshf_colour,
+            "zarr_lz4_nshf": zarr_lz4_nshf_colour,
             "savvy": sav_colour,
         }
     have_genozip = False
@@ -326,14 +328,15 @@ def whole_matrix_decode(time_data, output):
         "zarr": "Zarr (Zstd + BitShuffle)",
         "savvy": "Savvy",
         "zarr_nshf": "Zarr (Zstd)",
+        "zarr_lz4_nshf": "Zarr (LZ4)",
     }
     plot_total_cpu(
         ax1,
         df,
         toolname=name_map,
         time_units="m",
-        order=["zarr", "zarr_nshf", "savvy"],
-        label_y_offset={"savvy": -2},
+        order=["zarr", "zarr_nshf", "zarr_lz4_nshf", "savvy"],
+        label_y_offset={"savvy": -6, "zarr_lz4_nshf": -4},
     )
     df["genotypes_per_second"] = df["total_genotypes"] / df["user_time"]
     for tool in name_map.keys():

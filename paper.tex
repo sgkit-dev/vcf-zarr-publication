@@ -651,10 +651,14 @@ Turning off the BitShuffle filter for the Zarr dataset,
 however, leads to a substantial increase in decoding speed
 (3.9GiB/s) at the cost of a roughly 25\% increase in storage
 space (29.9GiB up from 22.1GiB for 1 million samples; data not
-shown). Given the relatively small contribution of genotypes to the
+shown). The LZ4 codec (again without BitShuffle) leads to slightly higher
+decoding speed, but at the cost of much larger storage requirements 
+(219GiB; data not shown).
+Given the relatively small contribution of genotypes to the
 overall storage of real datasets (see the Genomics England example)
-and the frequency that they are likely to be accessed, this
-would seem like a good tradeoff in most cases.
+and the frequency that they are likely to be accessed, using 
+Zstandard without BitShuffle 
+would seem like a good tradeoff in many cases.
 This ability to easily tune compression performance
 and decoding speed on a field-by-field basis is a major strong
 point of Zarr. The \texttt{vcf2zarr} utility also provides
