@@ -35,7 +35,7 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 	vcf2zarr encode $< $@ -p8 --max-memory=200GiB -v
 
 %.zarr.zip: %.zarr
-	7z a -tzip $@ $</.
+	7z a -mx0 -tzip $@ $</.
 
 %.noshuffle.zarr: %.icf
 	vcf2zarr mkschema $< | sed 's/"shuffle": 2/"shuffle": 0/g' > $@.schema.json
