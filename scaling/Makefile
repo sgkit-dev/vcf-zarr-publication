@@ -34,6 +34,10 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 %.zarr: %.icf
 	vcf2zarr encode $< $@ -p8 --max-memory=200GiB -v
 
+%.10kx1k.zarr: %.icf
+	vcf2zarr encode --samples-chunk-size=1000 --variants-chunk-size=10000 \
+		$< $@ -p8 --max-memory=200GiB -v
+
 %.zarr.zip: %.zarr
 	7z a -mx0 -tzip $@ $</.
 

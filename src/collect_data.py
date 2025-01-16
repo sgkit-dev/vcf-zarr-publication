@@ -597,7 +597,7 @@ def file_size(src, output, debug):
             "vcf": vcf_path,
             "bcf": bcf_path,
             "zarr": zarr_path,
-            "zarr_nshf": ts_path.with_suffix(".noshuffle.zarr"),
+            "zarr.zip": ts_path.with_suffix(".zarr.zip"),
             "sav": sav_path,
             "genozip": genozip_path,
         }
