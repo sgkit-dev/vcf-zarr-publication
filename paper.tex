@@ -1013,17 +1013,24 @@ in 1.27 hours for a compute cost of \$5.18 and an io cost of \$2.28.
 benchmarks in cloud settings.)
 
 \subsection{Case study: All of Us exome-like data} 
-The All of Us dataset comprises 245,388 clinical-grade whole genome sequences,
-identifying over 1 billion variants, including 3.9 million novel variants with
-coding consequences~\citep{all2024genomic}. 
-Participants are from the United States, with an emphasis
-on historically underrepresented genetic ancestry groups. The genomic data is
-of high quality, with an average coverage depth of 30x, and is linked to
-extensive health-related information, providing a valuable resource for
-biomedical research. For this study, we applied the bio2zarr compression method
-to the exome-like data for chromosome 20 from All of Us. This dataset, stored as a
-compressed VCF file of 7.44 GiB, includes 681,000 variants, of which 746 are
-classified as pathogenic or likely pathogenic.
+The All of Us dataset comprises 245,388 clinical-grade whole genome sequences (WGS), 
+identifying over 1 billion variants, including 3.9 million novel variants 
+with coding consequences~\citep{all2024genomic}. Participants are from the United States, 
+with an emphasis on historically underrepresented genetic ancestry groups. 
+The genomic data, generated through short-read sequencing on the Illumina NovaSeq 6000, 
+is of high quality, with an average coverage depth of 30x, and is linked to extensive 
+health-related information, providing a valuable resource for biomedical research. 
+WGS analysis is conducted on the Illumina DRAGEN platform, with alignment performed 
+using the GRCh38dh reference genome. GTC files are converted to VCF format using 
+Picard GtcToVcf, and every step of the WGS procedure is rigorously controlled by 
+predefined quality control measures.
+
+For this study, we applied the bio2zarr compression to the chromosome 20 exome-like 
+data from the All of Us dataset. The exome-like data is constructed by extracting from all WGS samples
+the SNP and indel variants that lie within the chromosome 20 exon regions of the Gencode v42 basic 
+transcripts. This dataset, stored as a compressed VCF file of 7.44 GiB, 
+includes 715,256 variants, of which 746 are classified as pathogenic or likely pathogenic.
+
 
 \begin{table}
 \caption{Summary for a selection of the largest VCF Zarr columns produced 
