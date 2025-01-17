@@ -353,7 +353,7 @@ employed in genetic data compression.
 The widely-used PLINK binary format stores genotypes in a 
 packed binary representation, supporting only biallelic
 variants without phase information.
-The PLINK 2 PGEN format~\citep{pgen2024} is more general
+The PLINK 2 PGEN format~\citep{rivas2024efficient} is more general
 and compact than PLINK, compressing variant data using specialised
 algorithms~\cite{sambo2014compression}.
 Methods have also been developed which store variation data 
@@ -474,9 +474,7 @@ arrays and chunks are stored hierarchically in directories
 and files (storage as a single Zip archive is also supported).
 To enable comparison with the existing file-based ecosystem
 of tools, we focus on Zarr's file system chunk storage in a series of illustrative 
-benchmarks in the following sections. 
-(See \citep{durbin2020task,moore2021ome,gowan2022using} for Zarr
-benchmarks in cloud settings.)
+benchmarks in the following sections before presenting cloud-based benchmarks. 
 We compare primarily with
 VCF/BCF based workflows using \texttt{bcftools} because this
 is the standard practice, used in the vast majority of cases.
@@ -651,10 +649,14 @@ Turning off the BitShuffle filter for the Zarr dataset,
 however, leads to a substantial increase in decoding speed
 (3.9GiB/s) at the cost of a roughly 25\% increase in storage
 space (29.9GiB up from 22.1GiB for 1 million samples; data not
-shown). Given the relatively small contribution of genotypes to the
+shown). The LZ4 codec (again without BitShuffle) leads to slightly higher
+decoding speed, but at the cost of much larger storage requirements 
+(219GiB; data not shown).
+Given the relatively small contribution of genotypes to the
 overall storage of real datasets (see the Genomics England example)
-and the frequency that they are likely to be accessed, this
-would seem like a good tradeoff in most cases.
+and the frequency that they are likely to be accessed, using 
+Zstandard without BitShuffle 
+would seem like a good tradeoff in many cases.
 This ability to easily tune compression performance
 and decoding speed on a field-by-field basis is a major strong
 point of Zarr. The \texttt{vcf2zarr} utility also provides
@@ -937,6 +939,8 @@ or a more specialised structure that supports overlap queries.
 % [Note: this is crazy that we still have a 19 second I/O wait. The
 % 5989 files for the POS chunks must be in cache already, so the delay
 % has to be the file system checking cache coherency.]
+% [Note BJ: The compute is on EC2 and storage is on-prem, I believe there is
+% no ec2-side cache and the link is saturated, hence the latency.]
 
 We then ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
 and~\ref{fig-subset-matrix-compute}) on the VCF file
@@ -955,7 +959,7 @@ concatenate the 106 VCF files. While af-dist itself is not a common operation,
 many tasks share this property
 of not being straightforwardly decomposable across multiple VCF files.
 
-Finally, to illustrate performance on a common filtering task, we 
+Additionally, to illustrate performance on a common filtering task, we 
 created a copy of the VCF chunk which contains only variants 
 that pass some common filtering criteria using
 \texttt{bcftools view -I --include "FORMAT/DP>10 \& FORMAT/GQ>20"},
@@ -985,8 +989,30 @@ present-day ``copy-oriented'' computing,
 to the ``mask-oriented'' analysis of large immutable, single-source
 datasets is a potentially transformational change enabled by Zarr.
 
-\subsection{Case study: Our Future Health genotype release}
+Finally, to explore the use of cloud computing services with VCF Zarr,
+the zarr files for chromosome 2 were uploaded to an AWS S3 standard bucket.
+Using a single-threaded process on an EC2 instance the benchmarks above were
+repeated. Extracting the position array required 15s CPU, 23.8s elapsed.
+The af-dist calculation required 2.70min CPU, 5.23min elapsed. Creating the filter mask
+required 3.05min CPU, 11.15min elapsed. These times are comparable to the on-premises
+HPC system above.
 
+This single-threaded approach is not optimal for cloud computing, as to optimise
+both runtime and costs parallel processing is required. Using 64 parallel processes
+on a single c5.24xlarge EC2 instance with 96 vCPUs (48 physical) the zarr chunks of
+genotype array could be retrived from S3 and decompressed at a rate of 50.8 GB/s.
+The network data rate was 127 MB/s, far below the capbility of the instance,
+indicating that this process was compute-constrained. When calculating af-dist after
+decompression the throughput was 24.6 GB/s. With this parallel approach the 
+af-dist calculation above was then completed in 4.12s elapsed time.
+This level of throughput would complete af-dist for all chromosomes for all samples
+% compute: $4.08 * 1.27
+% io: (((722000000/10000)*(79000/1000))/1000)*$0.0004
+in 1.27 hours for a compute cost of \$5.18 and an io cost of \$2.28.
+(See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
+benchmarks in cloud settings.)
+
+\subsection{Case study: Our Future Health genotype release}
 Our Future Health~\cite{ofhmain_2025} is the UK’s largest ever health research programme. 
 It is designed to help people live healthier lives for longer through the 
 discovery and testing of more effective approaches to prevention, earlier 
@@ -1008,6 +1034,61 @@ from 651,050 individuals on 707,522 variants. Here we use the genotype data from
 chromosome 22 to assess the performance of \texttt{vcf2zarr}. The dataset consists of
 three VCF files representing chunks of chromosome 22 split by 5,000 variants, totalling 
 10,221 variants. 
+
+\subsection{Case study: All of Us exome-like data} 
+The All of Us dataset comprises 245,388 clinical-grade whole genome sequences (WGS), 
+identifying over 1 billion variants, including 3.9 million novel variants 
+with coding consequences~\citep{all2024genomic}. Participants are from the United States, 
+with an emphasis on historically underrepresented genetic ancestry groups. 
+The genomic data, generated through short-read sequencing on the Illumina NovaSeq 6000, 
+is of high quality, with an average coverage depth of 30x, and is linked to extensive 
+health-related information, providing a valuable resource for biomedical research. 
+WGS analysis is conducted on the Illumina DRAGEN platform, with alignment performed 
+using the GRCh38dh reference genome. GTC files are converted to VCF format using 
+Picard GtcToVcf, and every step of the WGS procedure is rigorously controlled by 
+predefined quality control measures.
+
+For this study, we applied the bio2zarr compression to the chromosome 20 exome-like 
+data from the All of Us dataset. The exome-like data is constructed by extracting from all WGS samples
+the SNP and indel variants that lie within the chromosome 20 exon regions of the Gencode v42 basic 
+transcripts. This dataset, stored as a compressed VCF file of 7.44 GiB, 
+includes 715,256 variants, of which 746 are classified as pathogenic or likely pathogenic.
+
+
+\begin{table}
+\caption{Summary for a selection of the largest VCF Zarr columns produced 
+the from the 245,388 exome-like samples from chromosome 20
+using \texttt{vcf2zarr} and chunk sizes of 1,000 variants and 
+10,000 samples.
+For column details see the caption of Table~\ref{tab-genomics-england-data}.
+\label{tab-all-of-us-data}}
+\begin{tabular}{llS[table-format=3.2]S[table-format=3.2]S[table-format=3.2]}
+\toprule
+{Field} & {type} & {storage} & {compress} & {\%total} \\
+\midrule
+/call\_GQ & int8 & 1.89G & 87.0 & 45.94\% \\
+/call\_genotype & int8 & 914.22M & 370.0 & 21.70\% \\
+/call\_RGQ & int16 & 729.57M & 460.0 & 17.32\% \\
+/call\_genotype\_mask & bool & 606.02M & 550.0 & 14.39\% \\
+/call\_genotype\_phased & bool & 17.17M & 9700.0 & 0.41\% \\
+/variant\_allele & str & 4.74M & 110.0 & 0.11\% \\
+/variant\_filter & bool & 2.87M & 0.9 & 0.07\% \\
+% /variant\_AN & int32 & 908.75 K & 3.1 & 0.02\% \\
+% /variant\_position & int32 & 810.77 K & 3.4 & 0.02\% \\
+% /sample\_id & object & 357.15 K & 5.4 & 0.01\% \\
+% /variant\_length & int16 & 152.4 K & 9.2 & 0.00\% \\
+% /variant\_id & object & 56.18 K & 99.0 & 0.00\% \\
+% /variant\_quality & float32 & 51.92 K & 54.0 & 0.00\% \\
+% /variant\_id\_mask & bool & 51.89 K & 13.0 & 0.00\% \\
+% /variant\_contig & int16 & 50.6 K & 28.0 & 0.00\% \\
+% /region\_index & int32 & 13.93 K & 1.2 & 0.00\% \\
+% /contig\_length & int64 & 9.24 K & 2.8 & 0.00\% \\
+% /contig\_id & object & 8.33 K & 3.2 & 0.00\% \\
+% /filter\_id & object & 4.48 K & 0.0 & 0.00\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+>>>>>>> main
 
 \subsection{Case study: 1,063 spruce whole-genome samples}
 
@@ -1282,7 +1363,8 @@ GDAL~\citep{gdal_zarr},
 NetCDF~\citep{netcfd_c},
 N5~\citep{n5zarr}
 and xtensor~\citep{xtensor_zarr}
-as well as  standalone libraries for JavaScript~\cite{zarrjs},
+as well as  standalone libraries for 
+C++~\citep{ruan2024image}, JavaScript~\cite{zarrjs},
 Julia~\cite{zarrjl}, Rust~\citep{zarrs}
 and R~\cite{pizzarr}.
 
@@ -1337,8 +1419,9 @@ The Open Microscopy Environment has developed OME-Zarr~\cite{moore2023ome} as on
 of its ``next generation'' cloud ready file formats~\citep{moore2021ome}.
 OME-Zarr already has a rich suite of supporting
 tools~\cite{moore2023ome,rzepka2023toward}. 
-Zarr has also seen recent uptake 
-in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
+Zarr has also seen recent uptake in other large-scale processing for
+microscopy applications~\citep{ruan2024image}, as well as 
+single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
 and multimodal spatial omics
 data~\citep{marconato2024spatialdata,baker2023emobject}.
 Recent additions using Zarr include the application of deep learning
@@ -1723,7 +1806,7 @@ Total CPU time required to decode genotypes into memory using the Zarr-Python
 and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
 Elapsed time is also reported (dotted line). 
 This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
-3.9 GiB/s Zarr (Zstd), and 6.6 GiB/s for Savvy. 
+3.9 GiB/s Zarr (Zstd), 4.1 GiB/s Zarr (LZ4), and 6.6 GiB/s for Savvy. 
 \label{fig-whole-matrix-decode}}
 \end{figure}
 
