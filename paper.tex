@@ -1012,6 +1012,29 @@ in 1.27 hours for a compute cost of \$5.18 and an io cost of \$2.28.
 (See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
 benchmarks in cloud settings.)
 
+\subsection{Case study: Our Future Health genotype release}
+Our Future Health~\cite{ofhmain_2025} is the UK’s largest ever health research programme. 
+It is designed to help people live healthier lives for longer through the 
+discovery and testing of more effective approaches to prevention, earlier 
+detection and treatment of diseases.
+Our Future Health is inviting millions of people, from all backgrounds and 
+from right across the UK to take part. Volunteers are providing information 
+about their health and lifestyles to create an incredibly detailed picture 
+that represents the whole of the UK. 
+
+% this section is probably better placed in acknowledgements?
+This study makes use of de-identified data held by Our Future Health. 
+We would like to acknowledge all the research participants who have donated 
+their data to the Our Future Health research programme 
+\url{https://a.storyblok.com/f/228028/x/f45d0da22a/our-future-health-publication-policy-version-1_4.pdf}
+
+Release 9 (\url{https://ourfuturehealth.gitbook.io/our-future-health/data/data-releases/2024-data-releases/release-9}) 
+was made available in December 2024. The genetic component includes genotype data 
+from 651,050 individuals on 707,522 variants. Here we use the genotype data from 
+chromosome 22 to assess the performance of \texttt{vcf2zarr}. The dataset consists of
+three VCF files representing chunks of chromosome 22 split by 5,000 variants, totalling 
+10,221 variants. 
+
 \subsection{Case study: All of Us exome-like data} 
 The All of Us dataset comprises 245,388 clinical-grade whole genome sequences (WGS), 
 identifying over 1 billion variants, including 3.9 million novel variants 
