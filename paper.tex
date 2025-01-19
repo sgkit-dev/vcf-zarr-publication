@@ -1028,8 +1028,17 @@ predefined quality control measures.
 For this study, we applied the bio2zarr compression to the chromosome 20 exome-like 
 data from the All of Us dataset. The exome-like data is constructed by extracting from all WGS samples
 the SNP and indel variants that lie within the chromosome 20 exon regions of the Gencode v42 basic 
-transcripts. This dataset, stored as a compressed VCF file of 7.44 GiB, 
-includes 715,256 variants, of which 746 are classified as pathogenic or likely pathogenic.
+transcripts. This dataset, stored as a single compressed VCF file of 7.44 GiB, 
+includes 715,256 variants, of which more than 700 are classified as pathogenic or likely pathogenic.
+
+The compression was done on a single compute node with 64 CPUs and 416 GiB of RAM.
+We first converted the VCF to and ICF, which required 6h17min effective runtime and
+343 hours CPU time (parallel efficiency of 86\%), for a cost of \$23.88. The ICF 
+representation used a total of 7.5 GiB over 91,232 data storage files. We then 
+converted the ICF to Zarr (effective runtime: 50min32s, CPU time: 49h49min, 
+parallel efficiency: 92\%, cost: \$3.19), consuming a total of 13 GiB storage 
+over 36,9656 chunk files.
+
 
 
 \begin{table}
