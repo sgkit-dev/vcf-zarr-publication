@@ -1,5 +1,6 @@
 FIGURES=figures/data-scaling.pdf\
 	figures/whole-matrix-compute.pdf\
+	figures/whole-matrix-compute-zarr-versions.pdf\
 	figures/whole-matrix-decode.pdf\
 	figures/subset-matrix-compute.pdf\
 	figures/subset-matrix-compute-supplemental.pdf
@@ -91,6 +92,10 @@ figures/s3-throughput.pdf: plot_data/gel-s3-throughput.csv
 figures/whole-matrix-compute.pdf: plot_data/whole-matrix-compute.csv
 	python3 src/plot.py whole-matrix-compute plot_data/whole-matrix-compute.csv  \
 		figures/whole-matrix-compute.pdf
+
+figures/whole-matrix-compute-zarr-versions.pdf: plot_data/whole-matrix-compute-zarr-versions.csv
+	python3 src/plot.py whole-matrix-compute-zarr-versions plot_data/whole-matrix-compute-zarr-versions.csv  \
+		figures/whole-matrix-compute-zarr-versions.pdf
 
 figures/whole-matrix-decode.pdf: plot_data/whole-matrix-decode.csv
 	python3 src/plot.py whole-matrix-decode plot_data/whole-matrix-decode.csv  \

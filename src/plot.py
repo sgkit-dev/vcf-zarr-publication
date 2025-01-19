@@ -21,6 +21,9 @@ zarr_colour = "tab:blue"
 zarr_nshf_colour = "tab:cyan"
 zarr_lz4_nshf_colour = "tab:purple"
 two_bit_colour = "tab:pink"
+zarr_java_colour = "tab:olive"
+ts_py_colour = "tab:brown"
+ts_cpp_colour = "tab:gray"
 
 
 def one_panel_fig(**kwargs):
@@ -140,6 +143,9 @@ def plot_total_cpu(
             "zarr_nshf": zarr_nshf_colour,
             "zarr_lz4_nshf": zarr_lz4_nshf_colour,
             "savvy": sav_colour,
+            "zarr_java": zarr_java_colour,
+            "ts_py": ts_py_colour,
+            "ts_cpp": ts_cpp_colour,
         }
     have_genozip = False
     toolname = {} if toolname is None else toolname
@@ -311,6 +317,31 @@ def whole_matrix_compute(time_data, output):
 
     plt.savefig(output)
 
+@click.command()
+@click.argument("time_data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def whole_matrix_compute_zarr_versions(time_data, output):
+    """
+    Plot the figure showing compute performance on whole-matrix afdist for the zarr implementations.
+    """
+    df = pd.read_csv(time_data, index_col=False).sort_values("num_samples")
+    df = df[df.storage == "hdd"]
+
+    fig, ax1 = one_panel_fig()
+    name_map = {
+        "zarr": "zarr-python API",
+        "zarr_java": "zarr-java API",
+        "ts_py": "tensorstore Python API",
+        "ts_cpp": "tensorstore C++ API",
+    }
+    plot_total_cpu(
+        ax1,
+        df,
+        name_map,
+        order=["zarr", "zarr_java", "ts_py", "ts_cpp"],
+    )
+
+    plt.savefig(output)
 
 @click.command()
 @click.argument("time_data", type=click.File("r"))
@@ -597,6 +628,7 @@ def cli():
 cli.add_command(data_scaling)
 cli.add_command(s3_throughput)
 cli.add_command(whole_matrix_compute)
+cli.add_command(whole_matrix_compute_zarr_versions)
 cli.add_command(whole_matrix_decode)
 cli.add_command(column_extract)
 cli.add_command(subset_matrix_compute)
