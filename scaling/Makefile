@@ -15,7 +15,7 @@ all: data/chr21_10_1.zarr  \
 	data/chr21_10_3.icf  \
 	data/chr21_10_4.icf
 
-.PRECIOUS: %.tags.bcf %.bcf %.vcf.gz %.icf %.ts
+.PRECIOUS: %.tags.bcf %.bcf %.vcf.gz %.icf %.ts %.zarr
 
 data/chr21_10_1.ts: simulated_chrom_21.ts
 	python3 subset_trees.py
@@ -36,7 +36,7 @@ data/chr21_10_1.ts: simulated_chrom_21.ts
 
 %.10kx1k.zarr: %.icf
 	vcf2zarr encode --samples-chunk-size=1000 --variants-chunk-size=10000 \
-		$< $@ -p8 --max-memory=200GiB -v
+		$< $@ -p4 --max-memory=200GiB -v
 
 %.zarr.zip: %.zarr
 	7z a -mx0 -tzip $@ $</.
