@@ -638,6 +638,15 @@ decode_tools = all_tools[:2] + [
         None,
         run_zarr_decode,
         run_zarr_pos_extract,
+    ),
+    Tool(
+        "zarr.zip",
+        ".zarr.zip",
+        run_zarr_afdist,
+        run_zarr_afdist_subset,
+        None,
+        run_zarr_decode,
+        run_zarr_pos_extract,
     )
 ]
 
