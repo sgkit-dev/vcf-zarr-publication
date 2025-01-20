@@ -460,11 +460,11 @@ specification.
 \caption{Compression performance on simulated genotypes.
 Comparison of total stored bytes for VCF data produced 
 by subsets of a large simulation of French-Canadians.
-Sizes for $10^6$ samples are shown on the right. Sizes 
-for Savvy (21.25GiB) and Zarr (22.06GiB) are very similar.
+Sizes for $10^6$ samples are shown on the right.
 Also shown for reference is the size of genotype matrix 
 when encoded as two bits per diploid genotype (2bit), as used 
-in the PLINK binary format.
+in the PLINK binary format. Default compression settings were 
+used in all cases.
 \label{fig-data-storage}}
 \end{figure}
 
@@ -524,7 +524,10 @@ performance over VCF (note the log-log scale). Genozip has
 superb compression, having far smaller file sizes that the 
 other methods (although somewhat losing its advantage at 
 larger sample sizes). Zarr and Savvy have 
-almost identical compression performance in this example.
+very similar compression performance in this example (23.75GiB
+and 21.25GiB for $10^6$ samples, respectively). When using
+a chunk size of $10^4$ variants $\times$ $10^3$ samples, Zarr
+storage is reduced to 22.07GiB (not shown).
 It is remarkable that the simple approach of compressing
 two dimensional chunks of the genotype matrix 
 using the Zstandard compressor~\citep{collet2021rfc} and the 
@@ -1822,7 +1825,7 @@ Total CPU time required to decode genotypes into memory using the Zarr-Python
 and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
 Elapsed time is also reported (dotted line). 
 This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
-3.9 GiB/s Zarr (Zstd), 4.1 GiB/s Zarr (LZ4), and 6.6 GiB/s for Savvy. 
+2.7 GiB/s Zarr (Zstd), 2.9 GiB/s Zarr (LZ4), and 6.6 GiB/s for Savvy. 
 \label{fig-whole-matrix-decode}}
 \end{figure}
 
