@@ -637,20 +637,28 @@ C++ program written using the Savvy API. This would largely seem
 to be due to Savvy's excellent genotype decoding performance
 % zarr 1.2 GiB
 % savvy 6.6 GiB
-% zarr_nshf 3.9 GiB
+% zarr_nshf 2.7 GiB
+% zarr_lz4_nshf 2.9 GiB
 (up to 6.6GiB/s vs 1.2GiB/s for Zarr on this dataset;
 Fig~\ref{fig-whole-matrix-decode}).
-% sequence_length  num_samples  num_sites       tool       size
-% 40         48129895      1000000    7254858       zarr  22.071687
-% 35         48129895      1000000    7254858        bcf  51.749294
-% 36         48129895      1000000    7254858    genozip  10.691384
-% 37         48129895      1000000    7254858        sav  21.249436
-% 38         48129895      1000000    7254858        tsk   1.802636
-% 39         48129895      1000000    7254858        vcf  81.375831
-% 41         48129895      1000000    7254858  zarr_nshf  29.897540
+% sav / zarr ratio: [0.68777206 0.75870945 0.69865406 0.64644888 0.68131752
+% 0.89460906]
+%     sequence_length  num_samples  num_sites                tool         size
+% 58         48129895      1000000    7254858                zarr    23.752762
+% 50         48129895      1000000    7254858         10kx1k.zarr    22.068925
+% 51         48129895      1000000    7254858                 bcf    51.749294
+% 52         48129895      1000000    7254858             genozip    10.691384
+% 53         48129895      1000000    7254858  lz4.noshuffle.zarr   214.868005
+% 54         48129895      1000000    7254858      noshuffle.zarr    31.208149
+% 55         48129895      1000000    7254858                 sav    21.249436
+% 56         48129895      1000000    7254858                 tsk     1.802636
+% 57         48129895      1000000    7254858                 vcf    81.375831
+% 59         48129895      1000000    7254858            zarr.zip    24.240338
+% 5          48129895      1000000    7254858                2bit  1689.153258
+[TODO revise this text!!]
 Turning off the BitShuffle filter for the Zarr dataset,
 however, leads to a substantial increase in decoding speed
-(3.9GiB/s) at the cost of a roughly 25\% increase in storage
+(2.9GiB/s) at the cost of a roughly 25\% increase in storage
 space (29.9GiB up from 22.1GiB for 1 million samples; data not
 shown). The LZ4 codec (again without BitShuffle) leads to slightly higher
 decoding speed, but at the cost of much larger storage requirements 
@@ -665,6 +673,29 @@ and decoding speed on a field-by-field basis is a major strong
 point of Zarr. The \texttt{vcf2zarr} utility also provides
 functionality to aid with such storage schema tuning.
 
+A substantial advantage of Zarr is the availabilty of several 
+independent implementations across different programming languages
+(see Methods). Figure~\ref{fig-whole-matrix-compute-zarr-versions}
+compares the CPU time required to perform the computations
+of Figure~\ref{fig-whole-matrix-compute} 
+for af-dist implementations using the Zarr-Python~\cite{zarrpython},
+JZarr~\cite{jzarr},
+and TensorStore~\citep{tensorstore} (C++ and Python) libraries.
+The version using the Tensorstore C++ API is fastest, requiring 
+about 20\% less time than Zarr-Python (which is used in other
+benchmarks).
+
+% num_samples  num_sites       tool  user_time  sys_time     wall_time
+% storage  total_time
+% 22      1000000    7254858       zarr   16709.55     38.14  16910.057917
+% hdd    4.652136
+% 20      1000000    7254858     ts_cpp   13233.50     92.81  13573.456810
+% hdd    3.701753
+% 21      1000000    7254858  zarr_java   43780.50    245.28  44134.462377
+% hdd   12.229383
+% 23      1000000    7254858      ts_py   18027.43    642.40  19163.174182
+% hdd    5.186064
+% Cpp / Zarr python [0.79197226]
 
 \subsection{Subsetting the genotype matrix}
 \begin{figure}[t]
@@ -1383,7 +1414,9 @@ NetCDF~\citep{netcfd_c},
 N5~\citep{n5zarr}
 and xtensor~\citep{xtensor_zarr}
 as well as  standalone libraries for 
-C++~\citep{ruan2024image}, JavaScript~\cite{zarrjs},
+C++~\citep{ruan2024image}, 
+Java~\cite{jzarr},
+JavaScript~\cite{zarrjs},
 Julia~\cite{zarrjl}, Rust~\citep{zarrs}
 and R~\cite{pizzarr}.
 
@@ -1827,6 +1860,20 @@ Elapsed time is also reported (dotted line).
 This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
 2.7 GiB/s Zarr (Zstd), 2.9 GiB/s Zarr (LZ4), and 6.6 GiB/s for Savvy. 
 \label{fig-whole-matrix-decode}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/whole-matrix-compute-zarr-versions}
+\caption{Whole-matrix computation performance using different Zarr 
+implementations. 
+Total CPU time required to run the af-dist calculation
+the data in Figure~\ref{fig-data-storage} using different Zarr implementations.
+Elapsed time is also reported (dotted line). 
+These benchmarks were run on [TODO insert hardware details].
+Note the difference between the
+time reported here and in Fig~\ref{fig-whole-matrix-compute} for Zarr-Python
+is due to different hardware platforms.
+\label{fig-whole-matrix-compute-zarr-versions}}
 \end{figure}
 
 \begin{figure}[h]
