@@ -90,31 +90,32 @@ def plot_size(ax, df, label_y_offset=None, order=None):
     ax.set_ylabel("Storage size (bytes)")
     plt.tight_layout()
 
+
 def plot_s3_throughput(ax, df):
     ax.loglog(
         df["processes"].values,
         df["throughput_decompress"].values,
         marker=".",
-        label="Decompression only"
+        label="Decompression only",
     )
     ax.annotate(
         f"{df['throughput_decompress'][6]:.0f} MB/s",
         textcoords="offset points",
         xytext=(-8, -10),
-        xy=(df['processes'][6], df['throughput_decompress'][6]),
+        xy=(df["processes"][6], df["throughput_decompress"][6]),
         xycoords="data",
     )
     ax.loglog(
         df["processes"].values,
         df["throughput_afdist"].values,
         marker=".",
-        label="AF Dist"
+        label="AF Dist",
     )
     ax.annotate(
         f"{df['throughput_afdist'][6]:.0f} MB/s",
         textcoords="offset points",
         xytext=(-8, -10),
-        xy=(df['processes'][6], df['throughput_afdist'][6]),
+        xy=(df["processes"][6], df["throughput_afdist"][6]),
         xycoords="data",
     )
 
@@ -133,6 +134,7 @@ def plot_total_cpu(
     extrapolate=None,
     order=None,
     label_y_offset=None,
+    side_digits=None,
 ):
     if colours is None:
         colours = {
@@ -185,8 +187,14 @@ def plot_total_cpu(
 
         if tool not in extrapolate:
             time = total_cpu[-1] / divisors[time_units]
+            if side_digits is None:
+                digits = 0 if time > 1 else 1
+            else:
+                digits = side_digits
+
+            side_label = f"{time:.{digits}f}{time_units}"
             ax.annotate(
-                f"{time:.0f}{time_units}" if time > 1 else f"{time:.1f}{time_units}",
+                side_label,
                 textcoords="offset points",
                 xytext=(15, label_y_offset.get(tool, 0)),
                 xy=(row.num_samples, total_cpu[-1]),
@@ -263,13 +271,14 @@ def data_scaling(size_data, output):
     df1 = pd.concat([df1, pd.DataFrame(plink_ish)])
 
     fig, ax1 = one_panel_fig()
-    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
+    plot_size(ax1, df1, label_y_offset={"vcf": 4, "bcf":1, "sav": -5.5, "genozip": -7})
 
     # I tried putting an inset axis showing the ratio, but it was too small.
     # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
     # ax_inset.semilogx(sav["num_samples"], ratio)
 
     plt.savefig(output)
+
 
 @click.command()
 @click.argument("data", type=click.File("r"))
@@ -317,6 +326,7 @@ def whole_matrix_compute(time_data, output):
 
     plt.savefig(output)
 
+
 @click.command()
 @click.argument("time_data", type=click.File("r"))
 @click.argument("output", type=click.Path())
@@ -329,19 +339,24 @@ def whole_matrix_compute_zarr_versions(time_data, output):
 
     fig, ax1 = one_panel_fig()
     name_map = {
-        "zarr": "zarr-python API",
-        "zarr_java": "zarr-java API",
-        "ts_py": "tensorstore Python API",
-        "ts_cpp": "tensorstore C++ API",
+        "zarr_java": "JZarr",
+        "ts_py": "Tensorstore Python",
+        "zarr": "Zarr-python",
+        "ts_cpp": "Tensorstore C++",
     }
     plot_total_cpu(
         ax1,
         df,
         name_map,
-        order=["zarr", "zarr_java", "ts_py", "ts_cpp"],
+        order=["zarr_java", "ts_py", "zarr", "ts_cpp"],
+        label_y_offset={"ts_cpp": -9, "zarr": -5},
+        side_digits=2,
     )
-
     plt.savefig(output)
+    cpp = df[(df["tool"] == "ts_cpp") & (df["num_samples"] == 10**6)].user_time
+    zp = df[(df["tool"] == "zarr") & (df["num_samples"] == 10**6)].user_time
+    print("Cpp / Zarr python", cpp.values / zp.values)
+
 
 @click.command()
 @click.argument("time_data", type=click.File("r"))
@@ -442,8 +457,9 @@ def subset_matrix_compute(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n10", extrapolate=[],
-            label_y_offset={"savvy":-1})
+    run_subset_matrix_plot(
+        data, output, "n10", extrapolate=[], label_y_offset={"savvy": -1}
+    )
 
 
 @click.command()
@@ -453,8 +469,13 @@ def subset_matrix_compute_supplemental(data, output):
     """
     Plot the figure showing compute performance on subsets of matrix afdist.
     """
-    run_subset_matrix_plot(data, output, "n/2", extrapolate=["genozip"],
-            label_y_offset={"savvy": 2, "zarr": -2.5})
+    run_subset_matrix_plot(
+        data,
+        output,
+        "n/2",
+        extrapolate=["genozip"],
+        label_y_offset={"savvy": 2, "zarr": -2.5},
+    )
 
 
 @click.command()
