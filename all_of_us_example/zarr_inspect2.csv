@@ -1,0 +1,25 @@
+name,dtype,stored,size,ratio,nchunks,chunk_size,avg_chunk_stored,shape,chunk_shape,compressor,filters
+/call_LAD,int16,2.26 GiB,653.86 GiB, 2.9e+02,17900,37.41 MiB,132.17 KiB,"(715256, 245394, 2)","(1000, 10000, 2)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_GQ,int8,1.89 GiB,163.47 GiB, 87,17900,9.35 MiB,110.55 KiB,"(715256, 245394)","(1000, 10000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_LA,int8,1.24 GiB,326.93 GiB, 2.6e+02,17900,18.7 MiB,72.64 KiB,"(715256, 245394, 2)","(1000, 10000, 2)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_genotype,int8,914.22 MiB,326.93 GiB, 3.7e+02,17900,18.7 MiB,52.3 KiB,"(715256, 245394, 2)","(1000, 10000, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_RGQ,int16,729.57 MiB,326.93 GiB, 4.6e+02,17900,18.7 MiB,41.74 KiB,"(715256, 245394)","(1000, 10000)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_genotype_mask,bool,606.02 MiB,326.93 GiB, 5.5e+02,17900,18.7 MiB,34.67 KiB,"(715256, 245394, 2)","(1000, 10000, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_genotype_phased,bool,17.17 MiB,163.47 GiB, 9.7e+03,17900,9.35 MiB,1005 bytes,"(715256, 245394)","(1000, 10000)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_AF,float32,5.95 MiB,256.48 MiB, 43,716,366.81 KiB,8.51 KiB,"(715256, 94)","(1000, 94)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_homozygote_count,int32,4.78 MiB,259.21 MiB, 54,716,370.71 KiB,6.83 KiB,"(715256, 95)","(1000, 95)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_allele,object,4.74 MiB,518.41 MiB, 1.1e+02,716,741.42 KiB,6.78 KiB,"(715256, 95)","(1000, 95)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_AC,int32,4.24 MiB,256.48 MiB, 61,716,366.81 KiB,6.06 KiB,"(715256, 94)","(1000, 94)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_filter,bool,2.87 MiB,2.73 MiB, 0.95,716,3.9 KiB,4.1 KiB,"(715256, 4)","(1000, 4)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_AN,int32,904.75 KiB,2.73 MiB, 3.1,716,3.9 KiB,1.26 KiB,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_position,int32,806.77 KiB,2.73 MiB, 3.5,716,3.9 KiB,1.13 KiB,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/sample_id,object,357.15 KiB,1.87 MiB, 5.4,25,76.69 KiB,14.29 KiB,"(245394,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_length,int16,148.4 KiB,1.36 MiB, 9.4,716,1.95 KiB,212 bytes,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_id,object,52.18 KiB,5.46 MiB, 1.1e+02,716,7.8 KiB,74 bytes,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_quality,float32,47.92 KiB,2.73 MiB, 58,716,3.9 KiB,68 bytes,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_id_mask,bool,47.89 KiB,698.49 KiB, 15,716,998.9608938547486 bytes,68 bytes,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_contig,int16,46.6 KiB,1.36 MiB, 30,716,1.95 KiB,66 bytes,"(715256,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/region_index,int32,13.93 KiB,16.78 KiB, 1.2,1,16.78 KiB,13.93 KiB,"(716, 6)","(716, 6)","Blosc(cname='zstd', clevel=9, shuffle=NOSHUFFLE, blocksize=0)",None
+/contig_length,int64,9.24 KiB,26.3 KiB, 2.8,1,26.3 KiB,9.24 KiB,"(3366,)","(3366,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",None
+/contig_id,object,8.33 KiB,26.3 KiB, 3.2,1,26.3 KiB,8.33 KiB,"(3366,)","(3366,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
+/filter_id,object,4.48 KiB,32 bytes, 0.007,1,32.0 bytes,4.48 KiB,"(4,)","(4,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
