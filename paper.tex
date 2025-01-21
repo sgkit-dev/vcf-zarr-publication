@@ -527,7 +527,9 @@ larger sample sizes). Zarr and Savvy have
 very similar compression performance in this example (23.75GiB
 and 21.25GiB for $10^6$ samples, respectively). When using
 a chunk size of $10^4$ variants $\times$ $10^3$ samples, Zarr
-storage is reduced to 22.07GiB (not shown).
+storage is reduced to 22.07GiB for $10^6$ samples (data not shown;
+see Figs~\ref{fig-compression-chunksize} and \ref{fig-compression-chunksize-finegrained}
+for more analysis on the effect of chunk size on compression).
 It is remarkable that the simple approach of compressing
 two dimensional chunks of the genotype matrix 
 using the Zstandard compressor~\citep{collet2021rfc} and the 
@@ -655,14 +657,13 @@ Fig~\ref{fig-whole-matrix-decode}).
 % 57         48129895      1000000    7254858                 vcf    81.375831
 % 59         48129895      1000000    7254858            zarr.zip    24.240338
 % 5          48129895      1000000    7254858                2bit  1689.153258
-[TODO revise this text!!]
 Turning off the BitShuffle filter for the Zarr dataset,
 however, leads to a substantial increase in decoding speed
-(2.9GiB/s) at the cost of a roughly 25\% increase in storage
-space (29.9GiB up from 22.1GiB for 1 million samples; data not
+(2.7GiB/s) at the cost of a roughly 25\% increase in storage
+space (31.2GiB up from 23.75GiB for 1 million samples; data not
 shown). The LZ4 codec (again without BitShuffle) leads to slightly higher
-decoding speed, but at the cost of much larger storage requirements 
-(219GiB; data not shown).
+decoding speed (2.9GiB/s), but at the cost of much larger storage requirements 
+(214GiB; data not shown).
 Given the relatively small contribution of genotypes to the
 overall storage of real datasets (see the Genomics England example)
 and the frequency that they are likely to be accessed, using 
@@ -673,7 +674,7 @@ and decoding speed on a field-by-field basis is a major strong
 point of Zarr. The \texttt{vcf2zarr} utility also provides
 functionality to aid with such storage schema tuning.
 
-A substantial advantage of Zarr is the availabilty of several 
+Another advantage of Zarr is the availabilty of several 
 independent implementations across different programming languages
 (see Methods). Figure~\ref{fig-whole-matrix-compute-zarr-versions}
 compares the CPU time required to perform the computations

@@ -271,7 +271,7 @@ def data_scaling(size_data, output):
     df1 = pd.concat([df1, pd.DataFrame(plink_ish)])
 
     fig, ax1 = one_panel_fig()
-    plot_size(ax1, df1, label_y_offset={"vcf": 4, "sav": -5.5, "genozip": -7})
+    plot_size(ax1, df1, label_y_offset={"vcf": 4, "bcf":1, "sav": -5.5, "genozip": -7})
 
     # I tried putting an inset axis showing the ratio, but it was too small.
     # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
