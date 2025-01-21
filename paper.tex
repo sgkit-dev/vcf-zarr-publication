@@ -674,28 +674,56 @@ and decoding speed on a field-by-field basis is a major strong
 point of Zarr. The \texttt{vcf2zarr} utility also provides
 functionality to aid with such storage schema tuning.
 
+The discrepancy between elapsed time and total CPU time for Zarr 
+benchmarks in
+Figs~\ref{fig-whole-matrix-compute}--~\ref{fig-column-extract}
+and~\ref{fig-whole-matrix-decode} are mostly due to the overhead
+of accessing a large number of small chunk files and the reduced
+effectiveness of file-system read-ahead caching.
+While having many independent chunks maps 
+naturally to high-performance parallel access patterns
+in the cloud store setting~\citep{durner2023exploiting} 
+(see also the section on accessing Genomics England data stored on S3), 
+such file access patterns can be problematic in the 
+classical file-system setting.
+The Zarr Zip store (which is simply a Zip archive of the standard directory 
+hierarchy) provides a useful alternative here and can 
+significantly reduce overall processing time. To illustrate this
+we repeated the benchmarks in Fig~\ref{fig-whole-matrix-decode} in
+which we measure the time required to decode the entire genotype
+matrix (thus serving as a lower-bound for any subsequent computations).
+In the case of $10^6$ samples, the Zip file requires slightly more 
+% Full data table above ^
+% 58         48129895      1000000    7254858                zarr    23.752762
+% 59         48129895      1000000    7254858            zarr.zip    24.240338
+storage space than the directory hierarchy (23.75GiB and 24.24G
+for file system and Zip file, respectively)
+and while total 
+CPU time is similar (193m vs 187m), the elapsed wall clock
+time for the Zip file version is significantly less 
+(258m vs 188m).
+        % tool  user_time  sys_time    cpu_time   wall_time
+% 11      zarr   11383.82    191.01  192.913833  258.598778
+% 29  zarr.zip   11198.37     43.13  187.358333  188.659252
+
 Another advantage of Zarr is the availabilty of several 
 independent implementations across different programming languages
-(see Methods). Figure~\ref{fig-whole-matrix-compute-zarr-versions}
+(see Methods). Fig~\ref{fig-whole-matrix-compute-zarr-versions}
 compares the CPU time required to perform the computations
-of Figure~\ref{fig-whole-matrix-compute} 
+of Fig~\ref{fig-whole-matrix-compute} 
 for af-dist implementations using the Zarr-Python~\cite{zarrpython},
 JZarr~\cite{jzarr},
 and TensorStore~\citep{tensorstore} (C++ and Python) libraries.
-The program using the Tensorstore C++ API is fastest, being 
-about 20\% faster than the version using Zarr-Python and Numba
+The program using the Tensorstore C++ API is fastest, requiring 
+about 20\% less CPU time than the version using Zarr-Python and Numba
 used in our other benchmarks.
 
 % num_samples  num_sites       tool  user_time  sys_time     wall_time
 % storage  total_time
-% 22      1000000    7254858       zarr   16709.55     38.14  16910.057917
-% hdd    4.652136
-% 20      1000000    7254858     ts_cpp   13233.50     92.81  13573.456810
-% hdd    3.701753
-% 21      1000000    7254858  zarr_java   43780.50    245.28  44134.462377
-% hdd   12.229383
-% 23      1000000    7254858      ts_py   18027.43    642.40  19163.174182
-% hdd    5.186064
+% 22      1000000    7254858       zarr   16709.55     38.14  16910.057917 hdd    4.652136
+% 20      1000000    7254858     ts_cpp   13233.50     92.81  13573.456810 hdd    3.701753
+% 21      1000000    7254858  zarr_java   43780.50    245.28  44134.462377 hdd   12.229383
+% 23      1000000    7254858      ts_py   18027.43    642.40  19163.174182 hdd    5.186064
 % Cpp / Zarr python [0.79197226]
 
 \subsection{Subsetting the genotype matrix}
