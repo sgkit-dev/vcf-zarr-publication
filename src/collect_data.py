@@ -351,7 +351,8 @@ def zarr_pos_extract_worker(ds_path, memory_only, debug, conn):
 
 
 def zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn):
-    return _zarr_afdist_subset_worker(ds_path, variant_slice, sample_slice, debug, conn)
+    root = zarr.open(ds_path)
+    return _zarr_afdist_subset_worker(root, variant_slice, sample_slice, debug, conn)
 
 
 # TODO refactor this stuff for running Zarr - lots of ugly duplication
