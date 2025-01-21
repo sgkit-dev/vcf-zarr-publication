@@ -20,6 +20,7 @@ genozip_colour = "tab:purple"
 zarr_colour = "tab:blue"
 zarr_nshf_colour = "tab:cyan"
 zarr_lz4_nshf_colour = "tab:purple"
+zarr_zip_colour = "tab:green"
 two_bit_colour = "tab:pink"
 zarr_java_colour = "tab:olive"
 ts_py_colour = "tab:brown"
@@ -144,6 +145,7 @@ def plot_total_cpu(
             "zarr": zarr_colour,
             "zarr_nshf": zarr_nshf_colour,
             "zarr_lz4_nshf": zarr_lz4_nshf_colour,
+            "zarr.zip": zarr_zip_colour,
             "savvy": sav_colour,
             "zarr_java": zarr_java_colour,
             "ts_py": ts_py_colour,
@@ -271,7 +273,7 @@ def data_scaling(size_data, output):
     df1 = pd.concat([df1, pd.DataFrame(plink_ish)])
 
     fig, ax1 = one_panel_fig()
-    plot_size(ax1, df1, label_y_offset={"vcf": 4, "bcf":1, "sav": -5.5, "genozip": -7})
+    plot_size(ax1, df1, label_y_offset={"vcf": 4, "bcf": 1, "sav": -5.5, "genozip": -7})
 
     # I tried putting an inset axis showing the ratio, but it was too small.
     # ax_inset = ax1.inset_axes([0.70, 0.1, 0.25, 0.25])
@@ -390,6 +392,13 @@ def whole_matrix_decode(time_data, output):
         print(tool, humanize.naturalsize(max_rate, binary=True))
 
     plt.savefig(output)
+
+    df["cpu_time"] = df["user_time"] + df["sys_time"]
+    df = df[((df.tool == "zarr") | (df.tool == "zarr.zip")) & (df.num_samples == 10**6)]
+    dfs = df[["tool", "user_time", "sys_time", "cpu_time", "wall_time"]].copy()
+    dfs["wall_time"] /= 60
+    dfs["cpu_time"] /= 60
+    print(dfs)
 
 
 @click.command()
