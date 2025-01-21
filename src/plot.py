@@ -93,36 +93,61 @@ def plot_size(ax, df, label_y_offset=None, order=None):
 
 
 def plot_s3_throughput(ax, df):
+
+    GB = 2**30
+
+    argmax = 6
     ax.loglog(
         df["processes"].values,
         df["throughput_decompress"].values,
         marker=".",
         label="Decompression only",
+        base=2,
     )
+    ax.plot(
+        df["processes"][argmax],
+        df["throughput_decompress"][argmax],
+        marker="+",
+        color="black",
+    )
+    maxval = df["throughput_decompress"][argmax]
     ax.annotate(
-        f"{df['throughput_decompress'][6]:.0f} MB/s",
+        f"{maxval / GB:.1f} GiB/s",
         textcoords="offset points",
         xytext=(-8, -10),
-        xy=(df["processes"][6], df["throughput_decompress"][6]),
+        xy=(df["processes"][argmax], df["throughput_decompress"][argmax]),
         xycoords="data",
     )
     ax.loglog(
         df["processes"].values,
         df["throughput_afdist"].values,
         marker=".",
-        label="AF Dist",
+        label="Compute af-dist",
+        base=2,
     )
+    argmax = 7
+    ax.plot(
+        df["processes"][argmax],
+        df["throughput_afdist"][argmax],
+        marker="+",
+        color="black",
+    )
+    maxval = df["throughput_afdist"][argmax]
     ax.annotate(
-        f"{df['throughput_afdist'][6]:.0f} MB/s",
+        f"{maxval / GB:.1f} GiB/s",
         textcoords="offset points",
         xytext=(-8, -10),
-        xy=(df["processes"][6], df["throughput_afdist"][6]),
+        xy=(df["processes"][argmax], df["throughput_afdist"][argmax]),
         xycoords="data",
     )
 
+    ax.set_xticks(df["processes"].values)
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    # ax.set_xticklabels(labels)
+
     ax.legend()
     ax.set_xlabel("Number of processes")
-    ax.set_ylabel("Genotype data throughput (MB/s)")
+    ax.set_ylabel("Genotype data throughput (bytes/s)")
     plt.tight_layout()
 
 
@@ -290,13 +315,14 @@ def s3_throughput(data, output):
     Plot the figure showing compute performance on whole-matrix afdist.
     """
     df = pd.read_csv(data, index_col=False).sort_values("processes")
+    print(df)
+    # Data in here is power-of-10 MB/s, so convert back to bytes per
+    # second for consistency
+    df["throughput_decompress"] *= 1000**2
+    df["throughput_afdist"] *= 1000**2
 
     fig, ax1 = one_panel_fig()
-    plot_s3_throughput(
-        ax1,
-        df,
-    )
-
+    plot_s3_throughput(ax1, df)
     plt.savefig(output)
 
 
