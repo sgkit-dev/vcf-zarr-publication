@@ -757,8 +757,12 @@ the variant\_position array into a NumPy array, and then wrote to
 a text file using the Pandas \texttt{write\_csv} method. 
 Zarr CPU time is dominated by writing the text output; we also show
 the time required to populate a NumPy array with the data in Zarr,
-which is less than a second. Wall-clock time (dotted line) is dominated 
-in this case by file I/O. Time to output text for Savvy is not significant
+which is 2 seconds. Wall-clock time (dotted line) is dominated 
+in this case by file I/O. Note that our benchmarking methodology of 
+dropping the file system caches before each run (see Methods) is
+likely not reflective of real world usage where a small and 
+frequently used field such as POS would remain in cache.
+Time to output text for Savvy is not significant
 for $> 1000$ samples (not shown).
 \label{fig-column-extract}}
 \end{figure}
