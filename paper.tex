@@ -1122,52 +1122,57 @@ the genotypes include the PL field.
 Following the conversion process detailed in the previous section, we
 first converted the 165 VCF files (7.33TiB) to ICF, followed by
 conversion to Zarr. The tasks were run as single jobs on a compute
-node with 2,048 GB RAM and 128 cores. Conversion to ICF required
-13h45min runtime. The ICF representation used a total of 6.77 TiB over
-1,342,569 data storage files. Conversion to Zarr required 18h51min
-runtime, generating a dataset with 32 arrays, consuming a total of 6.6
-TiB storage over 11,984,581 chunk files. The reduction in total
-storage (1.1X) is negligible, mainly due to the inherent difficulty in
-compressing the PL field. The top fields in terms of storage are
-detailed in Table~\ref{tab-spruce-data}.
+node with 512 GB RAM and 128 cores using 120 cores. Conversion to ICF
+required 13h45min runtime. The ICF representation used a total of 6.77
+TiB over 1,340,804 data storage files. Conversion to Zarr required
+18h36min runtime, generating a dataset with 32 arrays, consuming a
+total of 6.6 TiB storage over 10,861,038 chunk files. The reduction in
+total storage (1.1X) is negligible, mainly due to the inherent
+difficulty in compressing the PL field. The output dataset storage
+size is dominated by a major component, call\_PL, which accounts for
+nearly 93\% of the total. call\_PL is yet another field with low
+compression potential due to inherent noisiness.
+
+Therefore, to reduce storage
+requirements we generated a Zarr schema for encoding that uses local
+allele fields with \texttt{vcf2zarr mkschema --local-alleles}, and
+used the generated schema as input to \texttt{vcf2zarr encode}. Zarr conversion required 14h09min runtime, generating a dataset with 35 arrays, consuming a total of 2.3TiB storage over 11,235,556 chunk files, with a reduction in storage of 3.2X. Therefore, by using local allele fields we achieve approximately 3X improvement of compression. The top fields in terms of storage are detailed in Table~\ref{tab-spruce-data}.
 
 \begin{table}
 \caption{Summary for a selection of the largest VCF Zarr columns produced for 
-1,063 VCFs on 12 spruce chromosomes using \texttt{vcf2zarr}
-default settings. For column details see the caption of Table~\ref{tab-genomics-england-data}.
+1,063 VCFs on 12 spruce chromosomes using \texttt{vcf2zarr} with samples chunk size set to 1,063 , variants chunk size to 10,000, and using local allele fields to reduce output size. For column details see the caption of Table~\ref{tab-genomics-england-data}.
 \label{tab-spruce-data}}
+
 \begin{tabular}{llS[table-format=3.1]S[table-format=3.2]S[table-format=3.2]}
 \toprule
-{Field} & {type} & {storage} & {compress} & {\%total} \\
-  \midrule
-  /call\_PL & int16 & 6.1 TiB & 12.0 & 92.75\% \\
-  /call\_genotype & int8 & 282.5 GiB & 26.0 & 4.18\% \\
-  /call\_genotype\_mask & bool & 42.2 GiB & 180.0 & 0.62\% \\
-  /variant\_DP4 & int32 & 26.2 GiB & 2.1 & 0.39\% \\
-  /variant\_MQSBZ & float32 & 13.1 GiB & 1.1 & 0.19\% \\
-  /variant\_RPBZ & float32 & 13.0 GiB & 1.1 & 0.19\% \\
-  /variant\_MQBZ & float32 & 13.0 GiB & 1.1 & 0.19\% \\
-  /variant\_SCBZ & float32 & 12.9 GiB & 1.1 & 0.19\% \\
-  /variant\_VDB & float32 & 12.8 GiB & 1.1 & 0.19\% \\
-  /variant\_quality & float32 & 12.8 GiB & 1.1 & 0.19\% \\
-  /variant\_BQBZ & float32 & 12.6 GiB & 1.1 & 0.19\% \\
-  /variant\_SGB & float32 & 12.1 GiB & 1.2 & 0.18\% \\
-  /variant\_position & int32 & 9.7 GiB & 1.4 & 0.14\% \\
-  /variant\_AC & int16 & 7.4 GiB & 2.8 & 0.11\% \\
-  /variant\_DP & int32 & 6.7 GiB & 2.1 & 0.10\% \\
-  /variant\_allele & object & 5.4 GiB & 21.0 & 0.08\% \\
-  /variant\_AN & int16 & 3.1 GiB & 2.3 & 0.05\% \\
-  /call\_genotype\_phased & bool & 2.0 GiB & 1800.0 & 0.03\% \\
-  /variant\_filter & bool & 1.5 GiB & 2.4 & 0.02\% \\
-  /variant\_MQ & int8 & 489.8 MiB & 7.3 & 0.01\% \\
-  \bottomrule
+Field & type & storage & compress & percentage \\
+\midrule
+/call_LPL & int16 & 1.26 TiB & 17.0 & 54.76% \\
+/call_LA & int8 & 415.39 GiB & 18.0 & 17.63% \\
+/call_genotype & int8 & 381.28 GiB & 19.0 & 16.18% \\
+/call_genotype_mask & bool & 103.84 GiB & 71.0 & 4.41% \\
+/variant_DP4 & int32 & 26.24 GiB & 2.1 & 1.11% \\
+/variant_MQSBZ & float32 & 13.08 GiB & 1.1 & 0.56% \\
+/variant_RPBZ & float32 & 13.04 GiB & 1.1 & 0.55% \\
+/variant_MQBZ & float32 & 12.97 GiB & 1.1 & 0.55% \\
+/variant_SCBZ & float32 & 12.94 GiB & 1.1 & 0.55% \\
+/variant_VDB & float32 & 12.84 GiB & 1.1 & 0.55% \\
+/variant_quality & float32 & 12.84 GiB & 1.1 & 0.55% \\
+/variant_BQBZ & float32 & 12.64 GiB & 1.1 & 0.54% \\
+/variant_SGB & float32 & 12.12 GiB & 1.2 & 0.51% \\
+/variant_position & int32 & 9.65 GiB & 1.4 & 0.41% \\
+/variant_AC & int16 & 7.42 GiB & 2.8 & 0.31% \\
+/variant_DP & int32 & 6.71 GiB & 2.1 & 0.28% \\
+/variant_allele & object & 5.37 GiB & 21.0 & 0.23% \\
+/variant_AN & int16 & 3.05 GiB & 2.3 & 0.13% \\
+/call_genotype_phased & bool & 1.75 GiB & 2100.0 & 0.07% \\
+/variant_filter & bool & 1.46 GiB & 2.4 & 0.06% \\
+/variant_MQ & int8 & 489.41 MiB & 7.3 & 0.02% \\
+/variant_IMF & float32 & 160.95 MiB & 89.0 & 0.01% \\
+/variant_IDV & int16 & 120.72 MiB & 59.0 & 0.01% \\
+\bottomrule
 \end{tabular}
 \end{table}
-
-Table~\ref{tab-spruce-data} shows that the dataset storage size is
-dominated by a major component, call\_PL, which accounts for nearly
-93\% of the total. call\_PL is yet another field with low compression
-potential due to inherent noisiness.
 
 Large genomes from non-model organisms pose particular problems for
 analysis workflows that often are tailored for human conditions. For

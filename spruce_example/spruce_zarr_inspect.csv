@@ -1,7 +1,7 @@
 name,dtype,stored,size,ratio,nchunks,chunk_size,avg_chunk_stored,shape,chunk_shape,compressor,filters
-/call_PL,int16,6.12 TiB,72.42 TiB, 12,749036,101.38 MiB,8.57 MiB,"(3745170452, 1063, 10)","(10000, 1000, 10)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/call_genotype,int8,282.45 GiB,7.24 TiB, 26,749036,10.14 MiB,395.4 KiB,"(3745170452, 1063, 2)","(10000, 1000, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
-/call_genotype_mask,bool,42.15 GiB,7.24 TiB, 1.8e+02,749036,10.14 MiB,59.01 KiB,"(3745170452, 1063, 2)","(10000, 1000, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_PL,int16,6.04 TiB,72.42 TiB, 12,374518,202.75 MiB,16.92 MiB,"(3745170452, 1063, 10)","(10000, 1063, 10)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_genotype,int8,381.28 GiB,7.24 TiB, 19,374518,20.28 MiB,1.04 MiB,"(3745170452, 1063, 2)","(10000, 1063, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/call_genotype_mask,bool,103.84 GiB,7.24 TiB, 71,374518,20.28 MiB,290.72 KiB,"(3745170452, 1063, 2)","(10000, 1063, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
 /variant_DP4,int32,26.24 GiB,55.81 GiB, 2.1,374518,156.25 KiB,73.47 KiB,"(3745170452, 4)","(10000, 4)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
 /variant_MQSBZ,float32,13.08 GiB,13.95 GiB, 1.1,374518,39.06 KiB,36.63 KiB,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
 /variant_RPBZ,float32,13.04 GiB,13.95 GiB, 1.1,374518,39.06 KiB,36.51 KiB,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
@@ -16,18 +16,20 @@ name,dtype,stored,size,ratio,nchunks,chunk_size,avg_chunk_stored,shape,chunk_sha
 /variant_DP,int32,6.71 GiB,13.95 GiB, 2.1,374518,39.06 KiB,18.79 KiB,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
 /variant_allele,object,5.37 GiB,111.61 GiB, 21,374518,312.5 KiB,15.04 KiB,"(3745170452, 4)","(10000, 4)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
 /variant_AN,int16,3.05 GiB,6.98 GiB, 2.3,374518,19.53 KiB,8.54 KiB,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/call_genotype_phased,bool,2.03 GiB,3.62 TiB, 1.8e+03,749036,5.07 MiB,2.84 KiB,"(3745170452, 1063)","(10000, 1000)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
-/variant_filter,bool,1.46 GiB,3.49 GiB, 2.4,374518,9.77 KiB,4.09 KiB,"(3745170452, 1)","(10000, 1)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
-/variant_MQ,int8,489.83 MiB,3.49 GiB, 7.3,374518,9.77 KiB,1.34 KiB,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/variant_IMF,float32,161.37 MiB,13.95 GiB, 89,374518,39.06 KiB,451 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/variant_IDV,int16,121.14 MiB,6.98 GiB, 59,374518,19.53 KiB,339 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/variant_INDEL,bool,72.6 MiB,3.49 GiB, 49,374518,9.77 KiB,203 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
-/variant_id,object,34.95 MiB,27.9 GiB, 8.2e+02,374518,78.12 KiB,97 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
-/variant_id_mask,bool,33.16 MiB,3.49 GiB, 1.1e+02,374518,9.77 KiB,92 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
-/variant_contig,int16,32.44 MiB,6.98 GiB, 2.2e+02,374518,19.53 KiB,90 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/variant_FS,float32,32.09 MiB,13.95 GiB, 4.5e+02,374518,39.06 KiB,89 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
-/variant_MQ0F,float32,32.09 MiB,13.95 GiB, 4.5e+02,374518,39.06 KiB,89 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_genotype_phased,bool,1.75 GiB,3.62 TiB, 2.1e+03,374518,10.14 MiB,4.91 KiB,"(3745170452, 1063)","(10000, 1063)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_filter,bool,1.46 GiB,3.49 GiB, 2.4,374518,9.77 KiB,4.08 KiB,"(3745170452, 1)","(10000, 1)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_MQ,int8,489.41 MiB,3.49 GiB, 7.3,374518,9.77 KiB,1.34 KiB,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_IMF,float32,160.95 MiB,13.95 GiB, 89,374518,39.06 KiB,450 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_IDV,int16,120.72 MiB,6.98 GiB, 59,374518,19.53 KiB,337 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_length,int16,105.19 MiB,6.98 GiB, 68,374518,19.53 KiB,294 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_INDEL,bool,72.18 MiB,3.49 GiB, 49,374518,9.77 KiB,202 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_id,object,34.53 MiB,27.9 GiB, 8.3e+02,374518,78.12 KiB,96 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",[VLenUTF8()]
+/variant_id_mask,bool,32.74 MiB,3.49 GiB, 1.1e+02,374518,9.77 KiB,91 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
+/variant_contig,int16,32.02 MiB,6.98 GiB, 2.2e+02,374518,19.53 KiB,89 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_FS,float32,31.67 MiB,13.95 GiB, 4.5e+02,374518,39.06 KiB,88 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/variant_MQ0F,float32,31.67 MiB,13.95 GiB, 4.5e+02,374518,39.06 KiB,88 bytes,"(3745170452,)","(10000,)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/region_index,int32,3.14 MiB,8.58 MiB, 2.7,12,731.8 KiB,268.25 KiB,"(374682, 6)","(93671, 2)","Blosc(cname='zstd', clevel=9, shuffle=NOSHUFFLE, blocksize=0)",None
 /contig_length,int64,6.77 KiB,8.18 KiB, 1.2,1,8.18 KiB,6.77 KiB,"(1047,)","(1047,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",None
 /contig_id,object,6.2 KiB,8.18 KiB, 1.3,1,8.18 KiB,6.2 KiB,"(1047,)","(1047,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
-/sample_id,object,5.46 KiB,8.3 KiB, 1.5,2,4.15 KiB,2.73 KiB,"(1063,)","(1000,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
+/sample_id,object,5.35 KiB,8.3 KiB, 1.6,1,8.3 KiB,5.35 KiB,"(1063,)","(1063,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
 /filter_id,object,4.43 KiB,8 bytes, 0.0018,1,8.0 bytes,4.43 KiB,"(1,)","(1,)","Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)",[VLenUTF8()]
