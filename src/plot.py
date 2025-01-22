@@ -92,37 +92,94 @@ def plot_size(ax, df, label_y_offset=None, order=None):
     plt.tight_layout()
 
 
+def plot_s3_network_throughput(ax, df):
+
+    GB = 2**30
+
+    x = df["processes"].values
+    for col in ["c5.9xlarge", "c5n.9xlarge"]:
+        y = df[col].values
+        ax.loglog(
+            x ,
+            y, 
+            marker=".",
+            label=col,
+            base=2,
+        )
+        argmax = np.argmax(y)
+        ax.plot(x[argmax], y[argmax], marker="+", color="black")
+        ax.annotate(
+            f"{y[argmax] / GB:.1f} GiB/s",
+            textcoords="offset points",
+            xytext=(-8, -10),
+            xy=(x[argmax], y[argmax]),
+            xycoords="data",
+        )
+
+    ax.set_xticks(x)
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+
+    ax.legend()
+    ax.set_xlabel("Number of processes")
+    ax.set_ylabel("Data download rate (bytes/s)")
+    plt.tight_layout()
+
+
 def plot_s3_throughput(ax, df):
+
+    GB = 2**30
+
+    argmax = 6
     ax.loglog(
         df["processes"].values,
         df["throughput_decompress"].values,
         marker=".",
         label="Decompression only",
+        base=2,
     )
+    ax.plot(
+        df["processes"][argmax],
+        df["throughput_decompress"][argmax],
+        marker="+",
+        color="black",
+    )
+    maxval = df["throughput_decompress"][argmax]
     ax.annotate(
-        f"{df['throughput_decompress'][6]:.0f} MB/s",
+        f"{maxval / GB:.1f} GiB/s",
         textcoords="offset points",
         xytext=(-8, -10),
-        xy=(df["processes"][6], df["throughput_decompress"][6]),
+        xy=(df["processes"][argmax], df["throughput_decompress"][argmax]),
         xycoords="data",
     )
     ax.loglog(
         df["processes"].values,
         df["throughput_afdist"].values,
         marker=".",
-        label="AF Dist",
+        label="Compute af-dist",
+        base=2,
     )
+    argmax = 7
+    ax.plot(
+        df["processes"][argmax],
+        df["throughput_afdist"][argmax],
+        marker="+",
+        color="black",
+    )
+    maxval = df["throughput_afdist"][argmax]
     ax.annotate(
-        f"{df['throughput_afdist'][6]:.0f} MB/s",
+        f"{maxval / GB:.1f} GiB/s",
         textcoords="offset points",
-        xytext=(-8, -10),
-        xy=(df["processes"][6], df["throughput_afdist"][6]),
+        xytext=(-30, -14),
+        xy=(df["processes"][argmax], df["throughput_afdist"][argmax]),
         xycoords="data",
     )
 
+    ax.set_xticks(df["processes"].values)
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+
     ax.legend()
     ax.set_xlabel("Number of processes")
-    ax.set_ylabel("Genotype data throughput (MB/s)")
+    ax.set_ylabel("Genotype data throughput (bytes/s)")
     plt.tight_layout()
 
 
@@ -290,13 +347,58 @@ def s3_throughput(data, output):
     Plot the figure showing compute performance on whole-matrix afdist.
     """
     df = pd.read_csv(data, index_col=False).sort_values("processes")
+    print(df)
+    # Data in here is power-of-10 MB/s, so convert back to bytes per
+    # second for consistency
+    df["throughput_decompress"] *= 1000**2
+    df["throughput_afdist"] *= 1000**2
 
     fig, ax1 = one_panel_fig()
-    plot_s3_throughput(
-        ax1,
-        df,
-    )
+    plot_s3_throughput(ax1, df)
+    plt.savefig(output)
 
+
+@click.command()
+@click.argument("data", type=click.File("r"))
+@click.argument("output", type=click.Path())
+def s3_network_throughput(data, output):
+    """
+    Plot the figure showing compute performance on whole-matrix afdist.
+    """
+
+    # Data derived from S3-1-DownloadChunks-MP.ipynb notebook. Numbers there]
+    # are in power-of-10 MB
+
+    # x = [1, 2, 4, 8, 16, 32, 64]
+    # data1 = np.array([
+    #     159.0341786762204,
+    #     349.88301727773677,
+    #     660.1621287063576,
+    #     1009.4825168651081,
+    #     1253.8112536680967,
+    #     1280.6974940263988,
+    #     1274.494689412922,
+    # ])
+    # data2 = np.array([
+    #     162.80624306237462,
+    #     345.7732721919105,
+    #     658.9358771498762,
+    #     1062.419542658184,
+    #     1972.057722720383,
+    #     2541.4617122839895,
+    #     2523.501053909922,
+    # ])
+    # MB = 1000 * 1000
+    # df = pd.DataFrame({"processes": x, "c5.9xlarge": data1 * MB, "c5n.9xlarge":
+    #     data2 * MB})
+    # print(df)
+    # df.to_csv("plot_data/gel-s3-network-throughput.csv", index=False)
+
+    df = pd.read_csv(data, index_col=False).sort_values("processes")
+    print(df)
+
+    fig, ax1 = one_panel_fig()
+    plot_s3_network_throughput(ax1, df)
     plt.savefig(output)
 
 
@@ -657,6 +759,7 @@ def cli():
 
 cli.add_command(data_scaling)
 cli.add_command(s3_throughput)
+cli.add_command(s3_network_throughput)
 cli.add_command(whole_matrix_compute)
 cli.add_command(whole_matrix_compute_zarr_versions)
 cli.add_command(whole_matrix_decode)

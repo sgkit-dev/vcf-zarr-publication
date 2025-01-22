@@ -471,7 +471,8 @@ used in all cases.
 One of the key benefits of Zarr is its cloud-native design, 
 but it also works well on standard file systems, where 
 arrays and chunks are stored hierarchically in directories
-and files (storage as a single Zip archive is also supported).
+and files (storage as a single Zip archive is also supported,
+and has certain advantages as discussed later).
 To enable comparison with the existing file-based ecosystem
 of tools, we focus on Zarr's file system chunk storage in a series of illustrative 
 benchmarks in the following sections before presenting cloud-based benchmarks. 
@@ -677,9 +678,9 @@ functionality to aid with such storage schema tuning.
 The discrepancy between elapsed time and total CPU time for Zarr 
 benchmarks in
 Figs~\ref{fig-whole-matrix-compute}--~\ref{fig-column-extract}
-and~\ref{fig-whole-matrix-decode} are mostly due to the overhead
-of accessing a large number of small chunk files and the reduced
-effectiveness of file-system read-ahead caching.
+and~\ref{fig-whole-matrix-decode} is mostly due to the overhead
+of accessing a large number of small chunk files and 
+consequent reduced effectiveness of file-system read-ahead caching.
 While having many independent chunks maps 
 naturally to high-performance parallel access patterns
 in the cloud store setting~\citep{durner2023exploiting} 
@@ -848,7 +849,8 @@ We then converted the ICF to Zarr, partitioned into
 5989 independent jobs, with an 18.6 min average run time.
 This produced a dataset with 44 arrays, consuming a 
 total of 2.54 TiB of storage over 6,312,488
-chunk files. This is a roughly 5X reduction in total storage 
+chunk files (using a chunk size of $10^4$ variants $\times 10^3$ 
+samples). This is a roughly 5X reduction in total storage 
 space over the original VCF. 
 The top fields in terms 
 of storage are detailed in Table~\ref{tab-genomics-england-data}.
@@ -1057,25 +1059,55 @@ to the ``mask-oriented'' analysis of large immutable, single-source
 datasets is a potentially transformational change enabled by Zarr.
 
 Finally, to explore the use of cloud computing services with VCF Zarr,
-the zarr files for chromosome 2 were uploaded to an AWS S3 standard bucket.
-Using a single-threaded process on an EC2 instance the benchmarks above were
-repeated. Extracting the position array required 15s CPU, 23.8s elapsed.
-The af-dist calculation required 2.70min CPU, 5.23min elapsed. Creating the filter mask
-required 3.05min CPU, 11.15min elapsed. These times are comparable to the on-premises
-HPC system above.
+we uploaded the Zarr directory hierarchy for chromosome 2 to an AWS S3 
+standard bucket. We repeated the benchmarks above on the same subset
+of 562,640 variants, using the same 
+single-threaded sequential Zarr code.
+Extracting the position array required 15s CPU, 23.8s elapsed.
+The af-dist calculation required 2.70min CPU, 5.23min elapsed. 
+Creating the filter mask
+required 3.05min CPU, 11.15min elapsed. 
 
-This single-threaded approach is not optimal for cloud computing, as to optimise
-both runtime and costs parallel processing is required. Using 64 parallel processes
-on a single c5.24xlarge EC2 instance with 96 vCPUs (48 physical) the zarr chunks of
-genotype array could be retrived from S3 and decompressed at a rate of 50.8 GB/s.
-The network data rate was 127 MB/s, far below the capbility of the instance,
-indicating that this process was compute-constrained. When calculating af-dist after
-decompression the throughput was 24.6 GB/s. With this parallel approach the 
-af-dist calculation above was then completed in 4.12s elapsed time.
+While these benchmarks are comparable with results obtained on the 
+shared file-system in the Genomics England research environment,
+the sequential single-threaded access patterns used do not map
+well to modern cloud computing environments.
+As each request to a cloud object store has a high latency, it 
+is important to have many requests running concurrently to achieve 
+good performance~\citep{durner2023exploiting}.
+To explore the limits of performance we developed a simple prototype
+Zarr implementation, designed to maximise concurrency using asynchrous
+IO and multiple processes (see Methods for details).
+Fig~\ref{fig-s3-throughput} shows the rate at which genotypes 
+can be decoded to RAM as well as rate at which we can compute
+af-dist (using Numba to classify genotypes, as before)
+as we increase the number of parallel processes on
+an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
+The maximum decompression rate of 47.4GiB/s 
+occurs at 64 processes, with a corresponding 
+network data rate of 127 MB/s [FIXME confirm and convert to MiB/s].
+Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
+network access by measuring the rate at which we can download the chunks
+into RAM (without decompressing) using the same parallel and asynchronous
+architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
+and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
+was achieved with 32 processes. Genotype data can therefore be fetched 
+from S3 around an order of magnitude more quickly than it can be decompressed 
+into RAM. This has some interesting consequences
+when we consider the goal of seeking the highest possible compression levels 
+for genotype data and the usual cloud storage cost structuring models (see
+Discussion).
+
+Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
+calculation is performed at a maximum rate of 25.5GiB/s using 128 
+processes. At this rate, the af-dist calculation for the target region 
+was completed in 4.12s [CHECKME] (compare to 5.23min for the naive single-threaded
+method above).
 This level of throughput would complete af-dist for all chromosomes for all samples
 % compute: $4.08 * 1.27
+% What are the numbers here??
 % io: (((722000000/10000)*(79000/1000))/1000)*$0.0004
-in 1.27 hours for a compute cost of \$5.18 and an io cost of \$2.28.
+in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
 (See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
 benchmarks in cloud settings.)
 
@@ -1910,8 +1942,20 @@ sample IDs, and the command line was therefore too long for the shell
 to execute. 
 \label{fig-subset-matrix-compute-supplemental}}
 \end{figure}
-\begin{figure}[h]
 
+\begin{figure}[h]
+\includegraphics{figures/s3-throughput}
+\caption{Scalability of genotype data processing on AWS.
+\label{fig-s3-throughput}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/s3-network-throughput}
+\caption{Chunk data download rate on AWS.
+\label{fig-s3-network-throughput}}
+\end{figure}
+
+\begin{figure}[h]
 \includegraphics{figures/compression-compressor}
 \caption{Effects of Blosc compression codec on compression ratio on call-level 
 fields in 1000 Genomes data. 
