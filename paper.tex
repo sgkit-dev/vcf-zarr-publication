@@ -1151,7 +1151,6 @@ that represents the whole of the UK.
 /contig\_length & int64 & 4.5 KiB & 0.0 & 0.00\% \\
 /filter\_id & object & 4.43 KiB & 0.0 & 0.00\% \\
 \bottomrule
-\bottomrule
 \end{tabular}
 \end{table}
 
@@ -1370,6 +1369,50 @@ as needed, and there is therefore no particular limit on genome size.
 % true genome coordinates for storage in Zarr. This updating procedure
 % could be applied to any species of choice.
 
+\subsection{Case study: SARS-Cov-2 alignment data}
+The SARS-CoV-2 pandemic resulted in viral sequence data collection at 
+an unprecedented scale, with over 15 million whole genomes incorporated into 
+one resource as of 2024~\citep{hinrichs2024ongoing}. Data at such scale 
+overwhelmed classical phylogenetic methods, leading to the development
+of a new class of tools~\citep{turakhia2021ultrafast,ye2022matoptimize,zhan2023towards}. 
+The Viridian dataset~\citep{hunt2024addressing} is a consistently assembled 
+set of consensus sequences for 4,471,579 samples, addressing a range of systematic 
+errors in earlier collections. The \texttt{sc2ts} inference tool uses VCF-Zarr as its 
+input format, and Zhan et al have made the Viridian dataset,
+aligned to the reference using MAFFT~\citep{katoh2013mafft},
+available for download~\citep{zhan2023towards}. This dataset has quite
+different properties to those examined in previous case studies, and 
+illustrates the flexibility of Zarr across a range of biological applications.
+
+One of the unusual properties of this dataset is that whole genome alignments 
+are stored, such that information on all 29903 bases is stored for every 
+sample. Given the number of samples and the fact that nearly all bases
+[TODO be concrete?] contain variation it is simply more convenient to 
+store the entire alignment for each sample than to manage the complexity
+of subsetting the sites. Similarly, the usual convention in VCF Zarr 
+is that the \texttt{variant\_alleles} field contains the REF and ALT 
+alleles as observed (such that the zeroth allele is always the reference).
+In this case it is more convenient to encode the alleles as the original
+bases and IUPAC uncertainty codes, such that the allele 0 is always A, 1 is C etc.
+Even in this case with very high sequence diversity, uncertainty codes and 
+storing data for the entire genome, compression rates are very high.
+
+Based on the batch 1 release of Viridian, the Zarr dataset contains
+3,960,704 sequences of length 29903 base pairs along with 31 metadata columns
+encoding information about those samples. This full dataset is stored in a
+single 345MiB Zip file, 241MiB of which is used by the alignment data. This
+gives an average compression ratio of 468X.
+
+Computational accessibility is excellent. For example, computing the number of
+samples with missing or ambiguous data at each site requires around 3 minutes,
+iterating over sample chunks sequentially (5 lines of Python).
+Retrieving the full alignment for a given sample requires 163ms and 
+getting the calls for all samples at a given site 209ms. [TODO confirm hardware
+details]. The storage of metadata and genetic data in a single file also
+makes many queries efficient and convenient. For example, computing the 
+average number of deletions in samples with a Scorpio designation of Alpha
+required x seconds and 5 lines of code using Dask.
+
 \section{Discussion}
 % Zarr is great
 VCF is a central element of modern genomics, facilitating
@@ -1529,6 +1572,7 @@ bandwidth to download large datasets may be limited.
 VCF Zarr could similarly reduce the costs of analysing large-scale
 human data, and effectively open access to biobanks
 for a much broader group of researchers than currently possible.
+
 
 \section{Methods}
 
