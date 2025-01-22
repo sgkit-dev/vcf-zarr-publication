@@ -1789,7 +1789,7 @@ We used bcftools version 1.18, Savvy 2.1.0, Genozip 5.0.26,
 vcf2zarr 0.0.9, and Zarr-Python 2.17.2. 
 All tools used default settings, 
 unless otherwise stated.
-All simulation-based benchmarks were performed on a 
+All simulation-based benchmarks (excluding Fig~\ref{fig-whole-matrix-compute-zarr-versions}) were performed on a 
 dual CPU (Intel Xeon E5-2680 v2)
 server with 256GiB of RAM running Debian GNU/Linux 11.
 To ensure that the true effects of having data distributed over a large 
@@ -1922,7 +1922,8 @@ implementations.
 Total CPU time required to run the af-dist calculation
 the data in Figure~\ref{fig-data-storage} using different Zarr implementations.
 Elapsed time is also reported (dotted line). 
-These benchmarks were run on [TODO insert hardware details].
+These benchmarks were run on an 8-core CPU (Intel i7-9700) with 32GiB RAM running
+Linux Mint 21.3 with data on an NVMe SSD.
 Note the difference between the
 time reported here and in Fig~\ref{fig-whole-matrix-compute} for Zarr-Python
 is due to different hardware platforms.
