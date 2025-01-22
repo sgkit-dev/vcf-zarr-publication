@@ -1,5 +1,6 @@
 name,dtype,stored,size,ratio,nchunks,chunk_size,avg_chunk_stored,shape,chunk_shape,compressor,filters
-/call_PL,int16,6.04 TiB,72.42 TiB, 12,374518,202.75 MiB,16.92 MiB,"(3745170452, 1063, 10)","(10000, 1063, 10)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_LPL,int16,1.26 TiB,21.72 TiB, 17,374518,60.83 MiB,3.53 MiB,"(3745170452, 1063, 3)","(10000, 1063, 3)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
+/call_LA,int8,415.39 GiB,7.24 TiB, 18,374518,20.28 MiB,1.14 MiB,"(3745170452, 1063, 2)","(10000, 1063, 2)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
 /call_genotype,int8,381.28 GiB,7.24 TiB, 19,374518,20.28 MiB,1.04 MiB,"(3745170452, 1063, 2)","(10000, 1063, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
 /call_genotype_mask,bool,103.84 GiB,7.24 TiB, 71,374518,20.28 MiB,290.72 KiB,"(3745170452, 1063, 2)","(10000, 1063, 2)","Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)",None
 /variant_DP4,int32,26.24 GiB,55.81 GiB, 2.1,374518,156.25 KiB,73.47 KiB,"(3745170452, 4)","(10000, 4)","Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)",None
