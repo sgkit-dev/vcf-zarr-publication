@@ -1,0 +1,26 @@
+name: RSAIGE
+channels:
+  - anaconda
+  - bioconda
+  - conda-forge
+  - defaults
+  - r
+dependencies:
+  - jupyter
+  - r-base
+  - r-rcppparallel
+  - r-cpp11
+  - r-matrix
+  - r-data.table
+  - r-rcpparmadillo
+  - r-spatest
+  - r-rcppeigen
+  - r-bh
+  - r-optparse
+  - r-skat
+  - r-metaskat
+  - r-qlcmatrix
+  - r-rhpcblasctl
+  - r-rsqlite
+  - r-dplyr
+    
