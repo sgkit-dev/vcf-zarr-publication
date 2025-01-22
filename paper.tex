@@ -1089,19 +1089,25 @@ network data rate of 127 MB/s [FIXME confirm and convert to MiB/s].
 Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
 network access by measuring the rate at which we can download the chunks
 into RAM (without decompressing) using the same parallel and asynchronous
-architecture. Here, the maximum throughput of 
+architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
+and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
+was achieved with 32 processes. Genotype data can therefore be fetched 
+from S3 around an order of magnitude more quickly than it can be decompressed 
+into RAM. This has some interesting consequences
+when we consider the goal of seeking the highest possible compression levels 
+for genotype data and the usual cloud storage cost structuring models (see
+Discussion).
 
-
-To assess the limitations imposed by network access, we repeated this
-experiment but measured only the rate at which chunks can be downloaded
-
-When calculating af-dist after
-decompression the throughput was 24.6 GB/s. With this parallel approach the 
-af-dist calculation above was then completed in 4.12s elapsed time.
+Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
+calculation is performed at a maximum rate of 25.5GiB/s using 128 
+processes. At this rate, the af-dist calculation for the target region 
+was completed in 4.12s [CHECKME] (compare to 5.23min for the naive single-threaded
+method above).
 This level of throughput would complete af-dist for all chromosomes for all samples
 % compute: $4.08 * 1.27
+% What are the numbers here??
 % io: (((722000000/10000)*(79000/1000))/1000)*$0.0004
-in 1.27 hours for a compute cost of \$5.18 and an io cost of \$2.28.
+in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
 (See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
 benchmarks in cloud settings.)
 

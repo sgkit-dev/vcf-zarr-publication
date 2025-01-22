@@ -169,14 +169,13 @@ def plot_s3_throughput(ax, df):
     ax.annotate(
         f"{maxval / GB:.1f} GiB/s",
         textcoords="offset points",
-        xytext=(-8, -10),
+        xytext=(-30, -14),
         xy=(df["processes"][argmax], df["throughput_afdist"][argmax]),
         xycoords="data",
     )
 
     ax.set_xticks(df["processes"].values)
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    # ax.set_xticklabels(labels)
 
     ax.legend()
     ax.set_xlabel("Number of processes")
