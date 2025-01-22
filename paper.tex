@@ -1060,15 +1060,15 @@ datasets is a potentially transformational change enabled by Zarr.
 
 Finally, to explore the use of cloud computing services with VCF Zarr,
 we uploaded the Zarr directory hierarchy for chromosome 2 to an AWS S3 
-standard bucket. We repeated the benchmarks above the same subset
-562,640 variants, and the same 
+standard bucket. We repeated the benchmarks above on the same subset
+of 562,640 variants, using the same 
 single-threaded sequential Zarr code.
 Extracting the position array required 15s CPU, 23.8s elapsed.
 The af-dist calculation required 2.70min CPU, 5.23min elapsed. 
 Creating the filter mask
 required 3.05min CPU, 11.15min elapsed. 
 
-While these benchmarks are comparable with results obtained from the 
+While these benchmarks are comparable with results obtained on the 
 shared file-system in the Genomics England research environment,
 the sequential single-threaded access patterns used do not map
 well to modern cloud computing environments.
@@ -1085,10 +1085,15 @@ as we increase the number of parallel processes on
 an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
 The maximum decompression rate of 47.4GiB/s 
 occurs at 64 processes, with a corresponding 
-network data rate of 
-% FIXME MiB/s
-127 MB/s, far below the capbility of the instance,
-indicating that this process was compute-constrained. 
+network data rate of 127 MB/s [FIXME confirm and convert to MiB/s].
+Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
+network access by measuring the rate at which we can download the chunks
+into RAM (without decompressing) using the same parallel and asynchronous
+architecture. Here, the maximum throughput of 
+
+
+To assess the limitations imposed by network access, we repeated this
+experiment but measured only the rate at which chunks can be downloaded
 
 When calculating af-dist after
 decompression the throughput was 24.6 GB/s. With this parallel approach the 
@@ -1936,6 +1941,12 @@ to execute.
 \includegraphics{figures/s3-throughput}
 \caption{Scalability of genotype data processing on AWS.
 \label{fig-s3-throughput}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/s3-network-throughput}
+\caption{Chunk data download rate on AWS.
+\label{fig-s3-network-throughput}}
 \end{figure}
 
 \begin{figure}[h]
