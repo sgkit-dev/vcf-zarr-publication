@@ -1121,47 +1121,36 @@ the SNP and indel variants that lie within the chromosome 20 exon regions of the
 transcripts. This dataset, stored as a single compressed VCF file of 7.44 GiB, 
 includes 715,256 variants, of which more than 700 are classified as pathogenic or likely pathogenic.
 
-The compression was performed on a single compute node with 64 CPUs and 416 GiB of RAM.  
-We first converted the VCF to an ICF, which took 6 hours and 17 minutes of  
-effective runtime and utilized 343 hours of CPU time, achieving a parallel efficiency of 86\%.  
-This step incurred a cost of \$23.88. The resulting ICF representation required 7.5 GiB of storage  
-distributed across 91,232 files. Next, the ICF was converted to Zarr, which took 50 minutes and 32 
-seconds of effective runtime and 49 hours and 49 minutes of CPU time, with a parallel efficiency of 92\%, 
-at a cost of \$3.19. The final Zarr representation occupied 13 GiB of storage across 369,656 chunk files.  
-
+The compression was performed on the All of Us Researcher Workbench platform 
+(based on Google Cloud), using a single compute node with 64 CPUs and 416 GiB 
+of RAM, which cost \$3.80/hour. We first converted the VCF to an ICF, which 
+took 6 hours and 17 minutes of effective runtime and utilized 343 hours of CPU 
+time, achieving a parallel efficiency of 86\%. This step incurred a cost of 
+\$23.88. The resulting ICF representation required 7.5 GiB of storage distributed 
+across 91,232 files. Next, the ICF was converted to Zarr, 
+after removing the field \texttt{call\_FT}, which is 
+suspected to be problematic. The conversion took 53 minutes and 40 seconds, with 
+a CPU time of 52 hours and 34 minutes and a parallel efficiency of 92\%, at a 
+cost of \$3.40. This second Zarr representation occupied 8 GiB of storage across 
+214,190 chunk files.
 
 
 
 \begin{table}
 \caption{Summary for a selection of the largest VCF Zarr columns produced 
-the from the 245,388 exome-like samples from chromosome 20
-using \texttt{vcf2zarr} and chunk sizes of 1,000 variants and 
-10,000 samples.
-For column details see the caption of Table~\ref{tab-genomics-england-data}.
-\label{tab-all-of-us-data}}
-\begin{tabular}{llS[table-format=3.2]S[table-format=3.2]S[table-format=3.2]}
+    from the dataset using \texttt{vcf2zarr} with chunk sizes of 1,000 variants and 
+    10,000 samples. For column details, see Table~\ref{tab-genomics-england-data}.
+    \label{tab-top-fields-data}}
+\begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
 \toprule
-{Field} & {type} & {storage} & {compress} & {\%total} \\
+{Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
 \midrule
-/call\_GQ & int8 & 1.89G & 87.0 & 45.94\% \\
-/call\_genotype & int8 & 914.22M & 370.0 & 21.70\% \\
-/call\_RGQ & int16 & 729.57M & 460.0 & 17.32\% \\
-/call\_genotype\_mask & bool & 606.02M & 550.0 & 14.39\% \\
-/call\_genotype\_phased & bool & 17.17M & 9700.0 & 0.41\% \\
-/variant\_allele & str & 4.74M & 110.0 & 0.11\% \\
-/variant\_filter & bool & 2.87M & 0.9 & 0.07\% \\
-% /variant\_AN & int32 & 908.75 K & 3.1 & 0.02\% \\
-% /variant\_position & int32 & 810.77 K & 3.4 & 0.02\% \\
-% /sample\_id & object & 357.15 K & 5.4 & 0.01\% \\
-% /variant\_length & int16 & 152.4 K & 9.2 & 0.00\% \\
-% /variant\_id & object & 56.18 K & 99.0 & 0.00\% \\
-% /variant\_quality & float32 & 51.92 K & 54.0 & 0.00\% \\
-% /variant\_id\_mask & bool & 51.89 K & 13.0 & 0.00\% \\
-% /variant\_contig & int16 & 50.6 K & 28.0 & 0.00\% \\
-% /region\_index & int32 & 13.93 K & 1.2 & 0.00\% \\
-% /contig\_length & int64 & 9.24 K & 2.8 & 0.00\% \\
-% /contig\_id & object & 8.33 K & 3.2 & 0.00\% \\
-% /filter\_id & object & 4.48 K & 0.0 & 0.00\% \\
+/call_LAD & int16 & 2.26 GiB & 290.0 & 29.63% \\
+/call_GQ & int8 & 1.89 GiB & 87.0 & 24.78% \\
+/call_LA & int8 & 1.24 GiB & 260.0 & 16.26% \\
+/call_genotype & int8 & 914.22 MiB & 370.0 & 11.70% \\
+/call_RGQ & int16 & 729.57 MiB & 460.0 & 9.34% \\
+/call_genotype_mask & bool & 606.02 MiB & 550.0 & 7.76% \\
 \bottomrule
 \end{tabular}
 \end{table}
