@@ -822,7 +822,7 @@ we can update an existing field or add arbitrary additional
 fields without touching the rest of the data or creating redundant
 copies.
 
-\subsection{Case study: Genomics England 100,000 genomes}
+\subsection{Case study: Genomics England WGS data}
 In this section we demonstrate the utility of VCF Zarr on a large human dataset
 and the scalability of the \texttt{vcf2zarr} conversion utility.
 Genomics England’s multi-sample VCF dataset (aggV2) is an 
@@ -1111,7 +1111,7 @@ in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
 (See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
 benchmarks in cloud settings.)
 
-\subsection{Case study: Our Future Health genotype release}
+\subsection{Case study: Our Future Health genotype data}
 Our Future Health~\cite{ofhmain_2025} is the UK’s largest ever health research programme. 
 It is designed to help people live healthier lives for longer through the 
 discovery and testing of more effective approaches to prevention, earlier 
@@ -1121,13 +1121,7 @@ from right across the UK to take part. Volunteers are providing information
 about their health and lifestyles to create an incredibly detailed picture 
 that represents the whole of the UK. 
 
-% this section is probably better placed in acknowledgements?
-This study makes use of de-identified data held by Our Future Health. 
-We would like to acknowledge all the research participants who have donated 
-their data to the Our Future Health research programme 
-\url{https://a.storyblok.com/f/228028/x/f45d0da22a/our-future-health-publication-policy-version-1_4.pdf}
-
-Release 9 (\url{https://ourfuturehealth.gitbook.io/our-future-health/data/data-releases/2024-data-releases/release-9}) 
+Release 9~\citep{ofhdatarelease9}
 was made available in December 2024. The genetic component includes genotype data 
 from 651,050 individuals on 707,522 variants. Here we use the genotype data from 
 chromosome 22 to assess the performance of \texttt{vcf2zarr}. The dataset consists of
@@ -1175,13 +1169,13 @@ cost of \$4.31. This second Zarr representation occupied 8.5 GiB of storage acro
 \toprule
 {Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
 \midrule
-/call_LAD & int16 & 2.26 GiB & 290.0 & 27.85% \\
-/call_GQ & int8 & 1.89 GiB & 87.0 & 23.29% \\
-/call_LA & int8 & 1.24 GiB & 260.0 & 15.28% \\
-/call_genotype & int8 & 914.22 MiB & 370.0 & 11.00% \\
-/call_RGQ & int16 & 729.57 MiB & 460.0 & 8.78% \\
-/call_genotype_mask & bool & 606.02 MiB & 550.0 & 7.29% \\
-/call_FT & object & 498.61 MiB & 2700.0 & 6.00% \\
+% /call_LAD & int16 & 2.26 GiB & 290.0 & 27.85% \\
+% /call_GQ & int8 & 1.89 GiB & 87.0 & 23.29% \\
+% /call_LA & int8 & 1.24 GiB & 260.0 & 15.28% \\
+% /call_genotype & int8 & 914.22 MiB & 370.0 & 11.00% \\
+% /call_RGQ & int16 & 729.57 MiB & 460.0 & 8.78% \\
+% /call_genotype_mask & bool & 606.02 MiB & 550.0 & 7.29% \\
+% /call_FT & object & 498.61 MiB & 2700.0 & 6.00% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1904,6 +1898,10 @@ research. The National Genomic Research Library is funded by the National
 Institute for Health Research and NHS England. The Wellcome Trust, Cancer
 Research UK and the Medical Research Council have also funded research
 infrastructure.
+
+This study makes use of de-identified data held by Our Future Health. 
+We would like to acknowledge all the research participants who have donated 
+their data to the Our Future Health research programme~\cite{ofhpubpolicy}.
 
 Computation used the Oxford Biomedical Research Computing (BMRC) facility, a
 joint development between the Wellcome Centre for Human Genetics and the Big
