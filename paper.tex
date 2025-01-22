@@ -1113,7 +1113,7 @@ in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
 benchmarks in cloud settings.)
 
 \subsection{Case study: Our Future Health genotype data}
-Our Future Health~\cite{ofhmain_2025} is the UK’s largest ever health research programme. 
+Our Future Health~\cite{ofhmain_2025}  is the UK’s largest ever health research programme. 
 It is designed to help people live healthier lives for longer through the 
 discovery and testing of more effective approaches to prevention, earlier 
 detection and treatment of diseases.
@@ -1122,12 +1122,83 @@ from right across the UK to take part. Volunteers are providing information
 about their health and lifestyles to create an incredibly detailed picture 
 that represents the whole of the UK. 
 
+\begin{table}
+\caption{Summary of the largest VCF Zarr columns for the Our Future Health
+    genotype dataset, with chunk sizes of 1,000 variants and 
+    10,000 samples and applying the BitRound(5) filter to the floating point 
+    fields.
+    For column details, see Table~\ref{tab-genomics-england-data}.
+    \label{tab-ofh-data}}
+\begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
+\toprule
+{Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
+\midrule
+/call\_LRR & float32 & 8.41 GiB & 2.9 & 51.65\% \\
+/call\_BAF & float32 & 6.14 GiB & 4.0 & 37.71\% \\
+/call\_GS & float32 & 1021.24 MiB & 25.0 & 6.12\% \\
+/call\_genotype & int8 & 663.97 MiB & 19.0 & 3.98\% \\
+/call\_genotype\_mask & bool & 84.7 MiB & 150.0 & 0.51\% \\
+/sample\_id & object & 3.19 MiB & 1.6 & 0.02\% \\
+/call\_genotype\_phased & bool & 1.08 MiB & 5900.0 & 0.01\% \\
+/variant\_id & object & 40.83 KiB & 2.0 & 0.00\% \\
+/variant\_position & int32 & 39.03 KiB & 1.0 & 0.00\% \\
+/variant\_allele & object & 20.71 KiB & 7.7 & 0.00\% \\
+/variant\_filter & bool & 12.55 KiB & 0.8 & 0.00\% \\
+/variant\_quality & float32 & 4.51 KiB & 8.8 & 0.00\% \\
+/variant\_contig & int8 & 4.51 KiB & 2.2 & 0.00\% \\
+/contig\_id & object & 4.51 KiB & 0.0 & 0.00\% \\
+/variant\_id\_mask & bool & 4.5 KiB & 2.2 & 0.00\% \\
+/contig\_length & int64 & 4.5 KiB & 0.0 & 0.00\% \\
+/filter\_id & object & 4.43 KiB & 0.0 & 0.00\% \\
+\bottomrule
+\bottomrule
+\end{tabular}
+\end{table}
+
+
 Release 9~\citep{ofhdatarelease9}
 was made available in December 2024. The genetic component includes genotype data 
 from 651,050 individuals on 707,522 variants. Here we use the genotype data from 
 chromosome 22 to assess the performance of \texttt{vcf2zarr}. The dataset consists of
 three VCF files representing chunks of chromosome 22 split by 5,000 variants, totalling 
-10,221 variants. 
+% 20G     ofh.chr22-b0.vcf.gz
+% 19G     ofh.chr22-b1.vcf.gz
+% 3.3G    ofh.chr22-b2.vcf.gz
+% ==42.3 GiB - assuming the G is power-of-two here
+10,221 variants and 42.3GiB of storage. We first converted the VCF 
+data to ICF, which took 8m 55s elapsed (138m CPU) using 20 processes.
+The ICF representation required a total of 41GiB over XX files.
+We then converted to VCF Zarr format using the default schema, which resulted
+in a 41GiB VCZ. On inspection, this was dominated by three floating point 
+fields LRR, BAF and GS stored 
+to a high degree of precision (7 decimal places for LRR and BAF and 4 decimal
+places for GS).
+On inspecting the histograms for these fields
+(Fig~\ref{fig-ofh-field-distributions}) it seemed that such high precision
+was likely unneccessary, and we investigated applying the Quantize
+and Bitround filters from \texttt{numcodecs}~\citep{numcodecs}
+to reduce the precision in stored floating point data, 
+and therefore improve compression.
+Using the Quantize filter with 5 digits of precision on these three fields reduced the 
+overall storage space to 31G with a mean absolute error (MAE, i.e., the average
+difference between the truncated and original values) of 
+% 3   call_LRR    quantize    1.91e-06
+% 4   call_BAF    quantize    1.18e-06
+% 5   call_GS quantize    1.88e-06
+$1.91\times10^{-6}$ (LRR), 
+$1.18\times10^{-6}$ (BAF)  and 
+$1.88\times10^{-6}$ (GS). 
+Using the Bitround filter with a parameter of 5 bits reduced the overall storage for the Zarr to
+XX with an MAE of
+% 0   call_LRR    bitround    6.93e-04
+% 1   call_BAF    bitround    7.86e-04
+% 2   call_GS bitround    3.38e-03
+$6.93\times10^{-4}$ (LRR), 
+$7.86\times10^{-4}$ (BAF)  and 
+$3.38\times10^{-3}$ (GS). 
+The histograms of the truncated fields in all cases were visually indistinguishable 
+from the original in Fig~\ref{fig-ofh-field-distributions} (data not shown).
+Table~\ref{tab-ofh-data} shows a summary of the Zarr using the BitRound filter.
 
 \subsection{Case study: All of Us exome-like data} 
 The All of Us dataset comprises 245,388 clinical-grade whole genome sequences (WGS), 
@@ -1979,6 +2050,16 @@ to execute.
 \includegraphics{figures/s3-network-throughput}
 \caption{Chunk data download rate on AWS.
 \label{fig-s3-network-throughput}}
+\end{figure}
+
+\begin{figure}[h]
+\begin{tabular}{ccc}
+\includegraphics[width=2.5cm]{ofh_example/plots/default_call_LRR.png}&
+\includegraphics[width=2.5cm]{ofh_example/plots/default_call_BAF.png}&
+\includegraphics[width=2.5cm]{ofh_example/plots/default_call_GS.png}
+\end{tabular}
+\caption{Distribution of floating point fields in the Our Future Health data.
+\label{fig-ofh-field-distributions}}
 \end{figure}
 
 \begin{figure}[h]
