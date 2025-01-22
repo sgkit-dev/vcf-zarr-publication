@@ -1127,12 +1127,10 @@ of RAM, which cost \$3.80/hour. We first converted the VCF to an ICF, which
 took 6 hours and 17 minutes of effective runtime and utilized 343 hours of CPU 
 time, achieving a parallel efficiency of 86\%. This step incurred a cost of 
 \$23.88. The resulting ICF representation required 7.5 GiB of storage distributed 
-across 91,232 files. Next, the ICF was converted to Zarr, 
-after removing the field \texttt{call\_FT}, which is 
-suspected to be problematic. The conversion took 53 minutes and 40 seconds, with 
-a CPU time of 52 hours and 34 minutes and a parallel efficiency of 92\%, at a 
-cost of \$3.40. This second Zarr representation occupied 8 GiB of storage across 
-214,190 chunk files.
+across 91,232 files. Next, the ICF was converted to Zarr, which took 1 hour and 8 minutes, with 
+a CPU time of 68 hours and 8 minutes and a parallel efficiency of 94\%, at a 
+cost of \$4.31. This second Zarr representation occupied 8.5 GiB of storage across 
+232,809 chunk files.
 
 
 
@@ -1145,12 +1143,13 @@ cost of \$3.40. This second Zarr representation occupied 8 GiB of storage across
 \toprule
 {Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
 \midrule
-/call_LAD & int16 & 2.26 GiB & 290.0 & 29.63% \\
-/call_GQ & int8 & 1.89 GiB & 87.0 & 24.78% \\
-/call_LA & int8 & 1.24 GiB & 260.0 & 16.26% \\
-/call_genotype & int8 & 914.22 MiB & 370.0 & 11.70% \\
-/call_RGQ & int16 & 729.57 MiB & 460.0 & 9.34% \\
-/call_genotype_mask & bool & 606.02 MiB & 550.0 & 7.76% \\
+/call_LAD & int16 & 2.26 GiB & 290.0 & 27.85% \\
+/call_GQ & int8 & 1.89 GiB & 87.0 & 23.29% \\
+/call_LA & int8 & 1.24 GiB & 260.0 & 15.28% \\
+/call_genotype & int8 & 914.22 MiB & 370.0 & 11.00% \\
+/call_RGQ & int16 & 729.57 MiB & 460.0 & 8.78% \\
+/call_genotype_mask & bool & 606.02 MiB & 550.0 & 7.29% \\
+/call_FT & object & 498.61 MiB & 2700.0 & 6.00% \\
 \bottomrule
 \end{tabular}
 \end{table}
