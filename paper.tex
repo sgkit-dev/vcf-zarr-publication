@@ -1096,7 +1096,7 @@ as we increase the number of parallel processes on
 an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
 The maximum decompression rate of 47.4GiB/s 
 occurs at 64 processes, with a corresponding 
-network data rate of 127 MB/s [FIXME confirm and convert to MiB/s].
+network data rate of 121 MiB/s
 Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
 network access by measuring the rate at which we can download the chunks
 into RAM (without decompressing) using the same parallel and asynchronous
@@ -1112,12 +1112,13 @@ Discussion).
 Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
 calculation is performed at a maximum rate of 25.5GiB/s using 128 
 processes. At this rate, the af-dist calculation for the target region 
-was completed in 4.12s [CHECKME] (compare to 5.23min for the naive single-threaded
+was completed in 4.15s (compare to 5.23min for the naive single-threaded
 method above).
 This level of throughput would complete af-dist for all chromosomes for all samples
-% compute: $4.08 * 1.27
-% What are the numbers here??
-% io: (((722000000/10000)*(79000/1000))/1000)*$0.0004
+% compute: cost of c5.9xlarge per hour * 1.27
+% ==                             $4.08 * 1.27
+% io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
+% ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
 in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
 (See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
 benchmarks in cloud settings.)
