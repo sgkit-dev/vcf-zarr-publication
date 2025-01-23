@@ -1427,18 +1427,62 @@ required x seconds and 5 lines of code using Dask.
 To provide compatibility with existing workflows we have 
 developed the ``\texttt{vcztools}'' command line utility which 
 implements a subset of \texttt{bcftools} functionality.
-[TODO DETAILS]
-% (such as 
-% \texttt{view} and \texttt{query}) on a VCF Zarr dataset.
-% Such a tool would speed up some common queries by orders 
-% of magnitude, and reduce the need for user orchestration of 
-% operations among manually split VCF chunks (large VCF datasets
-% are typically split into hundreds of files; see the Genomics
-% England case study). Datasets could then be hosted in cloud
-% object stores, while still presenting file-like semantics
-% for existing workflows. This could provide an evolutionary path,
-% allowing established analysis workflows to coexist with new Zarr-native
-% approaches, working from the same primary data.
+Vcztools is intended to be a drop-in replacement for \texttt{bcftools},
+and compatibility being a primary objective.
+Vcztools is primarily intended to provide an evolutionary path for 
+VCF Zarr adoption,
+allowing established analysis workflows to coexist with new Zarr-native
+approaches, working from the same primary data.
+Vcztools currently supports Zarr stored in the local file system
+and Zip archives, and support for major cloud stores will be added in the near
+future. [JK: note this is a pretty simple feature, maybe we should just try 
+to add it?]
+% Mention Pyparsing?
+It is written in a mixture of Python and C, using
+PyRanges~\citep{stovner2020pyranges} to perform efficient range queries.
+
+
+The initial version of vcztools implements a subset of the \texttt{query}
+and \texttt{view} commands. We provide an example based on the simulated 
+dataset of $10^5$ samples of Fig~\ref{fig-data-storage} to illustrate 
+the functionality and 
+performance of vcztools. First, we extract the position column 
+using the \texttt{query} command. Using bcftools
+(\texttt{bcftools query -f '\%POS\textbackslash n' chr21\_10\_5.bcf})
+it took 8m57s to extract the position values for the 2,365,367
+variants from the BCF file. 
+Using vcztools
+(\texttt{vcztools query -f '\%POS\textbackslash n' chr21\_10\_5.zarr})
+required 51s (note that this operation could be performed much
+more quickly and may be worth optimising for, see 
+Fig~\ref{fig-column-extract}). This illustrates the general principle
+that vcztools only retrieves information necessary to fulfil a particular 
+query, which can have a significant impact with large datasets.
+
+To form a practical replacement for bcftools in production pipelines
+it is important that vcztools can produce VCF text at a reasonable
+rate. To do this we measure the time taken to generate VCF text for the 
+last 10,000 variants in the dataset (using the previously extracted 
+position column to determine the coordinates, \texttt{vcztools view
+chr21\_10\_5.zarr -r1:47958263-}). This took 30s, at rate of 124.3 MiB
+of VCF text produced per second. The bcftools command on the corresponding
+BCF file took 25s (152.64 MiB/s) and on the VCF file it took 63s (60.57 MiB/s).
+Thus, vcztools view can produce VCF at an intermediate rate between 
+bcftools reading from BCF and VCF files.
+
+Vcztools is primarily intended to used as a replacement for bcftools 
+in existing workflows based on Unix pipes, where VCF text is sequentially
+filtered and processed by different processes in the classical
+Unix manner. In this context the most important property is that vcztools
+can produce VCF text as quickly as other processes in the pipeline can consume
+it. To measure the rate at which VCF can be parsed, we wrote a simple
+program that reads a VCF file and parses it line-by-line using \texttt{htslib}
+APIs~\citep{bonfield2021htslib}. For the 10,000 variant subset discussed
+above (3.73 GiB) this took 31s, giving a parse rate of 123.1 MiB/s
+(almost identical to the write-rate of vcztools above). Given this limiting
+factor on overall throughput,
+it is unlikely that \texttt{vcztools view} would be a bottleneck 
+in practical processing pipelines.
 
 \subsection{Interoperability: SAIGE proof-of-concept}
 To demonstrate the potential for integrating VCF Zarr into existing utilities,
