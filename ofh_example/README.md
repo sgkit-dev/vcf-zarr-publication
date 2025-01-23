@@ -12,6 +12,10 @@ Format fileds of interest
 - BAF: B allele frequency (7 dp float)
 - GS: GenCall Score (4 dp float)
 
+Machine (Azure VM)
+- Standard_D32s_v5
+- 32 CPUs
+- 128 GB RAM
 
 ### Transform genotype VCF to column format 
 
@@ -20,9 +24,9 @@ INPUT_NAME=xxx
 
 time vcf2zarr explode --force -p 20 -Q ofh.chr22-b0.vcf.gz ofh.chr22-b1.vcf.gz ofh.chr22-b2.vcf.gz $INPUT_NAME.icf
 
-real    8m55.757s
-user    138m28.325s
-sys     2m36.004s
+real    7m53.434s
+user    137m11.811s
+sys     2m39.746s
 ```
 
 ### Make schema
@@ -63,125 +67,126 @@ Create two new schemas with filters applied to largest format fields (`call_LRR`
 ```
 time vcf2zarr encode --force -p 20 -Q $INPUT_NAME.icf $INPUT_NAME.vcz
 
-real    45m13.790s
-user    47m19.185s
-sys     2m56.594s
+real    6m33.836s
+user    57m51.796s
+sys     2m49.234s
 
-name                   dtype    stored      size           ratio    nchunks  chunk_size    avg_chunk_stored    shape               chunk_shape       compressor
-                                filters
----------------------  -------  ----------  ---------  ---------  ---------  ------------  ------------------  ------------------  ----------------  --------------------------------
-------------------------------  ------------
-/call_LRR              float32  22.16 GiB   24.79 GiB     1.1          1304  19.47 MiB     17.4 MiB            (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   None
-/call_BAF              float32  15.22 GiB   24.79 GiB     1.6          1304  19.47 MiB     11.95 MiB           (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   None
-/call_GS               float32  2.22 GiB    24.79 GiB    11            1304  19.47 MiB     1.74 MiB            (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   None
-/call_genotype         int8     663.97 MiB  12.39 GiB    19            1304  9.73 MiB      521.4 KiB           (10221, 651050, 2)  (10000, 1000, 2)  Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/call_genotype_mask    bool     84.7 MiB    12.39 GiB   150            1304  9.73 MiB      66.51 KiB           (10221, 651050, 2)  (10000, 1000, 2)  Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/sample_id             object   3.19 MiB    4.97 MiB      1.6           652  7.8 KiB       5.01 KiB            (651050,)           (1000,)           Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
-/call_genotype_phased  bool     1.08 MiB    6.2 GiB    5900            1304  4.87 MiB      869 bytes           (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
-/variant_id            object   40.83 KiB   79.85 KiB     2               2  39.93 KiB     20.42 KiB           (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
-/variant_position      int32    39.03 KiB   39.93 KiB     1               2  19.96 KiB     19.52 KiB           (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
-/variant_allele        object   20.71 KiB   159.7 KiB     7.7             2  79.85 KiB     10.35 KiB           (10221, 2)          (10000, 2)        Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
-/variant_filter        bool     12.55 KiB   9.98 KiB      0.8             2  4.99 KiB      6.28 KiB            (10221, 1)          (10000, 1)        Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
-/variant_quality       float32  4.51 KiB    39.93 KiB     8.8             2  19.96 KiB     2.26 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
-/variant_contig        int8     4.51 KiB    9.98 KiB      2.2             2  4.99 KiB      2.25 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
-/contig_id             object   4.51 KiB    200 bytes     0.043           1  200.0 bytes   4.51 KiB            (25,)               (25,)             Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
-/variant_id_mask       bool     4.5 KiB     9.98 KiB      2.2             2  4.99 KiB      2.25 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
-/contig_length         int64    4.5 KiB     200 bytes     0.043           1  200.0 bytes   4.5 KiB             (25,)               (25,)             Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     None
-/filter_id             object   4.43 KiB    8 bytes       0.0018          1  8.0 bytes     4.43 KiB            (1,)                (1,)              Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+name                   dtype    stored      size            ratio    nchunks  chunk_size               avg_chunk_stored    shape               chunk_shape       compressor                                                      filters
+---------------------  -------  ----------  ---------  ----------  ---------  -----------------------  ------------------  ------------------  ----------------  --------------------------------------------------------------  ------------
+/call_LRR              float32  22.1 GiB    24.79 GiB      1.1           726  34.96 MiB                31.17 MiB           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/call_BAF              float32  15.12 GiB   24.79 GiB      1.6           726  34.96 MiB                21.33 MiB           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/call_GS               float32  2.09 GiB    24.79 GiB     12             726  34.96 MiB                2.95 MiB            (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/call_genotype         int8     657.21 MiB  12.39 GiB     19             726  17.48 MiB                926.97 KiB          (10221, 651050, 2)  (1000, 10000, 2)  Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/call_genotype_mask    bool     79.48 MiB   12.39 GiB    160             726  17.48 MiB                112.1 KiB           (10221, 651050, 2)  (1000, 10000, 2)  Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/sample_id             object   2.93 MiB    4.97 MiB       1.7            66  77.07 KiB                45.44 KiB           (651050,)           (10000,)          Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+/call_genotype_phased  bool     644.72 KiB  6.2 GiB    10000             726  8.74 MiB                 909 bytes           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/variant_allele        object   57.45 KiB   159.7 KiB      2.8            11  14.52 KiB                5.22 KiB            (10221, 2)          (1000, 2)         Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
+/variant_filter        bool     48.97 KiB   9.98 KiB       0.2            11  929.1818181818181 bytes  4.45 KiB            (10221, 1)          (1000, 1)         Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/variant_id            object   48.11 KiB   79.85 KiB      1.7            11  7.26 KiB                 4.37 KiB            (10221,)            (1000,)           Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
+/variant_position      int32    36.37 KiB   39.93 KiB      1.1            11  3.63 KiB                 3.31 KiB            (10221,)            (1000,)           Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/region_index          int32    8.62 KiB    264 bytes      0.03            1  264.0 bytes              8.62 KiB            (11, 6)             (11, 6)           Blosc(cname='zstd', clevel=9, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_length        int8     5.17 KiB    9.98 KiB       1.9            11  929.1818181818181 bytes  481 bytes           (10221,)            (1000,)           Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_contig        int8     4.99 KiB    9.98 KiB       2              11  929.1818181818181 bytes  464 bytes           (10221,)            (1000,)           Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_quality       float32  4.93 KiB    39.93 KiB      8.1            11  3.63 KiB                 459 bytes           (10221,)            (1000,)           Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_id_mask       bool     4.87 KiB    9.98 KiB       2              11  929.1818181818181 bytes  453 bytes           (10221,)            (1000,)           Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/contig_id             object   4.51 KiB    200 bytes      0.043           1  200.0 bytes              4.51 KiB            (25,)               (25,)             Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+/contig_length         int64    4.5 KiB     200 bytes      0.043           1  200.0 bytes              4.5 KiB             (25,)               (25,)             Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     None
+/filter_id             object   4.43 KiB    8 bytes        0.0018          1  8.0 bytes                4.43 KiB            (1,)                (1,)              Blosc(cname='zstd', clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+```
 
+```
 time vcf2zarr encode --force -p 20 -Qs schema_bitround.json $INPUT_NAME.icf $INPUT_NAME.bitround.vcz
 
-real    100m0.285s
-user    103m53.963s
-sys     2m49.117s
+real    11m21.202s
+user    105m17.498s
+sys     2m20.037s
 
-name                   dtype    stored       size           ratio    nchunks  chunk_size    avg_chunk_stored    shape               chunk_shape       compressor                                                      filters
----------------------  -------  -----------  ---------  ---------  ---------  ------------  ------------------  ------------------  ----------------  -------------------------------
--------------------------------  ----------------------
-/call_LRR              float32  8.41 GiB     24.79 GiB     2.9          1304  19.47 MiB     6.61 MiB            (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   [BitRound(keepbits=5)]
-/call_BAF              float32  6.14 GiB     24.79 GiB     4            1304  19.47 MiB     4.82 MiB            (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   [BitRound(keepbits=5)]
-/call_GS               float32  1021.24 MiB  24.79 GiB    25            1304  19.47 MiB     801.95 KiB          (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   [BitRound(keepbits=5)]
-/call_genotype         int8     663.97 MiB   12.39 GiB    19            1304  9.73 MiB      521.4 KiB           (10221, 651050, 2)  (10000, 1000, 2)  Blosc(cname='zstd', clevel=7, s
-huffle=BITSHUFFLE, blocksize=0)  None
-/call_genotype_mask    bool     84.7 MiB     12.39 GiB   150            1304  9.73 MiB      66.51 KiB           (10221, 651050, 2)  (10000, 1000, 2)  Blosc(cname='zstd', clevel=7, s
-huffle=BITSHUFFLE, blocksize=0)  None
-/sample_id             object   3.19 MiB     4.97 MiB      1.6           652  7.8 KiB       5.01 KiB            (651050,)           (1000,)           Blosc(cname='zstd', clevel=7, s
-huffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
-/call_genotype_phased  bool     1.08 MiB     6.2 GiB    5900            1304  4.87 MiB      869 bytes           (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, s
-huffle=BITSHUFFLE, blocksize=0)  None
-/variant_id            object   40.83 KiB    79.85 KiB     2               2  39.93 KiB     20.42 KiB           (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
-/variant_position      int32    39.03 KiB    39.93 KiB     1               2  19.96 KiB     19.52 KiB           (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   None
-/variant_allele        object   20.71 KiB    159.7 KiB     7.7             2  79.85 KiB     10.35 KiB           (10221, 2)          (10000, 2)        Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
-/variant_filter        bool     12.55 KiB    9.98 KiB      0.8             2  4.99 KiB      6.28 KiB            (10221, 1)          (10000, 1)        Blosc(cname='zstd', clevel=7, s
-huffle=BITSHUFFLE, blocksize=0)  None
-/variant_quality       float32  4.51 KiB     39.93 KiB     8.8             2  19.96 KiB     2.26 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   None
-/variant_contig        int8     4.51 KiB     9.98 KiB      2.2             2  4.99 KiB      2.25 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, s
-huffle=NOSHUFFLE, blocksize=0)   None
-/contig_id             object   4.51 KiB     200 bytes     0.043           1  200.0 bytes   4.51 KiB            (25,)               (25,)             Blosc(cname='zstd', clevel=7, s
-huffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
-/variant_id_mask       bool     4.5 KiB      9.98 KiB      2.2             2  4.99 KiB      2.25 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, s
-huffle=BITSHUFFLE, blocksize=0)  None
-/contig_length         int64    4.5 KiB      200 bytes     0.043           1  200.0 bytes   4.5 KiB             (25,)               (25,)             Blosc(cname='zstd', clevel=7, s
-huffle=SHUFFLE, blocksize=0)     None
-/filter_id             object   4.43 KiB     8 bytes       0.0018          1  8.0 bytes     4.43 KiB            (1,)                (1,)              Blosc(cname='zstd', clevel=7, s
-huffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+name                   dtype    stored      size            ratio    nchunks  chunk_size               avg_chunk_stored    shape               chunk_shape       compressor                                                      filters
+---------------------  -------  ----------  ---------  ----------  ---------  -----------------------  ------------------  ------------------  ----------------  --------------------------------------------------------------  ----------------------
+/call_LRR              float32  8.35 GiB    24.79 GiB      3             726  34.96 MiB                11.78 MiB           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [BitRound(keepbits=5)]
+/call_BAF              float32  6.02 GiB    24.79 GiB      4.1           726  34.96 MiB                8.49 MiB            (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [BitRound(keepbits=5)]
+/call_GS               float32  961.37 MiB  24.79 GiB     26             726  34.96 MiB                1.32 MiB            (10221, 651050)     (1000, 10000)     Blosc(cname='zstd', clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [BitRound(keepbits=5)]
+/call_genotype         int8     657.21 MiB  12.39 GiB     19             726  17.48 MiB                926.97 KiB          (10221, 651050, 2)  (1000, 10000, 2)  Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/call_genotype_mask    bool     79.48 MiB   12.39 GiB    160             726  17.48 MiB                112.1 KiB           (10221, 651050, 2)  (1000, 10000, 2)  Blosc(cname='zstd', clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/sample_id             object   2.93 MiB    4.97 MiB       1.7            66  77.07 KiB                45.44 KiB           (651050,)           (10000,)          Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+/call_genotype_phased  bool     644.72 KiB  6.2 GiB    10000             726  8.74 MiB                 909 bytes           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/variant_allele        object   57.45 KiB   159.7 KiB      2.8            11  14.52 KiB                5.22 KiB            (10221, 2)          (1000, 2)         Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
+/variant_filter        bool     48.97 KiB   9.98 KiB       0.2            11  929.1818181818181 bytes  4.45 KiB            (10221, 1)          (1000, 1)         Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/variant_id            object   48.11 KiB   79.85 KiB      1.7            11  7.26 KiB                 4.37 KiB            (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
+/variant_position      int32    36.37 KiB   39.93 KiB      1.1            11  3.63 KiB                 3.31 KiB            (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/region_index          int32    8.62 KiB    264 bytes      0.03            1  264.0 bytes              8.62 KiB            (11, 6)             (11, 6)           Blosc(cname='zstd',
+clevel=9, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_length        int8     5.17 KiB    9.98 KiB       1.9            11  929.1818181818181 bytes  481 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_contig        int8     4.99 KiB    9.98 KiB       2              11  929.1818181818181 bytes  464 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_quality       float32  4.93 KiB    39.93 KiB      8.1            11  3.63 KiB                 459 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_id_mask       bool     4.87 KiB    9.98 KiB       2              11  929.1818181818181 bytes  453 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/contig_id             object   4.51 KiB    200 bytes      0.043           1  200.0 bytes              4.51 KiB            (25,)               (25,)             Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+/contig_length         int64    4.5 KiB     200 bytes      0.043           1  200.0 bytes              4.5 KiB             (25,)               (25,)             Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     None
+/filter_id             object   4.43 KiB    8 bytes        0.0018          1  8.0 bytes                4.43 KiB            (1,)                (1,)              Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+```
 
+```
 time vcf2zarr encode --force -p 20 -Qs schema_quantize.json $INPUT_NAME.icf $INPUT_NAME.quantize.vcz
 
-real    57m27.351s
-user    59m56.832s
-sys     3m31.366s
+real    8m17.282s
+user    75m46.997s
+sys     2m30.519s
 
-name                   dtype    stored      size           ratio    nchunks  chunk_size    avg_chunk_stored    shape               chunk_shape       compressor
-                                filters
----------------------  -------  ----------  ---------  ---------  ---------  ------------  ------------------  ------------------  ----------------  --------------------------------
-------------------------------  ---------------------------------
-/call_LRR              float32  16.4 GiB    24.79 GiB     1.5          1304  19.47 MiB     12.88 MiB           (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   [Quantize(digits=5, dtype='<f4')]
-/call_BAF              float32  11.47 GiB   24.79 GiB     2.2          1304  19.47 MiB     9.01 MiB            (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   [Quantize(digits=5, dtype='<f4')]
-/call_GS               float32  1.93 GiB    24.79 GiB    13            1304  19.47 MiB     1.52 MiB            (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   [Quantize(digits=5, dtype='<f4')]
-/call_genotype         int8     663.97 MiB  12.39 GiB    19            1304  9.73 MiB      521.4 KiB           (10221, 651050, 2)  (10000, 1000, 2)  Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/call_genotype_mask    bool     84.7 MiB    12.39 GiB   150            1304  9.73 MiB      66.51 KiB           (10221, 651050, 2)  (10000, 1000, 2)  Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/sample_id             object   3.19 MiB    4.97 MiB      1.6           652  7.8 KiB       5.01 KiB            (651050,)           (1000,)           Blosc(cname='zstd', clevel=7, sh
-uffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
-/call_genotype_phased  bool     1.08 MiB    6.2 GiB    5900            1304  4.87 MiB      869 bytes           (10221, 651050)     (10000, 1000)     Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/variant_id            object   40.83 KiB   79.85 KiB     2               2  39.93 KiB     20.42 KiB           (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
-/variant_position      int32    39.03 KiB   39.93 KiB     1               2  19.96 KiB     19.52 KiB           (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   None
-/variant_allele        object   20.71 KiB   159.7 KiB     7.7             2  79.85 KiB     10.35 KiB           (10221, 2)          (10000, 2)        Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
-/variant_filter        bool     12.55 KiB   9.98 KiB      0.8             2  4.99 KiB      6.28 KiB            (10221, 1)          (10000, 1)        Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/variant_quality       float32  4.51 KiB    39.93 KiB     8.8             2  19.96 KiB     2.26 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   None
-/variant_contig        int8     4.51 KiB    9.98 KiB      2.2             2  4.99 KiB      2.25 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, sh
-uffle=NOSHUFFLE, blocksize=0)   None
-/contig_id             object   4.51 KiB    200 bytes     0.043           1  200.0 bytes   4.51 KiB            (25,)               (25,)             Blosc(cname='zstd', clevel=7, sh
-uffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
-/variant_id_mask       bool     4.5 KiB     9.98 KiB      2.2             2  4.99 KiB      2.25 KiB            (10221,)            (10000,)          Blosc(cname='zstd', clevel=7, sh
-uffle=BITSHUFFLE, blocksize=0)  None
-/contig_length         int64    4.5 KiB     200 bytes     0.043           1  200.0 bytes   4.5 KiB             (25,)               (25,)             Blosc(cname='zstd', clevel=7, sh
-uffle=SHUFFLE, blocksize=0)     None
-/filter_id             object   4.43 KiB    8 bytes       0.0018          1  8.0 bytes     4.43 KiB            (1,)                (1,)              Blosc(cname='zstd', clevel=7, sh
-uffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+name                   dtype    stored      size            ratio    nchunks  chunk_size               avg_chunk_stored    shape               chunk_shape       compressor
+                                            filters
+---------------------  -------  ----------  ---------  ----------  ---------  -----------------------  ------------------  ------------------  ----------------  --------------------
+------------------------------------------  ---------------------------------
+/call_LRR              float32  16.31 GiB   24.79 GiB      1.5           726  34.96 MiB                23.01 MiB           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [Quantize(digits=5, dtype='<f4')]
+/call_BAF              float32  11.34 GiB   24.79 GiB      2.2           726  34.96 MiB                15.99 MiB           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [Quantize(digits=5, dtype='<f4')]
+/call_GS               float32  1.81 GiB    24.79 GiB     14             726  34.96 MiB                2.56 MiB            (10221, 651050)     (1000, 10000)     Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [Quantize(digits=5, dtype='<f4')]
+/call_genotype         int8     657.21 MiB  12.39 GiB     19             726  17.48 MiB                926.97 KiB          (10221, 651050, 2)  (1000, 10000, 2)  Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/call_genotype_mask    bool     79.48 MiB   12.39 GiB    160             726  17.48 MiB                112.1 KiB           (10221, 651050, 2)  (1000, 10000, 2)  Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/sample_id             object   2.93 MiB    4.97 MiB       1.7            66  77.07 KiB                45.44 KiB           (651050,)           (10000,)          Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+/call_genotype_phased  bool     644.72 KiB  6.2 GiB    10000             726  8.74 MiB                 909 bytes           (10221, 651050)     (1000, 10000)     Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/variant_allele        object   57.45 KiB   159.7 KiB      2.8            11  14.52 KiB                5.22 KiB            (10221, 2)          (1000, 2)         Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
+/variant_filter        bool     48.97 KiB   9.98 KiB       0.2            11  929.1818181818181 bytes  4.45 KiB            (10221, 1)          (1000, 1)         Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/variant_id            object   48.11 KiB   79.85 KiB      1.7            11  7.26 KiB                 4.37 KiB            (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   [VLenUTF8()]
+/variant_position      int32    36.37 KiB   39.93 KiB      1.1            11  3.63 KiB                 3.31 KiB            (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/region_index          int32    8.62 KiB    264 bytes      0.03            1  264.0 bytes              8.62 KiB            (11, 6)             (11, 6)           Blosc(cname='zstd',
+clevel=9, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_length        int8     5.17 KiB    9.98 KiB       1.9            11  929.1818181818181 bytes  481 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_contig        int8     4.99 KiB    9.98 KiB       2              11  929.1818181818181 bytes  464 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_quality       float32  4.93 KiB    39.93 KiB      8.1            11  3.63 KiB                 459 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=NOSHUFFLE, blocksize=0)   None
+/variant_id_mask       bool     4.87 KiB    9.98 KiB       2              11  929.1818181818181 bytes  453 bytes           (10221,)            (1000,)           Blosc(cname='zstd',
+clevel=7, shuffle=BITSHUFFLE, blocksize=0)  None
+/contig_id             object   4.51 KiB    200 bytes      0.043           1  200.0 bytes              4.51 KiB            (25,)               (25,)             Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
+/contig_length         int64    4.5 KiB     200 bytes      0.043           1  200.0 bytes              4.5 KiB             (25,)               (25,)             Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     None
+/filter_id             object   4.43 KiB    8 bytes        0.0018          1  8.0 bytes                4.43 KiB            (1,)                (1,)              Blosc(cname='zstd',
+clevel=7, shuffle=SHUFFLE, blocksize=0)     [VLenUTF8()]
 ```
 
 - each `.vcz` also has a CSV file created via `vcf2zarr inspect` in the `csvs` directory
