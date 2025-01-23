@@ -1535,11 +1535,56 @@ used throughout as an example of a non-trivial whole-matrix operation
 on GPU. In the second, we demonstrate some emerging technology 
 in which Zarr data can be decompressed directly in GPU memory. 
 In both cases we demonstrate on chromosome 22 of 
-1000 Genomes WGS data~\citep{byrska2022high}. 
+1000 Genomes WGS data~\citep{byrska2022high}. This consists
+of 96,514 variants and 2504 samples [and more details about the zarr].
+Benchmarks in this section were performed on a
+machine with an Intel Xeon Silver 4216 processor,
+Nvidia A6000 RTX GPU and NVMe SSD.
 
-[Details of af-dist benchmark]
+We first illustrate the ease with which computations can be 
+be peformed on the GPU, with little or no preprocessing of the 
+data. To do this we reimplemented the af-dist calculation
+described above using CuPy~\citep{cupy}, a GPU accelerated library
+of core operations for scientific computing.
+All of the operations required to compute  af-dist are 
+performed on the GPU, mostly with minimal changes required 
+(e.g.\ replacing \texttt{np.digitize} with \texttt{cp.digitize}).
+We perform the core operation of genotype classification using the
+CuPy JIT compiler to generate a custom CUDA kernel, which 
+is also very similar to the Numba compiled function used in other
+benchmarks. In the simplest version, we iterate over the chunks
+in the \texttt{call\_genotype} array, decompress each to a local
+NumPy array and then copying the data to GPU memory by creating 
+the corresponding CuPy array. For this version, the total time
+in the genotype classification kernel was 0.045s, with an 
+overall data transfer time of 0.19s (we discount decompression
+time here; see next paragraph). For comparison, 
+our standard Numba compiled classification function required 
+a total of 1.44s running on a single CPU core.
+Another approach in which we load the entire 
+\texttt{call\_genotype} array into GPU memory at once (possible
+here as the $96514 \times 2504 \times 2$ array requires 
+460MiB) and use
+more sophisticated kernel in which we map GPU resources to
+subsets of the array in two dimensions, reduces transfer 
+time to 0.136s (and processing time to $2.43\times10^{-4}$s.
 
-[Details of decompression benchmark]
+Chunk decompression comprises a significant fraction of processing 
+time [FIXME crossrefs?] and host-to-GPU data transfer is 
+often a bottleneck. It is therefore useful in some applications 
+to directly decompress Zarr chunks into GPU memory. 
+KvikIO is a Python package that provides access to optimised
+GPU IO routines, and providing support for Zarr along with
+access to several GPU optimised compression codecs.
+To explore the performance of these codecs we recompressed
+the \texttt{call\_AD} (allele depth) array
+(96514, 2504, 7) [int16 more details]. In call cases it took around 1s 
+to compress and store this 3.15GiB array. [Details about compression codecs?]
+We then measured the time to decompress these arrays and 
+copy back to host memory [Why??]. This required about 0.6s with the 
+fastest codecs. For reference, using the Zstandard codec on a single
+CPU thread required about 7.6s.
+
 
 \section{Discussion}
 % Zarr is great
