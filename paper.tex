@@ -1470,6 +1470,32 @@ to our prototype Zarr backend.
 % Zarr:
 % real 0m55.957s user 1m10.375s sys 0m12.111s
 
+\subsection{Extensibility: GPU acceleration}
+[JK: this is a super rough first narrative draft.]
+Machine learning, and in particular deep learning methods, have led to 
+major breakthroughs in many different fields in recent years [CITES].
+GPUs have been a key enabling factor in this [details and cites].
+The PyData ecosystem [cites] has also enabled this. Techologies like
+[Cupy, lots of others] substantially lower the bar for writing efficient
+GPU code.
+Deep learning methods depend crucially on efficient access to vast 
+datasets for training, and Zarr is emerging as a popular choice
+[cites from geosciences?]. The RAPIDs GPU Accelerated data science 
+library [which does] now supports Zarr through [kvikio, more?].
+
+To demonstrate the ease and efficiency with this data stored in Zarr 
+format can be processed on a GPU, we developed two proof-of-concept
+applications. In the first we re-implement the af-dist calculation
+used throughout as an example of a non-trivial whole-matrix operation
+on GPU. In the second, we demonstrate some emerging technology 
+in which Zarr data can be decompressed directly in GPU memory. 
+In both cases we demonstrate on chromosome 22 of 
+1000 Genomes WGS data~\citep{byrska2022high}. 
+
+[Details of af-dist benchmark]
+
+[Details of decompression benchmark]
+
 \section{Discussion}
 % Zarr is great
 VCF is a central element of modern genomics, facilitating
