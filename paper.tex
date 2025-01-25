@@ -1085,13 +1085,10 @@ about their health and lifestyles to create an incredibly detailed picture
 that represents the whole of the UK.
 
 \begin{table}
-% \caption{Summary for VCF Zarr conversion of 
-% Genomics England WGS data for chromosome 2 (78,195 samples, 59,880,903 variants),
-% consisting of 44 fields and 2.54TiB of storage ($\sim$5X compression over gzipped VCF).
 \caption{Summary for VCF Zarr conversion of 
 Our Future Health genotype data for chromosome 22 (651,050 samples, 10,221
 variants) consisting of 19 fields and 17GiB of storage ($\sim2.5$X compression
-over shouce gzipped VCF).
+over source gzipped VCF).
 % 42.3  / 17 = 2.4882
 Here we use a chunk size of 1,000 variants $\times$ 10,000 samples and 
 apply the BitRound(5) filter to the large floating point fields (see text for 
@@ -1200,11 +1197,16 @@ cost of \$4.31. This second Zarr representation occupied 8.5 GiB of storage acro
 232,809 chunk files.
 
 \begin{table}
-\caption{Summary for a selection of the largest VCF Zarr columns
-    for the All of Us exome-like data. The chunk size is
-    1,000 variants $\times$ 10,000 samples.
-    For column details, see Table~\ref{tab-genomics-england-data}.
-    \label{tab-auo-data}}
+\caption{Summary for VCF Zarr conversion of 
+All of Us exome-like data genotype data for chromosome 22 (245,394 samples, 
+715,256 variants) 
+consisting of 25 fields and 8.5GiB of storage ($\sim1.1$X larger
+% 8.5 / 7.44 = 1.142
+than source gzipped VCF).
+Here we use the local alleles fields \texttt{call\_LA} and \texttt{call\_LAD};
+see text for details.
+For column details, see Table~\ref{tab-genomics-england-data}.
+\label{tab-auo-data}}
 \begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
 \toprule
 {Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
