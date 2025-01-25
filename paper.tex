@@ -1166,7 +1166,7 @@ from the original in Fig~\ref{fig-ofh-field-distributions} (data not shown).
 Table~\ref{tab-ofh-data} shows a summary of the Zarr using the BitRound filter.
 
 \subsection{Case study: All of Us exome-like data}
-The All of Us dataset comprises 245,388 clinical-grade whole genome sequences (WGS),
+The All of Us dataset comprises 245K clinical-grade whole genome sequences,
 identifying over 1 billion variants, including 3.9 million novel variants
 with coding consequences~\citep{all2024genomic}. Participants are from the United States,
 with an emphasis on historically underrepresented genetic ancestry groups.
@@ -1273,8 +1273,8 @@ detailed inTable~\ref{tab-spruce-data}.
 \begin{table}
 \caption{Summary for VCF Zarr conversion of the Norway spruce
 WGS data on all 12 autosomes (1,063 samples, 374,517,0452 variants)
-consisting of 34 fields and 2.3TiB of storage ($\sim 3.2X$ smaller 
-than source gzipped VCFs). The chunk size is 10,000 variants times 
+consisting of 34 fields and 2.3TiB of storage ($\sim 3.2$X smaller 
+than source gzipped VCFs). The chunk size is 10,000 variants $\times$
 1,063 samples (i..e, a single sample chunk). This uses local 
 alleles to reduce the 
 space required by the PL field; see the text for discussion.
@@ -1545,17 +1545,44 @@ in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
 benchmarks in cloud settings.)
 
 \subsection{Extensibility: GPU acceleration}
-[JK: this is a super rough first narrative draft.]
-Machine learning, and in particular deep learning methods, have led to
-major breakthroughs in many different fields in recent years [CITES].
-GPUs have been a key enabling factor in this [details and cites].
-The PyData ecosystem [cites] has also enabled this. Techologies like
-[Cupy, lots of others] substantially lower the bar for writing efficient
-GPU code.
-Deep learning methods depend crucially on efficient access to vast
-datasets for training, and Zarr is emerging as a popular choice
-[cites from geosciences?]. The RAPIDs GPU Accelerated data science
-library [which does] now supports Zarr through [kvikio, more?].
+GPU acceleration has revolutionized scientific computing by leveraging the
+massively parallel architecture of GPUs to achieve significant speedups in
+computationally intensive tasks such as simulations, data analysis, and machine
+learning, often by one or two orders of magnitude~\citep{nickolls2010gpu,
+mittal2014survey,owens2008gpu}
+% (Nickolls & Dally, 2010;
+% Mittal & Vetter, 2015; 
+% Owens et al., 2008). 
+This has profound implications for
+fields ranging from molecular dynamics~\citep{stone2007accelerating}
+% (Stone et al., 2010) 
+to deep learning~\citep{lecun2015deep}
+% (LeCun et al., 2015). 
+While early GPU programming required expertise in
+low-level languages like CUDA or OpenCL, the advent of high-level Python
+libraries such as Numba~\citep{lam2015numba}, CuPy~\citep{okuta2017cupy} 
+%(Okuta et al., 2017), 
+and
+PyCUDA/PyOpenCL~\citep{klockner2012pycuda}
+% (Klöckner, 2012) 
+has democratized access to GPU acceleration.
+These tools offer user-friendly interfaces and just-in-time compilation,
+allowing scientists to harness the power of GPUs within the familiar Python
+ecosystem, thereby significantly accelerating scientific discovery and
+broadening the adoption of accelerated computing across various research
+domains.
+
+% [JK: this is a super rough first narrative draft.]
+% Machine learning, and in particular deep learning methods, have led to
+% major breakthroughs in many different fields in recent years [CITES].
+% GPUs have been a key enabling factor in this [details and cites].
+% The PyData ecosystem [cites] has also enabled this. Techologies like
+% [Cupy, lots of others] substantially lower the bar for writing efficient
+% GPU code.
+% Deep learning methods depend crucially on efficient access to vast
+% datasets for training, and Zarr is emerging as a popular choice
+% [cites from geosciences?]. The RAPIDs GPU Accelerated data science
+% library [which does] now supports Zarr through [kvikio, more?].
 
 To demonstrate the ease and efficiency with this data stored in Zarr
 format can be processed on a GPU, we developed two proof-of-concept
@@ -1574,7 +1601,7 @@ Nvidia A6000 RTX GPU and NVMe SSD.
 We first illustrate the ease with which computations can be
 be peformed on the GPU, with little or no preprocessing of the
 data. To do this we reimplemented the af-dist calculation
-described above using CuPy~\citep{cupy}, a GPU accelerated library
+described above using CuPy~\citep{okuta2017cupy}, a GPU accelerated library
 of core operations for scientific computing.
 All of the operations required to compute  af-dist are
 performed on the GPU, mostly with minimal changes required
