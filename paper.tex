@@ -189,7 +189,7 @@ Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 Our Future Health~\citep{ofhmain_2025},
 and the All of Us research program~\citep{all2024genomic}
-collecting genome sequence data for hundreds of thousands of humans.
+collecting genome sequence data for millions of humans.
 Large genetic variation datasets are also being generated for other organisms
 and a variety of purposes including
 agriculture~\citep{ros2020accuracy,wang2023rice},
@@ -312,8 +312,10 @@ it gaining substantial traction
 across the sciences, and it is now used in multiple petabyte-scale
 datasets in cloud deployments (see Methods for details).
 We present the VCF Zarr specification that formalises this
-mapping, and the \texttt{vcf2zarr}
-utility to reliably convert large-scale VCFs to Zarr.
+mapping, the \texttt{vcf2zarr}
+utility to reliably convert large-scale VCFs to Zarr,
+and the \texttt{vcztools} program to form a compatibility layer by
+emulating the ubiquitous \texttt{bcftools}.
 We show that VCF Zarr is much more compact than
 VCF and is competitive with state-of-the-art
 file-based VCF compression tools.
@@ -359,8 +361,8 @@ deorowicz2021vcfshark, % VCFShark
 dehaas2024genotype} %  GRG
 most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
-See~\citep{mcvean2019linkage} for a review of the techniques
-employed in genetic data compression.
+(See~\citep{mcvean2019linkage} for a review of the techniques
+employed in genetic data compression.)
 The widely-used PLINK binary format stores genotypes in a
 packed binary representation, supporting only biallelic
 variants without phase information.
@@ -412,7 +414,7 @@ in alignment
 % Jeff: OK with the ADAM reference in here? You did some parquet based
 % alignment storage, right?
 storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
-the use of columnar technologies for
+columnar technologies for
 storing and analysing variation data have had limited
 success~\citep{boufea2017managing,fan2020variant}.
 Mapping VCF directly to a columnar layout, in which there is a
@@ -513,9 +515,9 @@ a reasonable and easily reproducible data point
 when comparing such methods.
 The simulations only contain genotypes without any additional
 high-entropy QC fields, which is unrealistic
-(see the Genomics England case-study
-for benchmarks on a large human dataset that includes
-many such fields).
+(see the later case-studies
+for benchmarks on datasets that contain a wide variety
+of such fields).
 Note, however, that such minimal, genotype-only data
 is something of a best-case scenario for specialised genotype
 compression methods using row-wise storage.
@@ -691,7 +693,7 @@ benchmarks in
 Figs~\ref{fig-whole-matrix-compute}--~\ref{fig-column-extract}
 and~\ref{fig-whole-matrix-decode} is mostly due to the overhead
 of accessing a large number of small chunk files and
-consequent reduced effectiveness of file-system read-ahead caching.
+consequent reduced effectiveness of operating system read-ahead caching.
 While having many independent chunks maps
 naturally to high-performance parallel access patterns
 in the cloud store setting~\citep{durner2023exploiting}
@@ -718,7 +720,7 @@ time for the Zip file version is significantly less
 % 11      zarr   11383.82    191.01  192.913833  258.598778
 % 29  zarr.zip   11198.37     43.13  187.358333  188.659252
 
-Another advantage of Zarr is the availabilty of several
+Zarr is a standard with multiple 
 independent implementations across different programming languages
 (see Methods). Fig~\ref{fig-whole-matrix-compute-zarr-versions}
 compares the CPU time required to perform the computations
@@ -726,7 +728,7 @@ of Fig~\ref{fig-whole-matrix-compute}
 for af-dist implementations using the Zarr-Python~\cite{zarrpython},
 JZarr~\cite{jzarr},
 and TensorStore~\citep{tensorstore} (C++ and Python) libraries.
-The program using the Tensorstore C++ API is fastest, requiring
+The program using the TensorStore C++ API is fastest, requiring
 about 20\% less CPU time than the version using Zarr-Python and Numba
 used in our other benchmarks.
 
