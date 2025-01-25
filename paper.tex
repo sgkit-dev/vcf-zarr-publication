@@ -189,7 +189,7 @@ Genomics England~\cite{turnbull2018100},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 Our Future Health~\citep{ofhmain_2025},
 and the All of Us research program~\citep{all2024genomic}
-collecting genome sequence data for hundreds of thousands of humans.
+collecting genome sequence data for millions of humans.
 Large genetic variation datasets are also being generated for other organisms
 and a variety of purposes including
 agriculture~\citep{ros2020accuracy,wang2023rice},
@@ -312,8 +312,10 @@ it gaining substantial traction
 across the sciences, and it is now used in multiple petabyte-scale
 datasets in cloud deployments (see Methods for details).
 We present the VCF Zarr specification that formalises this
-mapping, and the \texttt{vcf2zarr}
-utility to reliably convert large-scale VCFs to Zarr.
+mapping, the \texttt{vcf2zarr}
+utility to reliably convert large-scale VCFs to Zarr,
+and the \texttt{vcztools} program to form a compatibility layer by
+emulating the ubiquitous \texttt{bcftools}.
 We show that VCF Zarr is much more compact than
 VCF and is competitive with state-of-the-art
 file-based VCF compression tools.
@@ -359,8 +361,8 @@ deorowicz2021vcfshark, % VCFShark
 dehaas2024genotype} %  GRG
 most notably the Positional
 Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
-See~\citep{mcvean2019linkage} for a review of the techniques
-employed in genetic data compression.
+(See~\citep{mcvean2019linkage} for a review of the techniques
+employed in genetic data compression.)
 The widely-used PLINK binary format stores genotypes in a
 packed binary representation, supporting only biallelic
 variants without phase information.
@@ -412,7 +414,7 @@ in alignment
 % Jeff: OK with the ADAM reference in here? You did some parquet based
 % alignment storage, right?
 storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
-the use of columnar technologies for
+columnar technologies for
 storing and analysing variation data have had limited
 success~\citep{boufea2017managing,fan2020variant}.
 Mapping VCF directly to a columnar layout, in which there is a
@@ -513,9 +515,9 @@ a reasonable and easily reproducible data point
 when comparing such methods.
 The simulations only contain genotypes without any additional
 high-entropy QC fields, which is unrealistic
-(see the Genomics England case-study
-for benchmarks on a large human dataset that includes
-many such fields).
+(see the later case-studies
+for benchmarks on datasets that contain a wide variety
+of such fields).
 Note, however, that such minimal, genotype-only data
 is something of a best-case scenario for specialised genotype
 compression methods using row-wise storage.
@@ -691,7 +693,7 @@ benchmarks in
 Figs~\ref{fig-whole-matrix-compute}--~\ref{fig-column-extract}
 and~\ref{fig-whole-matrix-decode} is mostly due to the overhead
 of accessing a large number of small chunk files and
-consequent reduced effectiveness of file-system read-ahead caching.
+consequent reduced effectiveness of operating system read-ahead caching.
 While having many independent chunks maps
 naturally to high-performance parallel access patterns
 in the cloud store setting~\citep{durner2023exploiting}
@@ -718,7 +720,7 @@ time for the Zip file version is significantly less
 % 11      zarr   11383.82    191.01  192.913833  258.598778
 % 29  zarr.zip   11198.37     43.13  187.358333  188.659252
 
-Another advantage of Zarr is the availabilty of several
+Zarr is a standard with multiple 
 independent implementations across different programming languages
 (see Methods). Fig~\ref{fig-whole-matrix-compute-zarr-versions}
 compares the CPU time required to perform the computations
@@ -726,7 +728,7 @@ of Fig~\ref{fig-whole-matrix-compute}
 for af-dist implementations using the Zarr-Python~\cite{zarrpython},
 JZarr~\cite{jzarr},
 and TensorStore~\citep{tensorstore} (C++ and Python) libraries.
-The program using the Tensorstore C++ API is fastest, requiring
+The program using the TensorStore C++ API is fastest, requiring
 about 20\% less CPU time than the version using Zarr-Python and Numba
 used in our other benchmarks.
 
@@ -871,9 +873,11 @@ Savvy here because  they have fundamental limitations
 and conversion of these large VCFs is a major undertaking.
 
 \begin{table}
-\caption{Summary for a selection of the largest VCF Zarr columns produced for
-Genomics England aggV2 VCFs on chromosome 2 using \texttt{vcf2zarr}
-default settings. Each field is stored independently
+\caption{Summary for VCF Zarr conversion of 
+Genomics England WGS data for chromosome 2 (78,195 samples, 59,880,903 variants),
+consisting of 44 fields and 2.54TiB of storage ($\sim$5X compression over
+source gzipped VCF).
+Each field is stored independently
 as a Zarr array with the given type (sufficient to represent all values in the
 data). We show the total storage consumed (reported via \texttt{du}) in
 power-of-two units, and the compression ratio achieved on that array.
@@ -1069,59 +1073,6 @@ present-day ``copy-oriented'' computing,
 to the ``mask-oriented'' analysis of large immutable, single-source
 datasets is a potentially transformational change enabled by Zarr.
 
-Finally, to explore the use of cloud computing services with VCF Zarr,
-we uploaded the Zarr directory hierarchy for chromosome 2 to an AWS S3
-standard bucket. We repeated the benchmarks above on the same subset
-of 562,640 variants, using the same
-single-threaded sequential Zarr code.
-Extracting the position array required 15s CPU, 23.8s elapsed.
-The af-dist calculation required 2.70min CPU, 5.23min elapsed.
-Creating the filter mask
-required 3.05min CPU, 11.15min elapsed.
-
-While these benchmarks are comparable with results obtained on the
-shared file-system in the Genomics England research environment,
-the sequential single-threaded access patterns used do not map
-well to modern cloud computing environments.
-As each request to a cloud object store has a high latency, it
-is important to have many requests running concurrently to achieve
-good performance~\citep{durner2023exploiting}.
-To explore the limits of performance we developed a simple prototype
-Zarr implementation, designed to maximise concurrency using asynchrous
-IO and multiple processes (see Methods for details).
-Fig~\ref{fig-s3-throughput} shows the rate at which genotypes
-can be decoded to RAM as well as rate at which we can compute
-af-dist (using Numba to classify genotypes, as before)
-as we increase the number of parallel processes on
-an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
-The maximum decompression rate of 47.4GiB/s
-occurs at 64 processes, with a corresponding
-network data rate of 121 MiB/s
-Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
-network access by measuring the rate at which we can download the chunks
-into RAM (without decompressing) using the same parallel and asynchronous
-architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
-and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
-was achieved with 32 processes. Genotype data can therefore be fetched
-from S3 around an order of magnitude more quickly than it can be decompressed
-into RAM. This has some interesting consequences
-when we consider the goal of seeking the highest possible compression levels
-for genotype data and the usual cloud storage cost structuring models (see
-Discussion).
-
-Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
-calculation is performed at a maximum rate of 25.5GiB/s using 128
-processes. At this rate, the af-dist calculation for the target region
-was completed in 4.15s (compare to 5.23min for the naive single-threaded
-method above).
-This level of throughput would complete af-dist for all chromosomes for all samples
-% compute: cost of c5.9xlarge per hour * 1.27
-% ==                             $4.08 * 1.27
-% io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
-% ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
-in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
-(See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
-benchmarks in cloud settings.)
 
 \subsection{Case study: Our Future Health genotype data}
 Our Future Health~\cite{ofhmain_2025}  is the UK’s largest ever health research programme.
@@ -1134,11 +1085,15 @@ about their health and lifestyles to create an incredibly detailed picture
 that represents the whole of the UK.
 
 \begin{table}
-\caption{Summary of the largest VCF Zarr columns for the Our Future Health
-    genotype dataset, with chunk sizes of 1,000 variants and
-    10,000 samples and applying the BitRound(5) filter to the floating point
-    fields.
-    For column details, see Table~\ref{tab-genomics-england-data}.
+\caption{Summary for VCF Zarr conversion of 
+Our Future Health genotype data for chromosome 22 (651,050 samples, 10,221
+variants) consisting of 19 fields and 17GiB of storage ($\sim2.5$X compression
+over source gzipped VCF).
+% 42.3  / 17 = 2.4882
+Here we use a chunk size of 1,000 variants $\times$ 10,000 samples and 
+apply the BitRound(5) filter to the large floating point fields (see text for 
+details).
+For column details, see Table~\ref{tab-genomics-england-data}.
     \label{tab-ofh-data}}
 \begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
 \toprule
@@ -1242,11 +1197,16 @@ cost of \$4.31. This second Zarr representation occupied 8.5 GiB of storage acro
 232,809 chunk files.
 
 \begin{table}
-\caption{Summary for a selection of the largest VCF Zarr columns
-    for the All of Us exome-like data. The chunk size is
-    1,000 variants $\times$ 10,000 samples.
-    For column details, see Table~\ref{tab-genomics-england-data}.
-    \label{tab-auo-data}}
+\caption{Summary for VCF Zarr conversion of 
+All of Us exome-like data genotype data for chromosome 22 (245,394 samples, 
+715,256 variants) 
+consisting of 25 fields and 8.5GiB of storage ($\sim1.1$X larger
+% 8.5 / 7.44 = 1.142
+than source gzipped VCF; see text for discussion).
+Here we use the local alleles fields \texttt{call\_LA} and \texttt{call\_LAD}; 
+see text for details.
+For column details, see Table~\ref{tab-genomics-england-data}.
+\label{tab-auo-data}}
 \begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
 \toprule
 {Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
@@ -1264,6 +1224,8 @@ cost of \$4.31. This second Zarr representation occupied 8.5 GiB of storage acro
 
 [TODO discuss local alleles and mention Table~\ref{tab-auo-data}].
 
+[Discuss why we're bigger than VCF here, people will want to understand.
+
 \subsection{Case study: 1,063 spruce whole-genome samples}
 
 To demonstrate the versatility of \texttt{vcf2zarr}, in this section
@@ -1277,7 +1239,7 @@ Gb~\cite{nystedt_NorwaySpruceGenome_2013}. Here, we assess the
 performance of \texttt{vcf2zarr} as applied to 1,063 whole-genome
 resequenced spruce individuals from a recent study (in preparation),
 where resequencing data has been mapped to a chromosome-scale
-reference genome. The dataset consists of approximately 3,745 million
+reference genome. The dataset consists of approximately 3.8 million
 single-nucleotide variants and small indels from the 12 autosomes
 totalling 7.4TiB of VCF data after \texttt{bgzip} compression,
 distributed over 165 VCF files. Since the dataset originally was
@@ -1309,11 +1271,14 @@ storage over 11,235,556 chunk files, with a reduction in storage of
 detailed inTable~\ref{tab-spruce-data}.
 
 \begin{table}
-\caption{Summary for a selection of the largest VCF Zarr columns
-produced for 1,063 VCFs on 12 spruce chromosomes using
-\texttt{vcf2zarr} with samples chunk size set to 1,063, variants
-chunk size to 10,000, and using local allele fields to reduce output
-size. For column details see the caption of
+\caption{Summary for VCF Zarr conversion of the Norway spruce
+WGS data on all 12 autosomes (1,063 samples, 374,517,0452 variants)
+consisting of 34 fields and 2.3TiB of storage ($\sim 3.2X$ smaller 
+than source gzipped VCFs). The chunk size is 10,000 variants times 
+1,063 samples (i..e, a single sample chunk). This uses local 
+alleles to reduce the 
+space required by the PL field; see the text for discussion.
+For column details see the caption of
 Table~\ref{tab-genomics-england-data}.
 \label{tab-spruce-data}}
 
@@ -1514,6 +1479,70 @@ to our prototype Zarr backend.
 
 % Zarr:
 % real 0m55.957s user 1m10.375s sys 0m12.111s
+
+\subsection{Extensibility: Cloud computing}
+To explore the use of cloud computing services with VCF Zarr,
+we uploaded the Zarr directory hierarchy for the Genomics England
+data chromosome 2 described in Table~\ref{tab-genomics-england-data}.
+an AWS S3 standard bucket. 
+[TODO clarify what we're doing and remind reader]
+We repeated the benchmarks above on the same subset
+of 562,640 variants, using the same
+single-threaded sequential Zarr code.
+Extracting the position array required 15s CPU, 23.8s elapsed.
+The af-dist calculation required 2.70min CPU, 5.23min elapsed.
+Creating the filter mask
+required 3.05min CPU, 11.15min elapsed.
+
+While these benchmarks are comparable with results obtained on the
+shared file-system in the Genomics England research environment,
+the sequential single-threaded access patterns used do not map
+well to modern cloud computing environments.
+As each request to a cloud object store has a high latency, it
+is important to have many requests running concurrently to achieve
+good performance~\citep{durner2023exploiting}.
+To explore the limits of performance we developed a simple prototype
+Zarr implementation, designed to maximise concurrency using asynchrous
+IO and multiple processes (see Methods for details).
+Fig~\ref{fig-s3-throughput} shows the rate at which genotypes
+can be decoded to RAM as well as rate at which we can compute
+af-dist (using Numba to classify genotypes, as before)
+as we increase the number of parallel processes on
+an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
+The maximum decompression rate of 47.4GiB/s
+occurs at 64 processes, with a corresponding
+network data rate of 121 MiB/s
+Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
+network access by measuring the rate at which we can download the chunks
+into RAM (without decompressing) using the same parallel and asynchronous
+architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
+and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
+was achieved with 32 processes. Genotype data can therefore be fetched
+from S3 around an order of magnitude more quickly than it can be decompressed
+into RAM. [TODO QUESTION: can such rates be sustained, and be expected to 
+happen in parallel? Do Durner et al consider this?]
+ 
+% Maybe don't bother with this, the same trade-off always exists.
+% but I guess it's an extra factor to take into account when weighing
+% up practical engineering decisions.
+% This has some interesting consequences
+% when we consider the goal of seeking the highest possible compression levels
+% for genotype data and the usual cloud storage cost structuring models (see
+% Discussion).
+
+Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
+calculation is performed at a maximum rate of 25.5GiB/s using 128
+processes. At this rate, the af-dist calculation for the target region
+was completed in 4.15s (compare to 5.23min for the naive single-threaded
+method above).
+This level of throughput would complete af-dist for all chromosomes for all samples
+% compute: cost of c5.9xlarge per hour * 1.27
+% ==                             $4.08 * 1.27
+% io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
+% ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
+in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
+(See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
+benchmarks in cloud settings.)
 
 \subsection{Extensibility: GPU acceleration}
 [JK: this is a super rough first narrative draft.]
