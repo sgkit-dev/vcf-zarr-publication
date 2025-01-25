@@ -1166,7 +1166,7 @@ from the original in Fig~\ref{fig-ofh-field-distributions} (data not shown).
 Table~\ref{tab-ofh-data} shows a summary of the Zarr using the BitRound filter.
 
 \subsection{Case study: All of Us exome-like data}
-The All of Us dataset comprises 245,388 clinical-grade whole genome sequences (WGS),
+The All of Us dataset comprises 245K clinical-grade whole genome sequences,
 identifying over 1 billion variants, including 3.9 million novel variants
 with coding consequences~\citep{all2024genomic}. Participants are from the United States,
 with an emphasis on historically underrepresented genetic ancestry groups.
@@ -1273,8 +1273,8 @@ detailed inTable~\ref{tab-spruce-data}.
 \begin{table}
 \caption{Summary for VCF Zarr conversion of the Norway spruce
 WGS data on all 12 autosomes (1,063 samples, 374,517,0452 variants)
-consisting of 34 fields and 2.3TiB of storage ($\sim 3.2X$ smaller 
-than source gzipped VCFs). The chunk size is 10,000 variants times 
+consisting of 34 fields and 2.3TiB of storage ($\sim 3.2$X smaller 
+than source gzipped VCFs). The chunk size is 10,000 variants $\times$
 1,063 samples (i..e, a single sample chunk). This uses local 
 alleles to reduce the 
 space required by the PL field; see the text for discussion.
