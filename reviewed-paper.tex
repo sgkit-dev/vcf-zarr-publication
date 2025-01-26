@@ -1,0 +1,1672 @@
+%,%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Please note that whilst this template provides a
+% preview of the typeset manuscript for submission, it
+% will not necessarily be the final publication layout.
+%
+% letterpaper/a4paper: US/UK paper size toggle
+% num-refs/alpha-refs: numeric/author-year citation and bibliography toggle
+
+%\documentclass[letterpaper]{oup-contemporary}
+\documentclass[a4paper,num-refs]{oup-contemporary}
+
+%%% Journal toggle; only specific options recognised.
+%%% (Only "gigascience" and "general" are implemented now. Support for other journals is planned.)
+\journal{preprint}
+
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage[switch]{lineno}
+
+\linenumbers
+
+% Additional packages for data model figure
+\usepackage{forest}
+\usepackage{tikz}
+\usetikzlibrary{quotes,arrows.meta,3d}
+
+%%% Flushend: You can add this package to automatically balance the final page, but if things go awry (e.g. section contents appearing out-of-order or entire blocks or paragraphs are coloured), remove it!
+% \usepackage{flushend}
+
+% Macros etc for data model figure
+\input{diagrams/data-model-preamble.tex}
+
+% See https://github.com/sgkit-dev/vcf-zarr-publication/issues/87
+% for discussion
+\title{Analysis-ready VCF at Biobank scale using Zarr}
+
+%%% Use the \authfn to add symbols for additional footnotes, if any. 
+% 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
+% First author
+\author[1,\authfn{1}]{Eric Czech} % https://orcid.org/0000-0002-4254-4255
+\author[2,3\authfn{1}]{Timothy R. Millar} % https://orcid.org/0000-0002-5142-8811
+\author[4,\authfn{1}]{Tom White} 
+
+% Middle
+\author[5]{Ben Jeffery} % https://orcid.org/0000-0002-1982-6801
+\author[6]{Alistair Miles} % https://orcid.org/0000-0001-9018-4680
+\author[7]{Sam Tallman} % https://orcid.org/0000-0001-7183-6276
+\author[1]{Rafal Wojdyla} % https://orcid.org/0009-0005-0735-7090
+\author[8]{Shadi Zabad} % https://orcid.org/0000-0002-8003-9284
+ 
+% Senior 
+\author[1,\authfn{2}]{Jeff Hammerbacher} % https://orcid.org/0000-0001-6596-8563
+\author[5,\authfn{2},\authfn{3}]{Jerome Kelleher} % https://orcid.org/0000-0002-7894-5253
+
+\affil[1]{Related Sciences}
+\affil[2]{The New Zealand Institute for Plant \& Food Research Ltd, Lincoln,
+New Zealand}
+\affil[3]{Department of Biochemistry, School of Biomedical Sciences, University of Otago, Dunedin, New Zealand}
+\affil[4]{Tom White Consulting Ltd.}
+\affil[5]{Big Data Institute, Li Ka Shing Centre for Health Information and Discovery, 
+University of Oxford, UK}
+\affil[6]{Wellcome Sanger Institute}
+\affil[7]{Genomics England}
+\affil[8]{School of Computer Science, McGill University, Montreal, QC, Canada}
+
+%%% Author Notes
+\authnote{\authfn{1}Joint first author.}
+\authnote{\authfn{2}Joint senior author.}
+\authnote{\authfn{3}jerome.kelleher@bdi.ox.ac.uk}
+
+%%% Paper category
+\papercat{Paper}
+
+%%% "Short" author for running page header
+\runningauthor{Czech et al.}
+
+%%% Should only be set by an editor
+\jvolume{00}
+\jnumber{0}
+\jyear{2024}
+
+\begin{document}
+
+\begin{frontmatter}
+\maketitle
+
+% The Abstract (250 words maximum) should be structured to
+% include the following details:
+% \textbf{Background}, the context and purpose of
+% the study;
+% \textbf{Results}, the main findings;
+% \textbf{Conclusions}, brief
+% summary and potential implications. Please minimize the use of abbreviations
+% and do not cite references in the abstract.
+% The Abstract (250 words maximum) should be structured to
+% include the following details:
+% \textbf{Background}, the context and purpose of % the study;
+% \textbf{Results}, the main findings;
+% \textbf{Conclusions}, brief summary and potential implications.
+
+%% NOTE: this is much too long currently, but keeping for now so we
+% can see which stuff migrates to the intro
+\begin{abstract}
+\textbf{Background:}
+Variant Call Format (VCF) is the standard file format for interchanging
+genetic variation data and associated quality control metrics.
+% It provides a well-defined data model and is central to a large ecosystem
+% of interoperating tools.
+The usual row-wise encoding of the VCF data model (either as text
+or packed binary) emphasises efficient retrieval of all data for a given
+variant, but accessing data on a field or sample basis is inefficient.
+Biobank scale datasets currently available 
+consist of hundreds of thousands of whole genomes 
+and hundreds of terabytes of compressed VCF.
+Row-wise data storage is fundamentally unsuitable
+and a more scalable approach is needed.
+
+\textbf{Results:}
+We present the VCF Zarr specification, an encoding of the 
+VCF data model using Zarr which makes retrieving subsets of the 
+data much more efficient. Zarr is a cloud-native format for storing 
+multi-dimensional data, widely used in scientific computing.
+We show how this format is far more efficient than
+standard VCF based approaches,
+and competitive with specialised methods for 
+storing genotype data in terms of compression ratios
+and calculation performance.
+We demonstrate the VCF Zarr format (and the vcf2zarr conversion utility) 
+on a subset of the Genomics England aggV2 dataset comprising
+78,195 samples and 59,880,903 variants,
+with a 5X reduction in storage and greater than 300X reduction in CPU usage
+in some representative benchmarks.
+
+\textbf{Conclusions:}
+Large row-encoded VCF files are a major bottleneck for current research, and 
+storing and processing these files incurs a substantial cost.
+The VCF Zarr specification, building on widely-used, open-source technologies
+has the potential to greatly reduce these costs, 
+and may enable a diverse ecosystem of next-generation tools for analysing 
+genetic variation data directly from cloud-based object stores,
+while maintaining compatibility with existing file-oriented workflows.
+\end{abstract}
+
+\begin{keywords}
+Variant Call Format; Zarr; Analysis ready data.
+\end{keywords}
+\end{frontmatter}
+
+%%% Key points will be printed at top of second page
+\begin{keypoints*}
+\begin{itemize}
+\item VCF is widely supported, and the underlying data model entrenched 
+in bioinformatics pipelines.
+\item The standard row-wise encoding as text (or binary) is inherently
+inefficient for large-scale data processing.
+\item The Zarr format provides an efficient solution, by encoding fields
+in the VCF separately in chunk-compressed binary format.
+\end{itemize}
+\end{keypoints*}
+
+\section{Background}
+Variant Call Format (VCF) is the standard format for interchanging genetic
+variation data, encoding information about 
+DNA sequence polymorphisms among a set of samples with associated 
+quality control metrics and metadata~\citep{danecek2011variant}. 
+Originally defined specifically as a text file,
+it has been refined and standardised~\citep{rehm2021ga4gh} and the 
+underlying data-model is now deeply embedded in bioinformatics practice.
+Dataset sizes have grown explosively since the introduction of 
+VCF as part of 1000 Genomes project~\citep{10002015global},
+with Biobank scale initiatives such as 
+Genomics England~\cite{turnbull2018100},
+UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
+and the All of Us research program~\citep{all2024genomic}
+collecting genome sequence data for hundreds of thousands of humans.
+Large genetic variation datasets are also being generated for other organisms
+and a variety of purposes including 
+agriculture~\citep{ros2020accuracy,wang2023rice}, 
+conservation~\citep{shaffer2022landscape}
+and infectious disease surveillance~\citep{hamid2023pf7}.
+VCF's simple text-based design and widespread
+support~\cite{garrison2022spectrum} makes it an 
+excellent archival format, but it is an inefficient basis for analysis.
+Methods that require efficient access to genotype data
+either require conversion to the
+PLINK~\cite{purcell2007plink,chang2015second} 
+or BGEN~\citep{band2018bgen} 
+formats~\citep[e.g.][]{yang2011gcta,mbatchou2021computationally,loh2015efficient}
+or use bespoke binary formats 
+that support the required access patterns~\citep[e.g.][]{
+% Uses custom "bref3" format,
+% https://faculty.washington.edu/browning/beagle/bref3.24May18.pdf
+browning2018one, 
+% .samples Zarr format
+kelleher2019inferring,
+% Has a "xcftools" package, but it still looks pretty experimental
+hofmeister2023accurate}.
+While PLINK and BGEN formats are more efficient to access than VCF, neither
+can accommodate the full flexibility of the VCF data model and conversion
+is lossy.
+PLINK's approach of storing the genotype matrix in uncompressed
+packed-binary format provides efficient access to genotype 
+data, but file sizes are substantially larger than 
+the equivalent compressed VCF (see Fig~\ref{fig-data-storage}).
+For example, at two bits 
+per diploid genotype, the full genotype matrix for the GraphTyper SNP dataset 
+in the 500K UKB WGS data~\citep{uk2023whole} is 116 TiB.
+% 1,037,556,156 SNPs x  490,640 samples
+% humanize.naturalsize(1_037_556_156 * 490_640 / 4, binary=True)
+% '115.7 TiB'
+
+Processing of Biobank scale datasets can be split into a 
+few broad categories. The most basic analysis 
+is quality control (QC). Variant QC is an 
+involved and multi-faceted 
+task~\cite{marees2018tutorial,panoutsopoulou2018quality,chen2024genomic,hemstrom2024next}, 
+often requiring interactive, exploratory analysis
+and incurring substantial computation over multiple QC fields.
+Genotype calls are sometimes refined via statistical methods,
+for example by phasing~\citep{
+browning2021fast,browning2023statistical,hofmeister2023accurate,williams2024phasing},
+and imputation~\citep{browning2018one,rubinacci2020genotype,barton2021whole,
+rubinacci2023imputation}
+creating additional dataset copies.
+A common task to perform  is
+a genome wide association study (GWAS)~\cite{uffelmann2021genome}. 
+The majority of tools for 
+performing GWAS and related analyses require
+data to be in PLINK or BGEN formats~\cite[e.g][]{chang2015second,
+loh2015efficient,
+abraham2017flashpca2,
+mbatchou2021computationally},
+and so data must be ``hard-called'' according to some QC criteria
+and exported to additional copies.
+Finally, variation datasets are often queried in exploratory
+analyses, to find regions or samples of interest for a particular 
+study~\cite[e.g.][]{chen2024novo}.
+
+VCF cannot support any of these workflows efficiently at the Biobank scale.
+The most intrinsically limiting aspect of VCF's design 
+is its row-wise layout of data, which means that (for example)
+information for a particular sample or field cannot be obtained without
+retrieving the entire dataset.
+The file-oriented paradigm is also unsuited to the realities 
+of modern datasets, which are too large to download and 
+often required to stay in-situ by data-access agreements.
+Large files are currently stored in cloud environments, where the 
+file systems that are required by classical file-oriented tools
+are expensively emulated on the basic building blocks
+of object storage. 
+These multiple layers of inefficiencies around processing
+VCF data at scale in the cloud mean that it is 
+time-consuming and expensive, and these vast datasets are 
+not utilised to their full potential.
+
+To achieve this full potential we 
+need a new generation of tools that operate directly
+on a primary data representation that supports 
+efficient access across a range of applications,
+with native support for cloud object storage.
+Such a representation can be termed ``analysis-ready''
+and ``cloud-native''~\citep{abernathey2021cloud}.
+For the representation to be FAIR~\citep{wilkinson2016fair},
+it must also be \emph{accessible}, using protocols that are 
+``open, free, and universally implementable''.
+There is currently no efficient, FAIR representation of genetic variation
+data suitable for cloud deployments.
+Hail~\cite{ganna2016ultra,hail2024} has become the dominant platform
+for quality control of large-scale variation datasets, 
+and has been instrumental in projects such as 
+gnomadAD~\cite{karczewski2020mutational,chen2024genomic}.
+While Hail is built on open components
+from the Hadoop distributed computing ecosystem~\citep{white2012hadoop},
+the details of its MatrixTable format are not documented
+or intended for external reuse. 
+% cite? https://dev.hail.is/t/matrixtable-file-format-reference/173/6
+Similarly, commercial solutions that have emerged to facilitate
+the analysis of large-scale genetic variation data are either
+based on proprietary~\cite{basespace2024,graf2024,googlelifesciences2024,
+awshealthomics2024,microsoftgenomics2024}
+or single-vendor technologies~\cite[e.g.][]{tiledb2024,genomicsdb2024}.
+The next generation of VCF analysis methods requires
+an open, free and transparent data representation 
+with multiple independent implementations.
+
+In this article, we decouple the VCF data model from its row-oriented
+file definition, and show how the data can be 
+compactly stored and efficiently analysed in a cloud-native, FAIR manner.
+We do this by translating VCF data into Zarr format,
+a method of storing large-scale multidimensional data as a regular
+grid of compressed chunks. 
+Zarr's elegant simplicity and first-class support for 
+cloud object stores have led to 
+it gaining substantial traction
+across the sciences, and it is now used in multiple petabyte-scale
+datasets in cloud deployments (see Methods for details).
+We present the VCF Zarr specification that formalises this 
+mapping, and the \texttt{vcf2zarr} 
+utility to reliably convert large-scale VCFs to Zarr.
+We show that VCF Zarr is much more compact than 
+VCF and is competitive with state-of-the-art
+file-based VCF compression tools. 
+Moreover, we show that Zarr's storage of data in an analysis-ready 
+format greatly facilitates computation,
+with various benchmarks being substantially faster than
+\texttt{bcftools} based pipelines, and again competitive
+with state-of-the-art file-oriented methods. Finally, we show the 
+utility of VCF Zarr on the Genomics England aggV2 dataset,
+demonstrating that common \texttt{bcftools} queries can be performed orders
+of magnitude more quickly using simple Python scripts.
+
+\section{Results}
+
+\subsection{Storing genetic variation data}
+Although VCF is the standard format for exchanging genetic variation
+data, its limitations both in terms of compression 
+and query/compute performance are well 
+known~\citep[e.g.][]{kelleher2013processing,layer2016efficient,li2016bgt},
+and many methods 
+have been suggested to improve on these properties.
+Most approaches balance compression with
+performance on particular types of queries, 
+typically using a command line interface (CLI)
+and outputting VCF text~\citep{
+layer2016efficient, %GQT
+li2016bgt, % BGT
+tatwawadi2016gtrac, % GTRAC
+danek2018gtc, % GTC
+lin2020sparse, % SpVCF
+lan2020genozip,lan2021genozip, %genozip
+lefaive2021sparse, % SAVVY
+wertenbroek2022xsi,% XSI
+zhang2023gbc}. %GBC
+Several specialised algorithms for compressing 
+the genotype matrix (i.e., just the genotype calls without additional
+VCF information) have been proposed
+\citep{qiao2012handling, % SpeedGene
+deorowicz2013genome, %TGC
+sambo2014compression, % snpack
+deorowicz2019gtshark, %GTShark
+deorowicz2021vcfshark, % VCFShark
+dehaas2024genotype} %  GRG
+most notably the Positional
+Burrows--Wheeler Transform (PBWT)~\citep{durbin2014efficient}.
+See~\citep{mcvean2019linkage} for a review of the techniques
+employed in genetic data compression.
+The widely-used PLINK binary format stores genotypes in a 
+packed binary representation, supporting only biallelic
+variants without phase information.
+The PLINK 2 PGEN format~\citep{pgen2024} is more general
+and compact than PLINK, compressing variant data using specialised
+algorithms~\cite{sambo2014compression}.
+Methods have also been developed which store variation data 
+along with annotations in databases to facilitate
+efficient queries~\cite[e.g.][]{
+paila2013gemini,%GEMINI
+lopez2017hgva} %OpenCGA
+which either limit to certain classes of variant~\cite[e.g.][]{greene2023genetic}
+or have storage requirements larger
+than uncompressed VCF~\citep{al2023critical}. 
+The SeqArray package~\citep{zheng2017seqarray} builds on the 
+Genomic Data Storage container format~\cite{zheng2012high}
+to store VCF genotype data in a packed and compressed format,
+and is used in several downstream R packages~\cite[e.g.][]{
+gogarten2019genetic,fernandes2020simplephenotypes}.
+
+VCF is a row-wise format in which 
+observations and metadata for a single variant are
+encoded as a line of text~\citep{danecek2011variant}.
+BCF~\citep{li2011statistical}, the standard binary representation of VCF,
+is similarly row-wise, as 
+are the majority of proposed alternative storage 
+formats.
+Row-wise storage makes retrieving all information
+for a given record straightforward and efficient,
+and works well when records are either relatively small
+or we typically want to analyse each record in its entirety.
+When we want to analyse only a subset of a record,
+row-wise storage can be inefficient because we will usually need to
+retrieve more information than required from storage. In the case 
+of VCF (and BCF) where records are not of a fixed size and 
+are almost always compressed in blocks, accessing any information
+for a set of rows means retrieving and decompressing \emph{all} 
+information from these rows.
+
+The usual alternative to row-wise storage is \emph{columnar} storage:
+instead of grouping together all the fields for a record,
+we group together all the records for a given field.
+Columnar storage formats such as Parquet~\citep{parquet2024}
+make retrieving particular columns much 
+more efficient and can lead to substantially better compression.
+While columnar techniques have been successfully applied 
+in alignment
+% TODO check
+% Jeff: OK with the ADAM reference in here? You did some parquet based
+% alignment storage, right?
+storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
+the use of columnar technologies for
+storing and analysing variation data have had limited
+success~\citep{boufea2017managing,fan2020variant}.
+Mapping VCF directly to a columnar layout, in which there is a 
+column for the genotypes (and other per-call QC metrics) 
+for each sample leads to a large number of columns, which 
+can be cumbersome and cause scalability issues.
+Fundamentally, columnar methods are one-dimensional, storing a vector
+of values associated with a particular key, whereas 
+genetic variation data is usually modelled as a two-dimensional matrix
+in which we are interested in accessing both rows \emph{and} columns.
+Just as row-oriented storage makes accessing data for a given
+sample inefficient, columnar storage makes accessing all the data 
+for a given variant inefficient.
+
+\begin{figure}
+\resizebox{225pt}{!}{\input{diagrams/data-model.tex}}
+\caption{Chunked compressed storage of VCF data using Zarr. 
+The \texttt{call\_genotype} array is a three-dimensional (variants, samples,
+ploidy) array of integers, split into a uniform grid of 
+chunks determined by the variant and sample chunk sizes (10,000
+and 1,000 by default in \texttt{vcf2zarr}). Each chunk is associated 
+with a key defining its location in this grid, which can be stored 
+in any key-value store such as a standard file-system or cloud object
+store. Chunks are compressed independently using standard 
+codecs and pre-compression filters, which can be specified on a per-array
+basis. Also shown are the one-dimensional \texttt{variant\_contig} (CHROM)
+and \texttt{variant\_position} arrays (POS). Other fields are stored 
+in a similar fashion. \label{fig-data-model}}
+\end{figure}
+
+VCF is at its core an encoding of the genotype matrix, where each entry
+describes the observed genotypes for a given sample at a given variant site,
+interleaved with per-variant information
+and other call-level matrices (e.g., the GQ or AD fields).
+The data is largely numerical and of fixed dimension, 
+and is therefore a natural mapping to array-oriented 
+or ``tensor'' storage.
+We propose the VCF Zarr specification which maps the 
+VCF data model into an array-oriented layout using Zarr 
+(Fig~\ref{fig-data-model}). 
+In the VCF Zarr specification, 
+each field in a VCF is mapped to a separately-stored array, 
+allowing for efficient retrieval and 
+high levels of compression.
+% In particular, call-level data is stored as $m \times n$ arrays
+% (for $m$ sites and $n$ samples), allowing for efficient 
+% retrieval of subsets of those fields along both the 
+% variants and samples axis.
+See the Methods for more detail on Zarr and the VCF Zarr
+specification.
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{figures/data-scaling}
+\end{center}
+\caption{Compression performance on simulated genotypes.
+Comparison of total stored bytes for VCF data produced 
+by subsets of a large simulation of French-Canadians.
+Sizes for $10^6$ samples are shown on the right. Sizes 
+for Savvy (21.25GiB) and Zarr (22.06GiB) are very similar.
+Also shown for reference is the size of genotype matrix 
+when encoded as two bits per diploid genotype (2bit), as used 
+in the PLINK binary format.
+\label{fig-data-storage}}
+\end{figure}
+
+One of the key benefits of Zarr is its cloud-native design, 
+but it also works well on standard file systems, where 
+arrays and chunks are stored hierarchically in directories
+and files (storage as a single Zip archive is also supported).
+To enable comparison with the existing file-based ecosystem
+of tools, we focus on Zarr's file system chunk storage in a series of illustrative 
+benchmarks in the following sections. 
+(See \citep{durbin2020task,moore2021ome,gowan2022using} for Zarr
+benchmarks in cloud settings.)
+We compare primarily with
+VCF/BCF based workflows using \texttt{bcftools} because this
+is the standard practice, used in the vast majority of cases.
+We also compare with two representative recent specialised utilities;
+see~\cite{danek2018gtc,zhang2023gbc} for further benchmarks of 
+these and other tools.
+Genozip~\cite{lan2020genozip,lan2021genozip} is a tool focused 
+on compression performance, which uses a custom file format 
+and a CLI to extract VCF as text with various filtering options.
+Savvy~\cite{lefaive2021sparse} is an extension of BCF which 
+takes advantage of sparsity in the genotype matrix as well
+as using PBWT-based approaches for improved compression.
+Savvy provides a CLI as well as a C++ API.
+Our benchmarks are based on genotype data 
+from subsets of a large and highly realistic 
+simulation of French-Canadians~\cite{anderson2023on}
+(see Methods for details on the dataset and benchmarking methodology).
+Note that while simulations cannot capture 
+all the subtleties of real data, the allele frequency
+and population structure patterns in this dataset 
+have been shown to closely follow 
+observations~\cite{anderson2023on} and so it provides 
+a reasonable and easily reproducible data point 
+when comparing such methods.
+The simulations only contain genotypes without any additional
+high-entropy QC fields, which is unrealistic 
+(see the Genomics England case-study
+for benchmarks on a large human dataset that includes 
+many such fields). 
+Note, however, that such minimal, genotype-only data 
+is something of a best-case scenario for specialised genotype
+compression methods using row-wise storage.
+
+Fig~\ref{fig-data-storage} shows compression performance 
+on up to a million samples for chromosome 21, with 
+the size of the genotype-matrix encoded as 1-bit per haploid
+call included for reference.
+% 2bit  1689.153258 G
+% vcf   81.375831 G
+% = 20.75 X, 4.8%
+Gzip compressed VCF performs remarkably well, compressing 
+the data to around 5\% of the 
+minimal binary encoding of a biallelic genotype matrix
+for 1 million samples. 
+BCF provides a significant improvement in compression
+performance over VCF (note the log-log scale). Genozip has 
+superb compression, having far smaller file sizes that the 
+other methods (although somewhat losing its advantage at 
+larger sample sizes). Zarr and Savvy have 
+almost identical compression performance in this example.
+It is remarkable that the simple approach of compressing
+two dimensional chunks of the genotype matrix 
+using the Zstandard compressor~\citep{collet2021rfc} and the 
+bit-shuffle filter from Blosc~\cite{alted2010modern} 
+(see Methods for details) produces 
+compression levels competitive with the highly specialised methods
+used by Savvy.
+
+\subsection{Calculating with the genotype matrix}
+Storing genetic variation data compactly is important, but it is also
+important that we can analyse the data efficiently. Bioinformatics 
+workflows tend to emphasise text files and command line utilities 
+that consume and produce text~\citep[e.g.][]{buffalo2015bioinformatics}. 
+Thus, many tools that compress VCF data provide a command line 
+utility with a query language to restrict the records
+examined, perform some pre-specified calculations and finally 
+output some text, typically VCF or tab/comma separated 
+values~\citep{
+layer2016efficient, %GQT
+li2016bgt, % BGT
+danek2018gtc, % GTC
+lin2020sparse, % SpVCF
+lan2020genozip,lan2021genozip, %genozip
+zhang2023gbc}. %GBC
+These pre-defined calculations are by necessity limited in scope, however,
+and the volumes of text involved in Biobank scale datasets
+make the classical approach of custom
+analyses via Unix utilities in pipelines prohibitively slow. Thus, 
+methods have begun to provide Application Programming Interfaces
+(APIs), providing efficient access to genotype and other VCF 
+data~\cite[e.g.][]{kelleher2013processing,lefaive2021sparse,
+wertenbroek2022xsi}. By providing programmatic access,
+the data can be retrieved from storage, decoded and then analysed
+in the same memory space without additional copies and 
+inter-process communication through pipes.
+
+To demonstrate the accessibility of genotype data and efficiency with 
+which calculations can be performed under the different formats,
+we use the \texttt{bcftools +af-dist} plugin
+(which computes a table of
+deviations from Hardy-Weinberg expectations in 
+allele frequency bins) as an example.
+% The details of the \texttt{af-dist} operation are not important:
+% as an example of a whole-matrix operation. 
+We chose this particular operation for several reasons. 
+First, it is a straightforward calculation that 
+requires examining every element in the genotype matrix,
+and can be reproduced in different programming languages
+without too much effort.
+Secondly, it produces a small volume of output  and therefore the 
+time spent outputting results is negligible.
+Finally, it has an efficient implementation written using the 
+\texttt{htslib} C API~\citep{bonfield2021htslib},
+and therefore running this command on a VCF or BCF file provides 
+a reasonable approximation of the limit of what can be achieved in terms 
+of whole-matrix computation on these formats.
+
+\begin{figure}
+\includegraphics{figures/whole-matrix-compute}
+\caption{Whole-matrix compute performance with increasing sample size.
+Total CPU time required to run \texttt{bcftools +af-dist}
+and equivalent operations in a single thread for various tools.
+Elapsed time is also reported (dotted line). Run-time for genozip
+and bcftools on VCF
+at $10^6$ samples were extrapolated by fitting an exponential.
+See Methods for full details.
+\label{fig-whole-matrix-compute}}
+\end{figure}
+
+Fig~\ref{fig-whole-matrix-compute} shows timing results 
+for running \texttt{bcftools +af-dist} and equivalent operations 
+on the data of Fig~\ref{fig-data-storage}. There is a large
+difference in the time required (note the log-log scale). 
+The slowest approach uses Genozip. Because Genozip does not
+provide an API and only outputs VCF text, the best approach available 
+is to pipe its output into \texttt{bcftools +af-dist}. 
+This involves first decoding the data from Genozip format,
+then generating large volumes  of VCF text (terabytes, in the 
+largest examples here), which we must 
+subsequently parse before finally doing the actual calculation. 
+Running \texttt{bcftools +af-dist} directly on the gzipped VCF
+is substantially faster, indicating that Genozip's excellent
+compression performance comes at a substantial decompression cost.
+Using a BCF file is again significantly faster,
+because the packed binary format avoids the overhead of parsing 
+VCF text into \texttt{htslib}'s internal data structures. 
+We only use BCF for subsequent \texttt{bcftools} benchmarks.
+
+The data shown in Fig~\ref{fig-whole-matrix-compute} for Zarr and Savvy
+is based on custom programs written using their respective APIs
+to implement the \texttt{af-dist} operation. The Zarr program uses
+the Zarr-Python package to iterate over the decoded chunks of the 
+genotype matrix and classifies genotypes within a chunk using a 14 line Python
+function, accelerated using the Numba JIT compiler~\cite{lam2015numba}.
+The allele frequencies and genotype counts are then analysed to produce 
+the final counts within the allele frequency bins with 9 lines of 
+Python using NumPy~\cite{harris2020array} functions. Remarkably, this 
+short and simple Python program is substantially faster than the 
+equivalent compiled C using \texttt{htslib} APIs on BCF (6.9 hours
+vs 20.6 hours for 1 million samples). 
+% num_samples  num_sites      tool  user_time  sys_time     wall_time  total_time
+%     1000000    7254858     savvy    8371.07      4.16   8377.718136  2.326453
+%     1000000    7254858  bcftools   73939.32     46.09  74023.083678  20.551503
+%     1000000    7254858      zarr   24709.64     29.32  24750.704171  6.871933
+The fastest method is the 
+C++ program written using the Savvy API. This would largely seem
+to be due to Savvy's excellent genotype decoding performance
+% zarr 1.2 GiB
+% savvy 6.6 GiB
+% zarr_nshf 3.9 GiB
+(up to 6.6GiB/s vs 1.2GiB/s for Zarr on this dataset;
+Fig~\ref{fig-whole-matrix-decode}).
+% sequence_length  num_samples  num_sites       tool       size
+% 40         48129895      1000000    7254858       zarr  22.071687
+% 35         48129895      1000000    7254858        bcf  51.749294
+% 36         48129895      1000000    7254858    genozip  10.691384
+% 37         48129895      1000000    7254858        sav  21.249436
+% 38         48129895      1000000    7254858        tsk   1.802636
+% 39         48129895      1000000    7254858        vcf  81.375831
+% 41         48129895      1000000    7254858  zarr_nshf  29.897540
+Turning off the BitShuffle filter for the Zarr dataset,
+however, leads to a substantial increase in decoding speed
+(3.9GiB/s) at the cost of a roughly 25\% increase in storage
+space (29.9GiB up from 22.1GiB for 1 million samples; data not
+shown). Given the relatively small contribution of genotypes to the
+overall storage of real datasets (see the Genomics England example)
+and the frequency that they are likely to be accessed, this
+would seem like a good tradeoff in most cases.
+This ability to easily tune compression performance
+and decoding speed on a field-by-field basis is a major strong
+point of Zarr. The \texttt{vcf2zarr} utility also provides
+functionality to aid with such storage schema tuning.
+
+
+\subsection{Subsetting the genotype matrix}
+\begin{figure}[t]
+\includegraphics{figures/subset-matrix-compute}
+\caption{Compute performance on subsets of the matrix.
+Total CPU time required to run the af-dist calculation for
+a contiguous subset of 10,000 variants $\times$ 10 samples 
+from the middle of the matrix
+for the data in Fig~\ref{fig-data-storage}.
+Elapsed time is also reported (dotted line). 
+The \texttt{genozip} and \texttt{bcftools} pipelines involve
+multiple commands required to correctly calculate the AF INFO field
+required by \texttt{bcftools +af-dist}. See the Methods for full details
+on the steps performed.
+\label{fig-subset-matrix-compute}}
+\end{figure}
+
+As datasets grow ever larger, the ability to efficiently access subsets 
+of the data becomes increasingly important. VCF/BCF achieve efficient 
+access to the data for genomic ranges 
+by compressing blocks of adjacent records using \texttt{bgzip},
+and storing secondary indexes alongside the original 
+files with a conventional suffix~\citep{li2011tabix}. 
+Thus, for a given range query we 
+decompress only the necessary blocks and can quickly access
+the required records. 
+The row-wise nature of VCF (and most proposed alternatives), however, means
+that we cannot efficiently subset \emph{by sample}
+(e.g., to calculate statistics within a particular cohort). In the extreme
+case, if we want to access only the genotypes for a single sample
+we must still retrieve and decompress the entire dataset.
+
+We illustrate this cost of row-wise encoding in
+Fig~\ref{fig-subset-matrix-compute}, where we run the af-dist calculation
+on a small fixed-size subset of the genotype matrices of
+Fig~\ref{fig-data-storage}. The two-dimensional chunking of Zarr
+means that this sub-matrix can be efficiently
+extracted, and therefore the execution time depends very weakly on 
+the overall dataset size, with the computation requiring around
+1 second for 1 million samples. Because of their 
+row-wise encoding, CPU time scales with the number of samples
+for all the other methods.
+Fig~\ref{fig-subset-matrix-compute-supplemental} shows performance
+for the same operation when selecting half of the samples in the 
+dataset.
+
+\subsection{Extracting, inserting and updating fields}
+\begin{figure}
+\includegraphics{figures/column-extract}
+\caption{Time to extract the genome position and write to a text file.
+Total CPU time required to extract the POS field for BCF,
+sav and Zarr formats
+for the data in Figure~\ref{fig-data-storage}.
+For the BCF file we used \texttt{bcftools query -f"\%POS$\backslash$n"}.
+For sav, we used the Savvy C++ API to extract position for each variant
+and output text using the \texttt{std::cout} stream. For Zarr, we read 
+the variant\_position array into a NumPy array, and then wrote to
+a text file using the Pandas \texttt{write\_csv} method. 
+Zarr CPU time is dominated by writing the text output; we also show
+the time required to populate a NumPy array with the data in Zarr,
+which is less than a second. Wall-clock time (dotted line) is dominated 
+in this case by file I/O. Time to output text for Savvy is not significant
+for $> 1000$ samples (not shown).
+\label{fig-column-extract}}
+\end{figure}
+We have focused on the genotype matrix up to this point, contrasting
+Zarr with existing row-wise methods.
+Real-world VCFs encapsulate much more than just the genotype
+matrix, and can contain large numbers of additional fields.
+Fig~\ref{fig-column-extract} shows the time required to extract 
+the genomic position of each variant in the simulated benchmark 
+dataset, which we can use as an indicative example of a per-variant 
+query. Although Savvy is many times faster than \texttt{bcftools query}
+here, the row-wise storage strategy that they share means that 
+the entire dataset must be read into memory and 
+decompressed to extract just one field from each record. Zarr
+excels at these tasks: we only read and decompress the information required.
+
+Many of the additional fields that we find in real-world VCFs are 
+variant-level annotations, extensively used in downstream applications.
+For example, a common workflow is to 
+add or update variant IDs in a VCF using a reference database
+such as dbSNP \cite{Sherry2001dbSNP}. The standard approach to this
+(using e.g.\ \texttt{bcftools annotate}) is to create a \emph{copy} of 
+the VCF which includes these new annotations. Thus, even though 
+we may only be altering a single field comprising a tiny fraction 
+of the data, we still read, decompress, update, compress and 
+write the entire dataset to a new file. With Zarr,
+we can update an existing field or add arbitrary additional
+fields without touching the rest of the data or creating redundant
+copies.
+
+\subsection{Case study: Genomics England 100,000 genomes}
+In this section we demonstrate the utility of VCF Zarr on a large human dataset
+and the scalability of the \texttt{vcf2zarr} conversion utility.
+Genomics England’s multi-sample VCF dataset (aggV2) is an 
+aggregate of 78,195 gVCFs from rare disease and cancer participants 
+recruited as part of the 100,000 Genomes Project~\cite{turnbull2018100}. 
+The dataset comprises approximately 722 million annotated single-nucleotide 
+variants and small indels split into 1,371 roughly equal chunks and 
+totalling 165.3 TiB of VCF data after \texttt{bgzip} compression. 
+The dataset is used for a variety of research purposes, ranging from 
+GWAS~\cite{kousathanas2022whole} and 
+imputation~\cite{shi2023genomics} to 
+simple queries involving single gene 
+regions~\cite{leggatt2023genotype,lam2023repeat}.
+
+As described in the Methods, conversion to Zarr using 
+\texttt{vcf2zarr} is a two-step process. We 
+first converted the 106 VCF files (12.81 TiB) for chromosome 2
+into the intermediate columnar format (ICF). This task was 
+split into 14,605 partitions, and distributed using the Genomics England
+HPC cluster. The average run-time per partition was 20.7 min.
+The ICF representation used a total
+of 9.94 TiB over 3,960,177 data storage files. 
+We then converted the ICF to Zarr, partitioned into
+5989 independent jobs, with an 18.6 min average run time.
+This produced a dataset with 44 arrays, consuming a 
+total of 2.54 TiB of storage over 6,312,488
+chunk files. This is a roughly 5X reduction in total storage 
+space over the original VCF. 
+The top fields in terms 
+of storage are detailed in Table~\ref{tab-genomics-england-data}.
+We do not compare with other tools such as Genozip and 
+Savvy here because  they have fundamental limitations 
+(as shown in earlier simulation-based benchmarks),
+and conversion of these large VCFs is a major undertaking.
+
+\begin{table}
+\caption{Summary for a selection of the largest VCF Zarr columns produced for 
+Genomics England aggV2 VCFs on chromosome 2 using \texttt{vcf2zarr}
+default settings. Each field is stored independently 
+as a Zarr array with the given type (sufficient to represent all values in the
+data). We show the total storage consumed (reported via \texttt{du}) in 
+power-of-two units, and the compression ratio achieved on that array.
+We also show the percentage of the overall storage that each array consumes
+(omitting values < 0.01\%).
+\label{tab-genomics-england-data}}
+\begin{tabular}{llS[table-format=3.1]S[table-format=3.2]S[table-format=3.2]}
+\toprule
+{Field} & {type} & {storage} & {compress} & {\%total} \\
+\midrule
+/call\_AD & int16 & 658.4G & 26 & 25.35\% \\
+/call\_GQ & int16 & 654.5G & 13 & 25.20\% \\
+/call\_DP & int16 & 570.0G & 15 & 21.95\% \\
+/call\_DPF & int16 & 447.1G & 20 & 17.22\% \\
+/call\_PL & int16 & 162.6G & 160 & 6.26\% \\
+/call\_GQX & int16 & 41.0G & 210 & 1.58\% \\
+/call\_FT & string & 25.0G & 1400& 0.96\% \\
+/call\_genotype & int8 & 21.5G & 410& 0.83\% \\
+/call\_genotype\_mask & bool & 12.8G & 680& 0.49\% \\
+/call\_genotype\_phased & bool & 2.4G & 1900& 0.09\% \\
+/call\_PS & int8 & 383.4M & 12000& 0.01\% \\
+% /call\_ADF & int8 & 383.4M & 12000.0 & 0.01\% \\
+% /call\_ADR & int8 & 383.4M & 12000.0 & 0.01\% \\
+/variant\_position & int32 & 111.6M & 2 & \\
+/variant\_quality & float32 & 87.4M & 2.6 & \\
+/variant\_allele & string & 69.3M & 13 & \\
+% /variant\_OLD\_MULTIALLELIC & object & 55.88M & 8.2 & 0.00\% \\
+/variant\_AN & int32 & 47.3M & 4.8 & \\
+% /variant\_AC & int32 & 47M & 4.9 & 0.00\% \\
+% /variant\_AC\_Het & int32 & 46.62M & 4.9 & 0.00\% \\
+% /variant\_ABratio & float32 & 20.23M & 11.0 & 0.00\% \\
+% /variant\_MendelSite & float32 & 20.09M & 11.0 & 0.00\% \\
+% /variant\_medianGQ & float32 & 19.16M & 12.0 & 0.00\% \\
+% /variant\_completeGTRatio & float32 & 14.98M & 15.0 & 0.00\% \\
+% /variant\_phwe\_eur & float32 & 14.46M & 16.0 & 0.00\% \\
+% /variant\_phwe\_afr & float32 & 13.37M & 17.0 & 0.00\% \\
+% /variant\_medianDepthNonMiss & float32 & 12.17M & 19.0 & 0.00\% \\
+% /variant\_medianDepthAll & float32 & 11.99M & 19.0 & 0.00\% \\
+% /variant\_phwe\_sas & float32 & 11.59M & 20.0 & 0.00\% \\
+% /variant\_AC\_Hom & int32 & 11.12M & 21.0 & 0.00\% \\
+% /variant\_missingness & float32 & 9.3M & 25.0 & 0.00\% \\
+% /variant\_phwe\_eas & float32 & 7.12M & 32.0 & 0.00\% \\
+/variant\_filter & bool & 6.4M & 570 & \\
+% /variant\_AC\_Hemi & int32 & 849.43 KiB & 280.0 & 0.00\% \\
+% /variant\_composite\_filter & bool & 433.38 KiB & 130.0 & 0.00\% \\
+% /variant\_OLD\_CLUMPED & object & 384.18 KiB & 1200.0 & 0.00\% \\
+% /variant\_id & object & 298.76 KiB & 1600.0 & 0.00\% \\
+% /variant\_phwe\_amr & float32 & 269.52 KiB & 870.0 & 0.00\% \\
+% /variant\_id\_mask & bool & 269.46 KiB & 220.0 & 0.00\% \\
+/sample\_id & str & 268.1K & 2.3 & \\
+% /variant\_contig & int16 & 257.77 KiB & 450.0 & 0.00\% \\
+% /contig\_length & int64 & 3.79 KiB & 5.3 & 0.00\% \\
+% /contig\_id & object & 2.3 KiB & 8.8 & 0.00\% \\
+% /filter\_id & object & 808 bytes & 0.6 & 0.00\% \\
+%%%% OLD for chr20
+% call\_AD &  int16 & 179.7G & 26 & 24.0\\
+% call\_GQ &  int16 & 171.8G & 13 & 23.0 \\
+% call\_DP &  int16 & 141.8G & 16 & 18.9 \\
+% call\_DPF& int16  & 115.1G & 20 & 15.3\\
+% call\_FT &  string & 58.5G & 160 & 7.8 \\
+% call\_PL &  int16 & 51.4G & 140 & 6.9 \\
+% call\_GQX &  int16 & 12.1G & 190 & 1.6 \\
+% call\_genotype & int8 & 6.1G & 380 & 0.8 \\
+% call\_genotype\_mask & bool & 3.7G  & 630 & 0.5\\
+% call\_genotype\_phased & bool & 692.5M  & 1700 & 0.1 \\
+% call\_PS  & int8  & 102.2M & 12000 & 0.05 \\
+% variant\_quality & float32 & 22.6M & 2.7 & <0.01 \\
+% variant\_allele & string & 21.5M & 11 \\
+% variant\_position & int32 & 12.7M & 4.7 \\
+% variant\_ABratio & float32 & 9.6M & 6.3 \\
+% variant\_AN & int32 & 9.6M & 6.3 \\
+% variant\_filter & bool & 1.9M & 490 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab-genomics-england-data} shows that the dataset storage
+size is dominated by a few columns with the top four
+(call\_AD, call\_GQ, call\_DP and call\_DPF) accounting for 
+90\% of the total. These fields are much less compressible
+than genotype data (which uses $<1\%$ of the total space here)
+because of their inherent noisiness~\citep{lin2020sparse}. 
+Note that these top four fields are stored as 16 bit integers
+because they contain rare outliers that cannot be stored as 
+8 bits. While the fields could likely be truncated to have 
+a maximum of 127 with minimal loss of information, 
+the compression gains from doing so are relatively minor,
+and we therefore opt for fully lossless compression here 
+for simplicity. The call\_PS field here has an extremely high
+compression ratio because it consists entirely of missing data
+(i.e., it was listed in the header but never used in the VCF).
+
+To demonstrate the computational accessibility of Zarr on this 
+large human dataset, we performed some illustrative benchmarks.
+As these benchmarks take some time to run, we focus 
+on a single 132GiB compressed VCF file covering
+positions 58,219,159--60,650,943 (562,640 variants) 
+from the middle of the list of 106 files for chromosome 2.
+We report both the total CPU time and elapsed wall-clock time here
+as both are relevant.
+First, we extracted the genome position for each variant in this single VCF 
+chunk using \texttt{bcftools query} and Python Zarr code as described in 
+Fig~\ref{fig-column-extract}. The \texttt{bcftools} command required 
+% def parse_time(time_str):
+%     minsplit = time_str.split("m")
+%     return datetime.timedelta(minutes=int(minsplit[0]),
+%         seconds=float(minsplit[1][:-1]))
+% def parse_time_output(s):
+%     values = {}
+%     for line in s.splitlines():
+%         split = line.split()
+%         values[split[0]] = parse_time(split[1])
+%     return values["real"].seconds / 60, (values["user"] + values["sys"]).seconds / 60
+% real  85m51.013s
+% user  54m39.986s
+% sys 0m45.277s
+55.42 min CPU and 85.85 min elapsed.
+% CPU times: user 846 ms, sys: 1.93 s, total: 2.78 s
+% Wall time: 1min 44s
+% 55.42 * 60 / 2.78  = 1196
+% 85.85 / 1.73 = 49.62 
+The Zarr code required 2.78 sec CPU and 1.73 min elapsed.
+This is a 1196X smaller CPU burden and a 50X speed-up in elapsed time.
+The major difference between CPU time and wall-time is noteworthy 
+here, and indicates some opportunities for improvement in VCF Zarr
+in high-latency environments such as the shared file system in the
+Genomics England HPC system. Currently VCF Zarr does not store any
+specialised index to map genomic coordinates to array positions
+along the variants dimension. Instead, to find the relevant slice
+of records corresponding to the range of positions in the target
+VCF file, we load the entire variant\_position array and 
+binary search. This entails reading 5,989 chunk files
+(the chunk size is 100,000 variants) which incurs a substantial
+latency penalty on this system. Later versions of the specification
+may solve this problem by storing an array of size 
+(approximately) the number variant chunks 
+which maps ranges of genome coordinates to chunk indexes,
+or a more specialised structure that supports overlap queries.
+
+% When we subsequently time the operation of 
+% just populating an array of the variant positions in specified region,
+% this is reduced to 1.13 sec, with an elapsed time of 20.9 sec.
+% [Note: this is crazy that we still have a 19 second I/O wait. The
+% 5989 files for the POS chunks must be in cache already, so the delay
+% has to be the file system checking cache coherency.]
+
+We then ran the af-dist calculation (Figs~\ref{fig-whole-matrix-compute}
+and~\ref{fig-subset-matrix-compute}) on the VCF file
+using \texttt{bcftools +af-dist} as before. 
+The elapsed time for this operation was 716.28 min CPU, 716.3 min elapsed.
+Repeating this operation for the same coordinates in Zarr 
+(using Python code described in previous sections) 
+% 716.28 / 2.32 = 308.74
+% 716.3 / 4.25 = 168.54
+gave a total CPU time of 2.32 min and elapsed time of 4.25 min.
+This is a 309X reduction in CPU burden and a 169X speed-up in elapsed time.
+It is worth noting here that \texttt{bcftools +af-dist} cannot be 
+performed in parallel across multiple slices of a chromosome, and if 
+we did want to run it on all of chromosome 2 we would need to 
+concatenate the 106 VCF files. While af-dist itself is not a common operation,
+many tasks share this property
+of not being straightforwardly decomposable across multiple VCF files.
+
+Finally, to illustrate performance on a common filtering task, we 
+created a copy of the VCF chunk which contains only variants 
+that pass some common filtering criteria using
+\texttt{bcftools view -I --include "FORMAT/DP>10 \& FORMAT/GQ>20"},
+following standard practices~\citep[e.g.][]{bergstrom2020insights,
+kousathanas2022whole,
+chen2024genomic}.
+This used 689.46 min CPU time, with an elapsed time of 689.48 min.
+In comparison, computing and storing a variant mask (i.e., a boolean value 
+for each variant denoting whether it should be considered or not
+for analysis) based on the same criteria using Zarr 
+consumed 1.96 min CPU time with an elapsed time of 11 min.
+This is a 358X reduction in CPU usage, and 63X reduction in elapsed time.
+% 689.46 / 1.96 = 351.76
+% 689.48 / 11 = 62.6 = 63X
+There is an important distinction here between creating a copy
+of the data (an implicit part of VCF based workflows) and creating an
+additional \emph{mask}. As Table~\ref{tab-genomics-england-data} 
+illustrates, call-level masks are cheap (the standard 
+genotype missingness mask, call\_genotype\_mask, uses 0.49\% of the overall 
+storage) and variant or sample level masks require negligible storage.
+If downstream software can 
+use configurable masks (at variant, sample and call level) 
+rather than expecting full copies of the data, major storage savings
+and improvements in processing efficiency can be made.
+The transition from the manifold inefficiencies of 
+present-day ``copy-oriented'' computing,
+to the ``mask-oriented'' analysis of large immutable, single-source
+datasets is a potentially transformational change enabled by Zarr.
+
+\section{Discussion}
+% Zarr is great
+VCF is a central element of modern genomics, facilitating
+the exchange of data in a large ecosystem of interoperating tools. 
+Its current row-oriented form, however,
+is fundamentally inefficient,
+profoundly limiting the scalability of the present generation
+of bioinformatics tools. Large scale VCF data cannot 
+currently be 
+processed without incurring a substantial economic
+(and environmental~\cite{grealey2022carbon}) cost.
+We have shown here that this is not a necessary situation,
+and that greatly improved efficiency can be achieved by 
+using more appropriate storage representations tuned
+to the realities of modern computing. We have argued that 
+Zarr provides a powerful basis for cloud-based
+storage and analysis of large-scale genetic variation data.
+We propose the VCF Zarr specification which losslessly
+maps VCF data to Zarr, and provide an efficient and scalable
+tool to perform conversion.
+
+% We're not pretending is a solution to all problems and
+% up front about weaknesses of the model.
+Zarr provides pragmatic solutions to some of the more pressing 
+problems facing the analysis of large-scale genetic variation
+data, but it is not a panacea. Firstly, 
+any dataset containing a variant with a large number of alleles
+(perhaps due to indels) will cause problems because the 
+dimensions of fields are determined by their \emph{maximum}
+dimension among all variants. In particular this is problematic
+for fields like PL in which the dimension depends 
+quadratically on the number of alleles (although practical
+solutions have been suggested that we plan to 
+implement~\cite{poterba2024scalable}).
+Secondly, the design of 
+VCF Zarr emphasises efficiency of analysis for a fixed 
+dataset, and does not consider how samples (and the 
+corresponding novel variants) should be added.
+Thirdly, Zarr works best for numerical data of a fixed 
+dimension, and therefore may not suitable for representing
+the unstructured data often included in VCF INFO fields.
+
+Nonetheless, there are numerous datasets that exist today
+that would likely reap significant benefits from being deployed 
+in a cloud-native fashion using Zarr. Object 
+stores typically allow for individual objects (chunks, in
+Zarr) to be associated with ``tags'', which can then be 
+used to associate storage class, user access control
+and encryption keys. 
+Aside from the performance benefits
+we have focused on here provided by Zarr, the ability
+to (for example) use high-performance storage for commonly
+used data such as the variant position and 
+more cost-effective storage classes
+for infrequently used bulk QC data should provide 
+significant operational benefits.
+Granular access controls would similarly allow non-identifiable
+variant-level data to be shared relatively freely,
+with genotype and other data more tightly controlled
+as required.
+Even finer granularity is possible if samples are grouped by
+access level within chunks (padding partially filled 
+chunks as needed and using an appropriate sample mask). 
+Providing client applications direct access to 
+the data over HTTP
+and delegating access control to the cloud provider
+makes custom web APIs~\cite{kelleher2019htsget} 
+and cryptographic container formats~\citep{senf2021crypt4gh}
+largely unnecessary in this setting.
+
+The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
+provided here are a necessary starting point for such cloud-native
+biobank repositories and open up many possibilities,
+but significant investment and development would be needed 
+to provide a viable alternative to standard bioinformatics workflows. 
+Two initial directions for development, however, may quickly
+yield sufficient results to both greatly improve researcher productivity on 
+large, centrally managed datasets such as Genomics England
+and motivate further research and development.
+The first direction is to provide compatibility with existing 
+workflows via a ``\texttt{vcztools}'' command line utility which 
+implements a subset of \texttt{bcftools} functionality (such as 
+\texttt{view} and \texttt{query}) on a VCF Zarr dataset.
+Such a tool would speed up some common queries by orders 
+of magnitude, and reduce the need for user orchestration of 
+operations among manually split VCF chunks (large VCF datasets
+are typically split into hundreds of files; see the Genomics
+England case study). Datasets could then be hosted in cloud
+object stores, while still presenting file-like semantics
+for existing workflows. This could provide an evolutionary path,
+allowing established analysis workflows to coexist with new Zarr-native
+approaches, working from the same primary data.
+
+The second natural direction for development is to create
+these Zarr-native applications, which can take advantage
+of the efficient data representation
+across multiple programming languages (see Methods).
+The Python data science ecosystem, in particular,
+has a rich suite of powerful tools~\cite[e.g.][]{
+mckinney2010data,
+lam2015numba,
+kluyver2016jupyter,
+harris2020array,
+virtanen2020scipy} 
+and is increasingly
+popular in recent biological applications~\citep[e.g.][]{
+abdennur2020cooler,
+rand2022bionumpy,
+open2c2024bioframe,
+hou2024admix}.
+Xarray~\cite{hoyer2017xarray} provides a unified interface for working 
+with multi-dimensional arrays
+in Python, and libraries like Dask~\cite{rocklin2015dask}  
+and Cubed~\cite{cubed2024} allow these operations to be
+scaled out transparently across processors and clusters. 
+This scaling is achieved by distributing calculations over 
+grid-based array representations like Zarr, where chunks
+provide the basic unit for parallel computation.
+The VCF Zarr specification introduced here was created 
+to facilitate work on a scalable genetics toolkit for 
+Python~\cite{sgkit2024} built on Xarray. 
+While the high-level facilities for distributed 
+computation provided by Xarray 
+are very powerful, they are not needed or indeed
+appropriate in all contexts. Our benchmarks here 
+illustrate that working at the lowest level, 
+by sequentially applying optimised kernels on a chunk-by-chunk
+basis is both straightforward to implement and highly performant.
+Thus, a range of possibilities exist in which developers 
+can build utilities using the VCF Zarr specification
+using the appropriate level of abstraction and tool chain
+on a case-by-case basis.
+
+While Zarr is now widely used across the sciences (see Methods)
+it was originally 
+developed to store genetic variation data from the 
+\textit{Anopheles gambiae} 
+1000 Genomes Project~\citep{anopheles2017genetic}
+and is in active use in this 
+setting~\cite[e.g.][]{ahouidi2021open,trimarsanto2022molecular}.
+The VCF Zarr specification presented here builds on this real-world 
+experience but is still a draft proposal that would benefit 
+from wider input across a range of applications. With some 
+refinements and sufficient uptake it may be suitable 
+for standardisation~\cite{rehm2021ga4gh}.
+The benefits of Zarr are substantial, and, in certain settings,
+worth the cost of retooling away from classical file-oriented workflows.
+For example, the MalariaGEN Vector Observatory
+currently uses Zarr to store data from whole-genome sequencing 
+of 23,000 \textit{Anopheles} mosquitoes from 31 African 
+countries~\cite{mvgo2024}.
+The data is hosted in Google Cloud Storage and can be analysed interactively
+using free cloud computing services like Google Colab,
+enabling the use of data by scientists in malaria-endemic countries
+where access to local computing infrastructure and sufficient network 
+bandwidth to download large datasets may be limited.
+VCF Zarr could similarly reduce the costs of analysing large-scale
+human data, and effectively open access to biobanks
+for a much broader group of researchers than currently possible.
+
+\section{Methods}
+
+\subsection{Zarr and block-based compression}
+% Zarr is a simple layer on top of best-in-class, modern components
+In the interest of completeness it is useful to provide a high-level overview
+of Zarr and the technologies that it depends upon. Zarr is a specialised format
+for storing large-scale $n$-dimensional data (arrays). Arrays
+are split into chunks, which are compressed and stored separately. Chunks are 
+addressed by their indexes along the dimensions of the array, and the 
+compressed data associated with this key. Chunks can
+be stored in individual files (as we do here), but a wide array of different
+storage backends are supported including cloud object stores 
+and NoSQL databases;
+in principle, Zarr can store data in any key-value store.
+Metadata describing the array and its properties is then stored 
+in JSON format along with the chunks. 
+The simplicity and transparency
+of this design has substantial advantages over technologies
+such as HDF~\citep{folk2011overview} and 
+NetCDF~\citep{rew1990netcdf} which are based on complex
+layouts of multidimensional data within a single file,
+and cannot be accessed in practice without the corresponding library.
+(See~\cite{abernathey2021cloud} for further discussion of the benefits
+of Zarr over these monolithic file-oriented formats.)
+In contrast, there are numerous implementations 
+of the Zarr specification, ranging 
+from the mature Zarr-Python~\citep{zarrpython}
+and TensorStore~\citep{tensorstore} implementations
+to more experimental extensions to packages like
+GDAL~\citep{gdal_zarr},
+NetCDF~\citep{netcfd_c},
+N5~\citep{n5zarr}
+and xtensor~\citep{xtensor_zarr}
+as well as  standalone libraries for JavaScript~\cite{zarrjs},
+Julia~\cite{zarrjl}, Rust~\citep{zarrs}
+and R~\cite{pizzarr}.
+
+Zarr is flexible in allowing different compression codecs and 
+pre-compression filters to be specified on a per-array basis.
+Two key technologies often used in conjunction with Zarr are the Blosc
+% This seems like the best citation for Blosc? It is mentioned here
+meta-compressor~\cite{alted2010modern}
+and Zstandard compression algorithm~\citep{collet2021rfc}.
+Blosc is a high-performance compressor optimised for numerical
+data which uses ``blocking''~\citep{alted2010modern} to 
+optimise CPU-cache access patterns, as well as highly optimised
+bit and byte shuffle filters.  Remarkably, on highly 
+compressible datasets, Blosc decompression can be faster 
+than \texttt{memcpy}.
+% Mentioning this detail to reassure readers who might be thinking
+% "how would this be implemented and what kind of horrible dependencies
+% would I need?"
+Blosc is written in C, with APIs for C, Python, Julia, Rust
+and others.
+Blosc is a ``meta-compressor'' because it provides 
+access to several different compression codecs. The 
+Zstandard codec is of particular 
+interest here as it achieves very high compression ratios
+with good decompression speeds (Figs~\ref{fig-whole-matrix-decode},
+\ref{fig-compression-compressor}).
+% This may seem a bit off topic, but want to reassure reader that 
+% this isn't some niche technology
+Zstandard is also used in several recent VCF compression 
+methods~\citep[e.g.][]{lefaive2021sparse,wertenbroek2022xsi}.
+% LZ4 is also notable - any citations for this?
+
+Scientific datasets are increasingly overwhelming the classical
+model of downloading and analysing locally, and are migrating to 
+centralised cloud repositories \citep{abernathey2021cloud,moore2021ome}.
+The combination of Zarr's simple and cloud-friendly storage 
+of data chunks with state-of-the-art compression methods has 
+led to Zarr gaining significant traction in these settings.
+Multiple petabyte-scale datasets are now stored using 
+Zarr~\cite[e.g.][]{gowan2022using, % weather model data
+fahnestock2023mappin, % ITS_LIVE dataset
+cmip6_dataset}
+or under active consideration for migration~\citep{durbin2020task,abernathey2021opening}.
+The Open GeoSpatial consortium has formally recognised Zarr as a community
+standard~\cite{ogc_zarr2_standard}
+and has formed
+a new GeoZarr Standards Working Group to establish a Zarr encoding for
+geospatial data~\cite{ogc_geozarr_news}.
+
+Zarr has recently been gaining popularity in biological applications.
+The Open Microscopy Environment has developed OME-Zarr~\cite{moore2023ome} as one 
+of its ``next generation'' cloud ready file formats~\citep{moore2021ome}.
+OME-Zarr already has a rich suite of supporting
+tools~\cite{moore2023ome,rzepka2023toward}. 
+Zarr has also seen recent uptake 
+in single-cell single-cell genomics~\citep{dhapola2022scarf,virshup2023scverse}
+and multimodal spatial omics
+data~\citep{marconato2024spatialdata,baker2023emobject}.
+Recent additions using Zarr include the application of deep learning
+models to genomic sequence data~\citep{klie2023predictive}, storage and 
+manipulation of large-scale linkage disequilibrium matrices \cite{zabad2023fast},  
+and a browser for genetic variation data~\citep{konig2023divbrowse}.
+
+\subsection{The VCF Zarr specification}
+The VCF Zarr specification is a direct mapping from the VCF data model
+to a chunked binary array format using Zarr,
+and is an evolution of the Zarr format used in the \texttt{scikit-allel}
+package~\citep{miles2023scikit}.
+VCF Zarr takes advantage
+of Zarr's hierarchical structure by representing a VCF file as a top-level
+Zarr group containing Zarr arrays. Each VCF field (fixed fields, INFO fields,
+and FORMAT fields) is represented as a separate array in the Zarr hierarchy.
+Some of the structures from the VCF header are also represented as arrays,
+including contigs, filters, and samples.
+
+The specification defines the name, shape, dimension names, and data type
+for each array in the Zarr store. These ``logical'' properties are mandated,
+in contrast to ``physical'' Zarr array properties such as chunk sizes and
+compression, which can be freely chosen by the implementation. This
+separation makes it straightforward for tools and applications to consume
+VCF Zarr data since the data has a well-defined structure, while allowing
+implementations enough room to optimise chunk sizes and compression
+according to the application's needs.
+
+The specification defines a clear mapping of VCF field names (keys) to
+array names, VCF Number to array shape, and VCF Type to array data type.
+To take one example, consider the VCF AD genotype field defined by the
+following VCF header: \texttt{
+\#\#FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">}.
+The FORMAT key \texttt{ID} maps to an array name of \texttt{call\_AD}
+(FORMAT fields have a \texttt{call\_} prefix, while INFO fields have a
+\texttt{variant\_} prefix; both are followed by the key name). Arrays
+corresponding to FORMAT fields are 3-dimensional with shapes that look
+like \texttt{(variants, samples, <Number>)} in general. In this case, the
+Number A entry indicates that the field has one value per alternate allele,
+which in VCF Zarr is represented as the \texttt{alt\_alleles} dimension name,
+so the shape of this array is \texttt{(variants, samples, alt\_alleles)}.
+The VCF Integer type can be represented as any Zarr integer type, 
+and the specification doesn't mandate particular integer widths. 
+The \texttt{vcf2zarr} (see the next section) conversion utility 
+chooses the narrowest integer width that can represent the data in
+each field.
+
+An important aspect of VCF Zarr is that field dimensions are 
+global and fixed, and defined as the maximum across all rows.
+Continuing the example above, the third dimension of the array 
+is the maximum number of alternate alleles across \emph{all} 
+variants. For variants at which there are less than the maximum
+number of alternative alleles, the third dimension of the 
+\texttt{call\_AD} array
+is padded with a sentinel value (-2 for integers and a specific
+non-signalling NaN for floats). While this is not a problem 
+in practice for datasets in which all four bases are observed, 
+it is a substantial issue for
+fields that have a quadratic dependency on the number of alleles
+(Number=G) such as PL. Such fields are already known to cause 
+significant problems, and the ``local alleles'' proposal 
+provides an elegant solution~\cite{poterba2024scalable}.
+As this approach is on a likely path to 
+standardisation~\cite{danecek2021twelve}, we plan to 
+include support in later versions of VCF Zarr.
+
+The VCF Zarr specification can represent anything described by BCF
+(which is somewhat more restrictive than VCF) except for two corner
+cases related to the encoding of missing data. Firstly, VCF Zarr does
+not distinguish between a field that is not present and one that 
+is present but contains missing data. For example, a variant with an
+INFO field \texttt{NS=.} is represented in the same way in VCF Zarr
+as an INFO field with no \texttt{NS} key. Secondly, because of the use
+of sentinel values to represent missing and fill values for integers
+(-1 and -2, respectively), a field containing these original values
+cannot be stored. In practice this doesn't seem to be much of 
+an issue (we have not found a real VCF that contains negative 
+integers). However, if -1 and -2 need to be stored, a float field
+can be used without issues.
+
+The VCF Zarr specification is general and can be mapped to 
+file formats such as PLINK~\citep{purcell2007plink,chang2015second}
+and BGEN~\citep{band2018bgen} with some minor extensions.
+
+\subsection{vcf2zarr}
+Converting VCF to Zarr at Biobank scale is challenging. 
+One problem is to determine the dimension of fields,
+(i.e., finding the maximum number of alternate alleles and the 
+maximum size of \texttt{Number=.} fields) which requires a full
+pass through the data. Another challenge is to keep
+memory usage within reasonable limits: although 
+we can view each record in the VCF one-by-one,
+we must buffer a full chunk (10,000 variants is the default in
+\texttt{vcf2zarr}) 
+in the variants dimension for each of the fields to convert to Zarr. 
+For VCFs with many FORMAT fields and large numbers of samples this can
+require tens of gigabytes of RAM per worker, making
+parallelism difficult. Reading the VCF multiple times for different fields
+is possible, but would be prohibitively slow for multi-terabyte VCFs.
+
+The \texttt{vcf2zarr} utility solves this problem by first converting 
+the VCF data (which can be split across many files) into an Intermediate
+Columnar Format (ICF). The \texttt{vcf2zarr explode} command takes a set
+of VCFs, and reads through them using
+\texttt{cyvcf2}~\cite{pedersen2017cyvcf2},
+storing each field independently in (approximately) fixed-size 
+compressed chunks.
+Large files can be partitioned based on information extracted from the 
+CSI or Tabix indexes, and so different parts of a file can be 
+converted to ICF in parallel.
+Once all partitions have completed, information about 
+the number of records in each partition and chunk of a given
+field is stored so that the record at a particular index 
+can be efficiently retrieved. 
+Summaries such as maximum dimension and the minimum and maximum value 
+of each field are also maintained, to aid choice of data types later.
+A set of VCF files can be converted to intermediate columnar 
+format in parallel on a single machine 
+using the \texttt{explode} command,
+or can be distributed across a cluster using the 
+\texttt{dexplode-init},
+\texttt{dexplode-partition} and \texttt{dexplode-finalise} commands.
+
+Once the VCF data has been converted to the intermediate columnar format,
+it can then be converted to Zarr using the \texttt{vcf2zarr encode}
+command. By default we choose integer widths based on the maximum
+and minimum values observed during conversion to ICF
+along with reasonable compressor defaults (see next section).
+Default choices can be 
+modified by generating a JSON-formatted storage schema,
+which can be edited and supplied as an argument to \texttt{encode}.
+Encoding a given field (for example, \texttt{call\_AD})
+involves creating a buffer to hold a full variant-chunk of the 
+array in question, and then sequentially filling this buffer with 
+values read from ICF and flushing to file.
+ Similar to the \texttt{explode} command,
+encoding to Zarr can be done in parallel on a single 
+machine using the \texttt{encode} command,
+or can be distributed across a cluster using the 
+\texttt{dencode-init},
+\texttt{dencode-partition} and \texttt{dencode-finalise} commands.
+The distributed commands are fault-tolerant, reporting any failed
+partitions so that they can be retried.
+
+\subsection{Choosing default compressor settings}
+To inform the choice of compression settings across different fields 
+in VCF data, we analysed their effect on compression ratio on 
+recent high-coverage WGS data from the 1000 Genomes 
+project~\citep{byrska2022high}. We began by downloading 
+the first 100,000 lines of the VCF 
+for chromosome 22 (giving a 1.1GiB compressed VCF)
+and converted to Zarr using 
+\texttt{vcf2zarr} with default settings. We then systematically 
+examined the effects of varying chunk sizes and compressor settings
+on the compression ratio for call-level fields. We excluded call\_PL
+from this analysis as it requires conversion to a ``local alleles''
+encoding~\citep{poterba2024scalable} to be efficient, 
+which is planned for implementation in a future 
+version of \texttt{vcf2zarr}.
+
+Fig~\ref{fig-compression-compressor} shows the effect of varying compression
+codecs in Blosc. The combination of outstanding compression performance
+and competitive decoding speed (Fig~\ref{fig-whole-matrix-decode}) 
+makes zstd a good default choice.
+
+The \texttt{shuffle} parameter in the Blosc meta-compressor~\cite{alted2010modern}
+can result in substantially better compression, albeit at the 
+cost of somewhat slower decoding (see Fig~\ref{fig-whole-matrix-decode}).
+Fig~\ref{fig-compression-shuffle} shows the effect of 
+bit shuffle (grouping together bits at the same position
+across bytes before compression), and byte shuffle (grouping together 
+bytes at the sample position across words before compression)
+on compression ratio. Bit shuffle provides a significant
+improvement in compression for the call\_genotype field  because 
+the vast majority of genotype calls will be 0 or 1, and therefore 
+bits 1 to 7 will be 0. Thus, grouping these bits together will 
+lead to significantly better compression. This strategy also 
+works well when compressing boolean fields stored as 
+8 bit integers, where the top 7 bits are always 0. In practice,
+boolean fields stored in this way have very similar compression
+to using a bit-packing pre-compression filter (data not shown).
+Although byte shuffle leads to somewhat better compression for call\_AD
+and call\_DP, it gives substantially worse compression on call\_AB
+than no shuffling. 
+The default in \texttt{vcf2zarr}
+is therefore to use bit shuffle for \texttt{call\_genotype}
+and all boolean fields, and to not use 
+byte shuffling on any field. These defaults can be easily
+overruled, however, by outputting and modifying a JSON formatted 
+storage schema before encoding to Zarr.
+
+
+
+Fig~\ref{fig-compression-chunksize} shows that chunk size has a 
+weak influence on compression ratio for most fields. 
+Increasing sample chunk size slightly increases 
+compression on call\_AB, and has no effect on less compressible
+fields. Variant chunk size appears to have almost no effect 
+on compression ratio. 
+Interestingly, the choice of chunk size along the sample dimension for the
+genotype matrix does have a significant effect. 
+With six evenly spaced points between 100 and 2504,
+Fig~\ref{fig-compression-chunksize}A shows a somewhat unpredictable 
+relationship between sample chunk size and compression ratio.
+The more fine-grained analysis of
+Fig~\ref{fig-compression-chunksize-finegrained} shows that three
+distinct trend lines emerge depending on the chunk size 
+divisibility, with the modulus 
+(i.e., the remainder in the last chunk) also having a minor effect. 
+At greater than 40X,
+compression ratio is 
+high in all cases, and given that genotypes contribute relatively
+little to the total storage of real datasets
+(Table~\ref{tab-genomics-england-data}) the effect will
+likely be fairly minor in practice.
+Thus, we do not expect the choice of chunk size to have a significant
+impact on overall storage usage, and so choice may be
+determined by other considerations such as expected data
+access patterns.
+
+
+\subsection{Benchmarks}
+In this section we describe the methodology used for the simulation-based
+benchmarks of Figs~\ref{fig-data-storage},\ref{fig-whole-matrix-compute},
+\ref{fig-subset-matrix-compute} and \ref{fig-column-extract}.
+The benchmarks use data simulated by conditioning on a large
+pedigree of French-Canadians using 
+\texttt{msprime}~\citep{baumdicker2021efficient},
+which have been shown to follow patterns observed in real 
+data from the same population to a remarkable 
+degree~\cite{anderson2023on}.
+We begin by downloading the simulated ancestral recombination 
+graph~\cite{brandt2024promise,lewanski2024era,wong2024general}
+for chromosome 21 from Zenodo~\cite{anderson2023simulated} 
+in compressed \texttt{tszip} format. This 552M file 
+contains the simulated ancestry and mutations for 1.4 million
+present-day samples. We then subset the full simulation 
+down to ${10^1, 10^2, \dots, 10^6}$ samples using 
+ARG simplification~\cite{kelleher2018efficient,wong2024general},
+storing the subsets in \texttt{tskit} format~\cite{tskit2024}.
+Note that this procedure captures the growth 
+in the number of variants (shown in the top x-axis labels)
+as we increase sample sizes as a 
+natural consequence of population-genetic processes.
+% jk@holly$ python3 src/collect_data.py site-allele-report
+% scaling/data/chr21_10_6.zarr/
+% 0 alleles:  100.00%
+% 1 alleles:  100.00%
+% 2 alleles:  7.92%
+% 3 alleles:  0.21%
+As a result of simulated mutational processes,
+most sites have one alternate allele, 
+with 7.9\% having two and 0.2\% having three
+alternate alleles in the $10^6$ samples dataset.
+We then export the variation data from each subset to VCF
+using \texttt{tskit vcf subset.ts | bgzip > subset.vcf.gz}
+as the starting point for other tools.
+
+We used bcftools version 1.18, Savvy 2.1.0, Genozip 5.0.26,
+vcf2zarr 0.0.9, and Zarr-Python 2.17.2. 
+All tools used default settings, 
+unless otherwise stated.
+All simulation-based benchmarks were performed on a 
+dual CPU (Intel Xeon E5-2680 v2)
+server with 256GiB of RAM running Debian GNU/Linux 11.
+To ensure that the true effects of having data distributed over a large 
+number of files were reported, benchmarks for Zarr and Savvy were 
+performed on a cold disk cache by running 
+\texttt{echo 3 | sudo tee /proc/sys/vm/drop\_caches} before each run.
+The I/O subsystem used is based on a RAID 5 of 12 SATA hard drives.
+For the CPU time benchmarks we measure the sum of the total user and
+system times required to execute the full command (as reported by GNU
+\texttt{time}) as well as elapsed wall-clock time. Total CPU
+time is shown as a solid line, with wall-clock time as a dashed line 
+of the same colour. In the case of pipelines, where some processing 
+is conducted concurrently wall-clock time can be less than total
+CPU (e.g.\ genozip in Fig~\ref{fig-whole-matrix-compute}). 
+When I/0 costs are significant, wall-clock time can be greater 
+than total CPU (e.g.\ Zarr and Savvy in Fig~\ref{fig-subset-matrix-compute}).
+Each tool was instructed to use one thread, where the options
+were provided. 
+Where possible in pipelines we use uncompressed BCF
+output (\texttt{-Ou}) to make processing 
+more efficient~\citep{danecek2021twelve}.
+We do not use BCF output in genozip because it is not supported
+directly.
+
+Because \texttt{bcftools +af-dist} requires the AF INFO field
+and this is not kept in sync by \texttt{bcftools view}  
+(although the AC and AN fields are), the subset calculation 
+for Fig~\ref{fig-subset-matrix-compute} requires an additional step. 
+The resulting pipeline is
+\texttt{bcftools view -r REGION -S SAMPLESFILE -IOu BCFFILE | 
+bcftools +fill-tags -Ou | bcftools +af-dist}. Genozip similarly
+requires a \texttt{+fill-tags} step in the pipeline.
+
+\section{Availability of source code and requirements}
+
+The VCF Zarr specification is available on GitHub at 
+\url{https://github.com/sgkit-dev/vcf-zarr-spec/}.
+All source code for running benchmarks, analyses and creating 
+plots in this article is available at
+\url{https://github.com/sgkit-dev/vcf-zarr-publication}.
+Vcf2zarr is freely available under the terms of the Apache 2.0 
+license as part of the \texttt{bio2zarr} 
+suite (\url{https://github.com/sgkit-dev/bio2zarr/}) 
+and can be installed from the Python Package Index
+(\url{https://pypi.org/project/bio2zarr/}).
+
+\subsection{List of abbreviations}
+% If abbreviations are used in the text they should be defined in the text at
+% first use, and a list of abbreviations should be provided in alphabetical
+% order.
+
+\begin{itemize}
+    \item ICF: Intermediate Columnar Format
+    \item GWAS: Genome Wide Association Study
+    \item PBWT: Positional Burrows-Wheeler Transform
+    \item QC: Quality Control
+    \item UKB: UK Biobank
+    \item VCF: Variant Call Format
+    \item WGS: Whole Genome Sequence
+\end{itemize}
+
+\subsection{Competing Interests}
+JK and BJ are consultants for Genomics England Limited.
+The authors declare that they have no other competing interests.
+
+\subsection{Funding}
+JK acknowledges the Robertson Foundation and 
+NIH (research grants HG011395 and HG012473). 
+JK and AM acknowledge the Bill \& Melinda Gates Foundation (INV-001927).
+TM acknowledges funding from The New Zealand Institute for Plant \& Food
+Research Ltd Kiwifruit Royalty Investment Programme.
+
+% \subsection{Author's Contributions}
+
+\section{Acknowledgements}
+We would like to thank Gil McVean for helpful comments on the manuscript.
+
+This research was made possible through access to data in the National Genomic
+Research Library, which is managed by Genomics England Limited (a wholly owned
+company of the Department of Health and Social Care). The National Genomic
+Research Library holds data provided by patients and collected by the NHS as
+part of their care and data collected as part of their participation in
+research. The National Genomic Research Library is funded by the National
+Institute for Health Research and NHS England. The Wellcome Trust, Cancer
+Research UK and the Medical Research Council have also funded research
+infrastructure.
+
+Computation used the Oxford Biomedical Research Computing (BMRC) facility, a
+joint development between the Wellcome Centre for Human Genetics and the Big
+Data Institute supported by Health Data Research UK and the NIHR Oxford
+Biomedical Research Centre. The views expressed are those of the author(s) and
+not necessarily those of the NHS, the NIHR or the Department of Health.
+
+Genozip was used under the terms of the free Genozip Academic license.
+Genozip was only used on simulated data, in compliance with
+the ``No Commercial Data'' criterion.
+
+\bibliography{paper}
+
+%\clearpage
+\renewcommand\thefigure{S\arabic{figure}}
+\setcounter{figure}{0}
+\renewcommand\thetable{S\arabic{table}}
+\setcounter{table}{0}
+
+\section*{Supplementary Material}
+
+\begin{figure}[h]
+\includegraphics{figures/whole-matrix-decode}
+\caption{Genotype decoding performance.
+Total CPU time required to decode genotypes into memory using the Zarr-Python
+and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
+Elapsed time is also reported (dotted line). 
+This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
+3.9 GiB/s Zarr (Zstd), and 6.6 GiB/s for Savvy. 
+\label{fig-whole-matrix-decode}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/subset-matrix-compute-supplemental}
+\caption{Compute performance on a large subset of the genotype matrix.
+Total CPU time required to run the af-dist calculation for
+a subset of half of the samples and 10000 variants from the middle of the matrix
+for the data in Figure~\ref{fig-data-storage}.
+Elapsed time is also reported (dotted line). 
+Genozip did not run for
+$n > 10^4$ samples because it does not support a file to specify
+sample IDs, and the command line was therefore too long for the shell
+to execute. 
+\label{fig-subset-matrix-compute-supplemental}}
+\end{figure}
+\begin{figure}[h]
+
+\includegraphics{figures/compression-compressor}
+\caption{Effects of Blosc compression codec on compression ratio on call-level 
+fields in 1000 Genomes data. 
+In all cases compression level=7 was used, with a variant
+chunk size of 10,000 and sample chunk size of 1,000.
+Bit shuffle was used for call\_genotype, and no shuffle used for the other fields.
+\label{fig-compression-compressor}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/compression-shuffle}
+\caption{Effects of Blosc shuffle settings on compression ratio on call-level 
+fields in 1000 Genomes data. 
+In all cases the zstd compressor with compression level=7 was used, with a variant
+chunk size of 10,000 and sample chunk size of 1,000.
+\label{fig-compression-shuffle}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/compression-chunksize}
+\caption{Effects of chunk sizes on compression ratio on call-level 
+fields in 1000 Genomes data.
+(A) Varying sample chunk size, holding variant chunk size fixed at 10,000.
+(B) Varying variant chunk size, holding sample chunk size fixed at 1,000.
+In all cases the zstd compressor with compression level=7 was used. Bit shuffle
+was used for call\_genotype, and no shuffle used for the other fields.
+Values are chosen to be evenly spaced on a linear scale 
+between 100 and 2504 (the number of samples) in (A) and 
+evenly spaced between 100 and 96514 on a log scale in (B). 
+\label{fig-compression-chunksize}}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics{figures/compression-chunksize-finegrained.pdf}
+\caption{Effects of sample chunk size on compression ratio on the call\_genotype
+field in 1000 Genomes data.
+The same analysis as in Fig~\ref{fig-compression-chunksize}, except we only
+consider call\_genotype and we examine all sample chunk sizes from 
+100 to 256. Distinct trend-lines emerge for odd, even and multiple-of-four
+chunk sizes (shown by markers). The size of the final chunk also has a minor
+effect (shown by colour).
+\label{fig-compression-chunksize-finegrained}}
+\end{figure}
+
+\end{document}
