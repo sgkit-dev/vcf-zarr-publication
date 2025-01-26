@@ -1483,16 +1483,14 @@ to our prototype Zarr backend.
 \subsection{Extensibility: Cloud computing}
 To explore the use of cloud computing services with VCF Zarr,
 we uploaded the Zarr directory hierarchy for the Genomics England
-data chromosome 2 described in Table~\ref{tab-genomics-england-data}.
-an AWS S3 standard bucket. 
-[TODO clarify what we're doing and remind reader]
+data chromosome 2 described in Table~\ref{tab-genomics-england-data}
+to an AWS S3 standard bucket. 
 We repeated the benchmarks above on the same subset
-of 562,640 variants, using the same
+of 562,640 variants and 78,195 samples using the same
 single-threaded sequential Zarr code.
 Extracting the position array required 15s CPU, 23.8s elapsed.
 The af-dist calculation required 2.70min CPU, 5.23min elapsed.
-Creating the filter mask
-required 3.05min CPU, 11.15min elapsed.
+Creating the filter mask required 3.05min CPU, 11.15min elapsed.
 
 While these benchmarks are comparable with results obtained on the
 shared file-system in the Genomics England research environment,
@@ -1517,10 +1515,20 @@ network access by measuring the rate at which we can download the chunks
 into RAM (without decompressing) using the same parallel and asynchronous
 architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
 and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
-was achieved with 32 processes. Genotype data can therefore be fetched
-from S3 around an order of magnitude more quickly than it can be decompressed
-into RAM. [TODO QUESTION: can such rates be sustained, and be expected to 
-happen in parallel? Do Durner et al consider this?]
+was achieved with 32 processes. 
+% Richard Durbin asked whether we were just using up all of a scarce 
+% resource on this point.
+While these measurments are simplistic and may not be an 
+accurate predictor of sustained bandwidth, it is still clear that 
+genotype data can be fetched
+from S3 around an order of magnitude more quickly 
+than it can be decompressed into RAM. 
+We have also not measured
+the achievable bandwidth while scaling out across many instances,
+but given the ubiquity of cloud-based services and the scale 
+at which they operate, it seems reasonable to assume that the claimed
+terabits per second of aggregate bandwidth from
+S3~\cite{s3-performance-optimising} are achievable.
  
 % Maybe don't bother with this, the same trade-off always exists.
 % but I guess it's an extra factor to take into account when weighing
@@ -1541,8 +1549,8 @@ This level of throughput would complete af-dist for all chromosomes for all samp
 % io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
 % ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
 in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
-(See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
-benchmarks in cloud settings.)
+See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
+benchmarks in cloud settings.
 
 \subsection{Extensibility: GPU acceleration}
 GPU acceleration has revolutionized scientific computing by leveraging the
