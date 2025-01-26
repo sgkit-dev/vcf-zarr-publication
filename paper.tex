@@ -120,8 +120,6 @@ University of Oxford, UK}
 \textbf{Background:}
 Variant Call Format (VCF) is the standard file format for interchanging
 genetic variation data and associated quality control metrics.
-% It provides a well-defined data model and is central to a large ecosystem
-% of interoperating tools.
 The usual row-wise encoding of the VCF data model (either as text
 or packed binary) emphasises efficient retrieval of all data for a given
 variant, but accessing data on a field or sample basis is inefficient.
@@ -132,20 +130,27 @@ Row-wise data storage is fundamentally unsuitable
 and a more scalable approach is needed.
 
 \textbf{Results:}
+Zarr is a format for storing
+multi-dimensional data that is widely used across the sciences,
+and is ideally suited to massively parallel processing.
 We present the VCF Zarr specification, an encoding of the
-VCF data model using Zarr which makes retrieving subsets of the
-data much more efficient. Zarr is a cloud-native format for storing
-multi-dimensional data, widely used in scientific computing.
+VCF data model using Zarr, along with fundamental software infrastructure
+for efficient and reliable conversion at scale.
 We show how this format is far more efficient than
 standard VCF based approaches,
 and competitive with specialised methods for
 storing genotype data in terms of compression ratios
-and calculation performance.
-We demonstrate the VCF Zarr format (and the vcf2zarr conversion utility)
-on a subset of the Genomics England aggV2 dataset comprising
-78,195 samples and 59,880,903 variants,
-with a 5X reduction in storage and greater than 300X reduction in CPU usage
-in some representative benchmarks.
+and single-threaded calculation performance.
+We present case studies on subsets of three large 
+human datasets (Genomics England: $n$=78,195;
+Our Future Health: $n$=651,050; 
+All of Us: $n$=245,394) along with whole genome
+datasets for Norway Spruce ($n$=1,063) and 
+SARS-Cov-2 ($n$=3,960,704), % TODO update for tranche 2 data 
+demonstrating the scalability and flexibility of VCF Zarr.
+We demonstrate the potential for VCF Zarr to enable a new generation
+of high-performance and cost-effective applications
+via illustrative highly parallel benchmarks on AWS and GPUs.
 
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and
@@ -307,15 +312,13 @@ We do this by translating VCF data into Zarr format,
 a method of storing large-scale multidimensional data as a regular
 grid of compressed chunks.
 Zarr's elegant simplicity and first-class support for
-cloud object stores have led to
+cloud object stores and parallel computing have led to
 it gaining substantial traction
 across the sciences, and it is now used in multiple petabyte-scale
 datasets in cloud deployments (see Methods for details).
 We present the VCF Zarr specification that formalises this
-mapping, the \texttt{vcf2zarr}
-utility to reliably convert large-scale VCFs to Zarr,
-and the \texttt{vcztools} program to form a compatibility layer by
-emulating the ubiquitous \texttt{bcftools}.
+mapping, along with the \texttt{vcf2zarr} and \texttt{vcztools} 
+utilities to reliably convert VCF to and from Zarr at scale.
 We show that VCF Zarr is much more compact than
 VCF and is competitive with state-of-the-art
 file-based VCF compression tools.
@@ -323,10 +326,45 @@ Moreover, we show that Zarr's storage of data in an analysis-ready
 format greatly facilitates computation,
 with various benchmarks being substantially faster than
 \texttt{bcftools} based pipelines, and again competitive
-with state-of-the-art file-oriented methods. Finally, we show the
-utility of VCF Zarr on the Genomics England aggV2 dataset,
-demonstrating that common \texttt{bcftools} queries can be performed orders
-of magnitude more quickly using simple Python scripts.
+with state-of-the-art file-oriented methods. 
+We demonstrate the scalability and flexibility of VCF Zarr
+via case-studies on five boundary-pushing datasets.
+We examine conversion and compression performance on three different
+data modalities for large human datasets: whole genome sequence
+data from Genomics England (5X smaller than gzipped VCF);
+genotype data from Our Future Health (2.5X smaller than gzipped VCF);
+and exome-like data from All of Us (1.1X larger than gzipped VCF). 
+We then examine performance 
+for species with large genomes using Norway Spruce data (3.2X smaller
+than gzipped VCF),
+and in a large collection of short whole genome alignments
+using SARS-Cov-2 data 
+(100X % FIXME! this is roughly correct, but need to get the numbers straight
+smaller than gzipped FASTA). 
+Interoperability with the vast ecosystem of tools
+based on VCF~\citep{danecek2021twelve,garrison2022spectrum}
+is crucial. 
+% TODO sentence too long
+We first present the \texttt{vcztools} program,
+which implements a subset of the functionality in \texttt{bcftools}
+and allows data stored in Zarr at some URL to be 
+treated as if it were a VCF or BCF file,
+and demonstrate that it can be used as a practical replacement 
+in processing pipelines.
+We then present an illustrative example of how existing
+methods can adopt VCF Zarr by modifying the popular 
+SAIGE~\cite{zhou2018efficiently, zhou2020scalable} GWAS software
+(written in C++), and show significant speedups over the existing 
+VCF (6.5X) and BCF (3X) backends in a simple benchmark.
+Finally, we illustrate the potential 
+for a new generation of Zarr-based applications via some illustative
+benchmarks. First, we demonstrate the very high levels of throughput 
+performance available on public clouds when data in an object 
+store is accessed in an asynchronous and highly parallel manner.
+Finally, we demonstrate the ease and efficiency with which data
+in Zarr format can be processed on a GPU, opening many exiting
+avenues for future research.
+
 
 \section{Results}
 
@@ -1206,7 +1244,7 @@ than source gzipped VCF; see text for discussion).
 Here we use the local alleles fields \texttt{call\_LA} and \texttt{call\_LAD}; 
 see text for details.
 For column details, see Table~\ref{tab-genomics-england-data}.
-\label{tab-auo-data}}
+\label{tab-aou-data}}
 \begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
 \toprule
 {Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
@@ -1222,7 +1260,7 @@ For column details, see Table~\ref{tab-genomics-england-data}.
 \end{tabular}
 \end{table}
 
-[TODO discuss local alleles and mention Table~\ref{tab-auo-data}].
+[TODO discuss local alleles and mention Table~\ref{tab-aou-data}].
 
 [Discuss why we're bigger than VCF here, people will want to understand.
 
@@ -1480,19 +1518,17 @@ to our prototype Zarr backend.
 % Zarr:
 % real 0m55.957s user 1m10.375s sys 0m12.111s
 
-\subsection{Extensibility: Cloud computing}
+\subsection{Future applications: Cloud computing}
 To explore the use of cloud computing services with VCF Zarr,
 we uploaded the Zarr directory hierarchy for the Genomics England
-data chromosome 2 described in Table~\ref{tab-genomics-england-data}.
-an AWS S3 standard bucket. 
-[TODO clarify what we're doing and remind reader]
+data chromosome 2 described in Table~\ref{tab-genomics-england-data}
+to an AWS S3 standard bucket. 
 We repeated the benchmarks above on the same subset
-of 562,640 variants, using the same
+of 562,640 variants and 78,195 samples using the same
 single-threaded sequential Zarr code.
 Extracting the position array required 15s CPU, 23.8s elapsed.
 The af-dist calculation required 2.70min CPU, 5.23min elapsed.
-Creating the filter mask
-required 3.05min CPU, 11.15min elapsed.
+Creating the filter mask required 3.05min CPU, 11.15min elapsed.
 
 While these benchmarks are comparable with results obtained on the
 shared file-system in the Genomics England research environment,
@@ -1517,10 +1553,20 @@ network access by measuring the rate at which we can download the chunks
 into RAM (without decompressing) using the same parallel and asynchronous
 architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
 and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
-was achieved with 32 processes. Genotype data can therefore be fetched
-from S3 around an order of magnitude more quickly than it can be decompressed
-into RAM. [TODO QUESTION: can such rates be sustained, and be expected to 
-happen in parallel? Do Durner et al consider this?]
+was achieved with 32 processes. 
+% Richard Durbin asked whether we were just using up all of a scarce 
+% resource on this point.
+While these measurments are simplistic and may not be an 
+accurate predictor of sustained bandwidth, it is still clear that 
+genotype data can be fetched
+from S3 around an order of magnitude more quickly 
+than it can be decompressed into RAM. 
+We have also not measured
+the achievable bandwidth while scaling out across many instances,
+but given the ubiquity of cloud-based services and the scale 
+at which they operate, it seems reasonable to assume that the claimed
+terabits per second of aggregate bandwidth from
+S3~\cite{s3-performance-optimising} are achievable.
  
 % Maybe don't bother with this, the same trade-off always exists.
 % but I guess it's an extra factor to take into account when weighing
@@ -1541,10 +1587,10 @@ This level of throughput would complete af-dist for all chromosomes for all samp
 % io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
 % ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
 in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
-(See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
-benchmarks in cloud settings.)
+See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
+benchmarks in cloud settings.
 
-\subsection{Extensibility: GPU acceleration}
+\subsection{Future applications: GPU acceleration}
 GPU acceleration has revolutionized scientific computing by leveraging the
 massively parallel architecture of GPUs to achieve significant speedups in
 computationally intensive tasks such as simulations, data analysis, and machine
@@ -1665,8 +1711,8 @@ to the realities of modern computing. We have argued that
 Zarr provides a powerful basis for cloud-based
 storage and analysis of large-scale genetic variation data.
 We propose the VCF Zarr specification which losslessly
-maps VCF data to Zarr, and provide an efficient and scalable
-tool to perform conversion.
+maps VCF data to Zarr, and provide the basic software
+infrastructure required for bidirectional conversion.
 
 % We're not pretending is a solution to all problems and
 % up front about weaknesses of the model.
@@ -1678,9 +1724,10 @@ any dataset containing a variant with a large number of alleles
 dimensions of fields are determined by their \emph{maximum}
 dimension among all variants. In particular this is problematic
 for fields like PL in which the dimension depends
-quadratically on the number of alleles (although practical
-solutions have been suggested that we plan to
-implement~\cite{poterba2024scalable}).
+quadratically on the number of alleles.
+While the local alleles representation~\cite{poterba2024scalable}
+is a substantial improvement (see All of Us and Norway Spruce
+case studies) it may be lossy (see Methods). 
 Secondly, the design of
 VCF Zarr emphasises efficiency of analysis for a fixed
 dataset, and does not consider how samples (and the
@@ -1717,37 +1764,56 @@ makes custom web APIs~\cite{kelleher2019htsget}
 and cryptographic container formats~\citep{senf2021crypt4gh}
 largely unnecessary in this setting.
 
-[TODO REWRITE]
-The VCF Zarr specification and scalable \texttt{vcf2zarr} conversion utility
-provided here are a necessary starting point for such cloud-native
-biobank repositories and open up many possibilities,
-but significant investment and development would be needed
-to provide a viable alternative to standard bioinformatics workflows.
-Two initial directions for development, however, may quickly
-yield sufficient results to both greatly improve researcher productivity on
-large, centrally managed datasets such as Genomics England
-and motivate further research and development.
-The first direction is to provide compatibility with existing
-workflows via a ``\texttt{vcztools}'' command line utility which
-implements a subset of \texttt{bcftools} functionality (such as
-\texttt{view} and \texttt{query}) on a VCF Zarr dataset.
-Such a tool would speed up some common queries by orders
-of magnitude, and reduce the need for user orchestration of
-operations among manually split VCF chunks (large VCF datasets
-are typically split into hundreds of files; see the Genomics
-England case study). Datasets could then be hosted in cloud
-object stores, while still presenting file-like semantics
-for existing workflows. This could provide an evolutionary path,
-allowing established analysis workflows to coexist with new Zarr-native
-approaches, working from the same primary data.
+% Streaming is inherently incompatible with efficient utilisation
+% of cloud object stores.
+Modern computing is increasingly parallel, from multicore CPUs, GPUs 
+and the massively parallel scale provided by public clouds.
+Making optimal use of these parallel resources requires new programming
+models, and in particular adapting analytics workloads to the properties of 
+disaggregated cloud object stores is essential.
+Classical workflows in genomics emphasise streaming, 
+in which large volumes of data are read sequentially from file,
+streamed through the processor, and the results written sequentially to 
+storage or to the input of another process in a pipeline. 
+Using this model on data held on a cloud object store requires
+us to emulate file-system semantics,
+and places hard requirements on receiving data in a specific order.
+As Durner et al~\cite{durner2023exploiting} show (and we confirm 
+in Fig~\ref{fig-s3-network-throughput}), sustained data throughput speeds similar to
+a locally attached SSD can be obtained from cost-effective and 
+massively scalable cloud object stores like Amazon S3,
+but on the condition that we do \emph{not} place constraints on
+the order in which data is received (due to the high variance in latency).
+In this context, Zarr provides a simple and elegant model for computation
+in which the \emph{chunk} is the basic unit of parallelism. For many
+applications, each chunk can be processed independently and in no particular order.
 
-[TODO REWRITE]
-The second natural direction for development is to create
-these Zarr-native applications, which can take advantage
-of the efficient data representation
-across multiple programming languages (see Methods).
-The Python data science ecosystem, in particular,
-has a rich suite of powerful tools~\cite[e.g.][]{
+% In the streaming model, large volumes of data are read sequentially from storage,
+% streamed through the processor, with results written sequentially to 
+% storage or read by other processes in a pipeline. 
+% Row-oriented storage of data (see the Introduction) is also well-suited to 
+% streaming computation
+% % The focus on large sequential 
+% % reads is derived ultimately from the realities of disk drive storage, and leads
+% % to efficient utilisation through multiple layers of operating system and 
+% % on-device caching, with heuristic parameters tuned through decades of experience.
+% % While there is some potential for parallelism in chaining multiple processes
+% % in a Unix pipeline, it tends to be limited by the slowest step and is not
+% % an effective way to use the tens of CPU cores available on a modern machines.
+% Splitting work up along the genome has provided ample opportunities to 
+% to parallelise in the past, and is part of the motivation 
+% for the current practise of providing VCF data in sub-chromosome partitions 
+% (see the Genomics England, Our Future Health and Norway Spruce case-studies). 
+% However, with increasingly large sample sizes, this approach to parallelism
+
+There is therefore an opportunity to develop a new 
+generation of Zarr-native applications, taking advantage of the efficient data
+representation and natural model of chunk-based parallelism.
+Although there are several independent Zarr implementations
+across programming languages (see Methods),
+the Python data science ecosystem is a particularly powerful
+platform,
+with a rich suite of tools~\cite[e.g.][]{
 mckinney2010data,
 lam2015numba,
 kluyver2016jupyter,
@@ -1775,7 +1841,7 @@ computation provided by Xarray
 are very powerful, they are not needed or indeed
 appropriate in all contexts. Our benchmarks here
 illustrate that working at the lowest level,
-by sequentially applying optimised kernels on a chunk-by-chunk
+by applying optimised kernels on a chunk-by-chunk
 basis is both straightforward to implement and highly performant.
 Thus, a range of possibilities exist in which developers
 can build utilities using the VCF Zarr specification
@@ -2134,6 +2200,9 @@ We use
 the Zarr-Python package~\citep{zarrpython} for all Zarr operations.
 The mini-language in the \texttt{query} command is parsed using
 PyParsing [TODO cite].
+[Add a note here on why it was easier to to write a Python application
+from scratch than to update bcftools.]
+
 As a general principle, data is only retrieved from the Zarr store
 when it is required to fulfil a particular query. For example,
 when a subset of samples are specified, we only retrieve chunks
