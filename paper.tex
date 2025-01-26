@@ -317,10 +317,8 @@ it gaining substantial traction
 across the sciences, and it is now used in multiple petabyte-scale
 datasets in cloud deployments (see Methods for details).
 We present the VCF Zarr specification that formalises this
-mapping, the \texttt{vcf2zarr}
-utility to reliably convert large-scale VCFs to Zarr,
-and the \texttt{vcztools} program to form a compatibility layer by
-emulating the ubiquitous \texttt{bcftools}.
+mapping, along with the \texttt{vcf2zarr} and \texttt{vcztools} 
+utilities to reliably convert VCF to and from Zarr at scale.
 We show that VCF Zarr is much more compact than
 VCF and is competitive with state-of-the-art
 file-based VCF compression tools.
@@ -346,9 +344,10 @@ smaller than gzipped FASTA).
 Interoperability with the vast ecosystem of tools
 based on VCF~\citep{danecek2021twelve,garrison2022spectrum}
 is crucial. 
+% TODO sentence too long
 We first present the \texttt{vcztools} program,
 which implements a subset of the functionality in \texttt{bcftools}
-allowing data stored in Zarr at some URL to be 
+and allows data stored in Zarr at some URL to be 
 treated as if it were a VCF or BCF file,
 and demonstrate that it can be used as a practical replacement 
 in processing pipelines.
@@ -357,6 +356,14 @@ methods can adopt VCF Zarr by modifying the popular
 SAIGE~\cite{zhou2018efficiently, zhou2020scalable} GWAS software
 (written in C++), and show significant speedups over the existing 
 VCF (6.5X) and BCF (3X) backends in a simple benchmark.
+Finally, we illustrate the potential 
+for a new generation of Zarr-based applications via some illustative
+benchmarks. First, we demonstrate the very high levels of throughput 
+performance available on public clouds when data in an object 
+store is accessed in an asynchronous and highly parallel manner.
+Finally, we demonstrate the ease and efficiency with which data
+in Zarr format can be processed on a GPU, opening many exiting
+avenues for future research.
 
 
 \section{Results}
