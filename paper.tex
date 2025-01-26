@@ -120,8 +120,6 @@ University of Oxford, UK}
 \textbf{Background:}
 Variant Call Format (VCF) is the standard file format for interchanging
 genetic variation data and associated quality control metrics.
-% It provides a well-defined data model and is central to a large ecosystem
-% of interoperating tools.
 The usual row-wise encoding of the VCF data model (either as text
 or packed binary) emphasises efficient retrieval of all data for a given
 variant, but accessing data on a field or sample basis is inefficient.
@@ -132,20 +130,27 @@ Row-wise data storage is fundamentally unsuitable
 and a more scalable approach is needed.
 
 \textbf{Results:}
+Zarr is a format for storing
+multi-dimensional data that is widely used across the sciences,
+and is ideally suited to massively parallel processing.
 We present the VCF Zarr specification, an encoding of the
-VCF data model using Zarr which makes retrieving subsets of the
-data much more efficient. Zarr is a cloud-native format for storing
-multi-dimensional data, widely used in scientific computing.
+VCF data model using Zarr, along with fundamental software infrastructure
+for efficient and reliable conversion at scale.
 We show how this format is far more efficient than
 standard VCF based approaches,
 and competitive with specialised methods for
 storing genotype data in terms of compression ratios
-and calculation performance.
-We demonstrate the VCF Zarr format (and the vcf2zarr conversion utility)
-on a subset of the Genomics England aggV2 dataset comprising
-78,195 samples and 59,880,903 variants,
-with a 5X reduction in storage and greater than 300X reduction in CPU usage
-in some representative benchmarks.
+and single-threaded calculation performance.
+We present case studies on subsets of three large 
+human datasets (Genomics England: $n$=78,195;
+Our Future Health: $n$=651,050; 
+All of Us: $n$=245,394) along with whole genome
+datasets for Norway Spruce ($n$=1,063) and 
+SARS-Cov-2 ($n$=3,960,704) % TODO update if we use tranche 2 data also
+demonstrating the scalability and flexibility of VCF Zarr.
+We demonstrate the potential for VCF Zarr to enable a new generation
+of high-performance and cost-effective applications
+via illustrative highly parallel benchmarks on AWS and GPUs.
 
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and
@@ -1206,7 +1211,7 @@ than source gzipped VCF; see text for discussion).
 Here we use the local alleles fields \texttt{call\_LA} and \texttt{call\_LAD}; 
 see text for details.
 For column details, see Table~\ref{tab-genomics-england-data}.
-\label{tab-auo-data}}
+\label{tab-aou-data}}
 \begin{tabular}{llS[table-format=3.2]S[table-format=4.1]S[table-format=3.2]}
 \toprule
 {Field} & {Type} & {Storage} & {Compress} & {\% Total} \\
@@ -1222,7 +1227,7 @@ For column details, see Table~\ref{tab-genomics-england-data}.
 \end{tabular}
 \end{table}
 
-[TODO discuss local alleles and mention Table~\ref{tab-auo-data}].
+[TODO discuss local alleles and mention Table~\ref{tab-aou-data}].
 
 [Discuss why we're bigger than VCF here, people will want to understand.
 
