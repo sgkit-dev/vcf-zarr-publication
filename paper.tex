@@ -146,7 +146,7 @@ human datasets (Genomics England: $n$=78,195;
 Our Future Health: $n$=651,050; 
 All of Us: $n$=245,394) along with whole genome
 datasets for Norway Spruce ($n$=1,063) and 
-SARS-Cov-2 ($n$=3,960,704) % TODO update if we use tranche 2 data also
+SARS-Cov-2 ($n$=3,960,704) % TODO update for tranche 2 data 
 demonstrating the scalability and flexibility of VCF Zarr.
 We demonstrate the potential for VCF Zarr to enable a new generation
 of high-performance and cost-effective applications
@@ -312,7 +312,7 @@ We do this by translating VCF data into Zarr format,
 a method of storing large-scale multidimensional data as a regular
 grid of compressed chunks.
 Zarr's elegant simplicity and first-class support for
-cloud object stores have led to
+cloud object stores and parallel computing have led to
 it gaining substantial traction
 across the sciences, and it is now used in multiple petabyte-scale
 datasets in cloud deployments (see Methods for details).
@@ -328,10 +328,36 @@ Moreover, we show that Zarr's storage of data in an analysis-ready
 format greatly facilitates computation,
 with various benchmarks being substantially faster than
 \texttt{bcftools} based pipelines, and again competitive
-with state-of-the-art file-oriented methods. Finally, we show the
-utility of VCF Zarr on the Genomics England aggV2 dataset,
-demonstrating that common \texttt{bcftools} queries can be performed orders
-of magnitude more quickly using simple Python scripts.
+with state-of-the-art file-oriented methods. 
+We demonstrate the scalability and flexibility of VCF Zarr
+via case-studies on five boundary-pushing datasets.
+We examine conversion and compression performance on three different
+data modalities for large human datasets: whole genome sequence
+data from Genomics England (5X smaller than gzipped VCF);
+genotype data from Our Future Health (2.5X smaller than gzipped VCF);
+and exome-like data from All of Us (1.1X larger than gzipped VCF). 
+We then examine performance 
+for species with large genomes using Norway Spruce data (3.2X smaller
+than gzipped VCF),
+and in a large collection of short whole genome alignments
+using SARS-Cov-2 data 
+(100X % FIXME! this is roughly correct, but need to get the numbers straight
+smaller than gzipped FASTA). 
+Interoperability with the vast ecosystem of tools
+based on VCF~\citep{danecek2021twelve,garrison2022spectrum}
+is crucial. 
+We first present the \texttt{vcztools} program,
+which implements a subset of the functionality in \texttt{bcftools}
+allowing data stored in Zarr at some URL to be 
+treated as if it were a VCF or BCF file,
+and demonstrate that it can be used as a practical replacement 
+in processing pipelines.
+We then present an illustrative example of how existing
+methods can adopt VCF Zarr by modifying the popular 
+SAIGE~\cite{zhou2018efficiently, zhou2020scalable} GWAS software
+(written in C++), and show significant speedups over the existing 
+VCF (6.5X) and BCF (3X) backends in a simple benchmark.
+
 
 \section{Results}
 
