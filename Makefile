@@ -140,3 +140,13 @@ figures/compression-chunksize-finegrained.pdf: plot_data/chunksize_finegrained_b
 		plot_data/chunksize_finegrained_benchmarks.csv \
 		$@
 
+
+review-diff.tex: paper.tex
+	latexdiff reviewed-paper.tex paper.tex > review-diff.tex
+
+review-diff.pdf: review-diff.tex
+	pdflatex review-diff.tex
+	pdflatex review-diff.tex
+	bibtex review-diff
+	pdflatex review-diff.tex
+
