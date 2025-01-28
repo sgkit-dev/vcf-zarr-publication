@@ -1728,7 +1728,7 @@ dimensions of fields are determined by their \emph{maximum}
 dimension among all variants. In particular this is problematic
 for fields like PL in which the dimension depends
 quadratically on the number of alleles.
-While the local alleles representation~\cite{poterba2024scalable}
+While the local alleles representation~\cite{poterba2025scalable}
 is a substantial improvement (see All of Us and Norway Spruce
 case studies) it may be lossy (see Methods). 
 Secondly, the design of
@@ -2028,16 +2028,14 @@ variants. For variants at which there are less than the maximum
 number of alternative alleles, the third dimension of the
 \texttt{call\_AD} array
 is padded with a sentinel value (-2 for integers and a specific
-non-signalling NaN for floats). While this is not a problem
-in practice for datasets in which all four bases are observed,
-it is a substantial issue for
-fields that have a quadratic dependency on the number of alleles
-(Number=G) such as PL. Such fields are already known to cause
-significant problems, and the ``local alleles'' proposal
-provides an elegant solution~\cite{poterba2024scalable}.
-As this approach is on a likely path to
-standardisation~\cite{danecek2021twelve}, we plan to
-include support in later versions of VCF Zarr.
+non-signalling NaN for floats). This is problematic in situations
+where some sites have a large number of alleles (e.g., 95 in the All
+of Us case study above), and 
+in particular for fields that have a quadratic dependency on the number of alleles
+(Number=G) such as PL. We use the local alleles
+encoding~\cite{poterba2025scalable} to reduce the storage 
+requirements for such fields (see the next section for 
+implementation details).
 
 The VCF Zarr specification can represent anything described by BCF
 (which is somewhat more restrictive than VCF) except for two corner
@@ -2117,9 +2115,27 @@ or can be distributed across a cluster using the
 The distributed commands are fault-tolerant, reporting any failed
 partitions so that they can be retried.
 
-\subsection{Local alleles}
-[TODO Implementation of local alleles in vcf2zarr]
-
+The implementation of the local alleles data reduction technique 
+in \texttt{vcf2zarr} follows the approach of Poterba 
+et al~\cite{poterba2025scalable}.
+Specifically, we identify the alleles in use for each call by
+examining the genotypes and then store the LA field,
+listing the (maximum of ploidy) unique alleles observed as indexes into the 
+global list for that variant.
+Using the LA field we then compute derived fields such as 
+AD and PL in terms of the local alleles during Zarr encoding
+(see e.g.\ the \texttt{call\_LAD} field in Table~\ref{tab-aou-data}
+and
+\texttt{call\_LPL} field in Table~\ref{tab-spruce-data}).
+Note that our approach (along with Poterba et al)
+differs from the details in the VCF 4.5 specification~\citep{vcf4_5},
+which defines the LAA field containing indexes of ALT 
+alleles only. Explicitly listing the alleles observed leads
+to simpler code and means we do not need to refer back to the 
+genotypes to distinguish missing data from homozygous reference 
+calls. Note also that the local alleles encoding may be lossy,
+as only information relevant to the chosen alleles for 
+each call is retained.
 
 \subsection{Choosing default compressor settings}
 To inform the choice of compression settings across different fields
@@ -2131,11 +2147,9 @@ for chromosome 22 (giving a 1.1GiB compressed VCF)
 and converted to Zarr using
 \texttt{vcf2zarr} with default settings. We then systematically
 examined the effects of varying chunk sizes and compressor settings
-on the compression ratio for call-level fields. We excluded call\_PL
-from this analysis as it requires conversion to a ``local alleles''
-encoding~\citep{poterba2024scalable} to be efficient,
-which is planned for implementation in a future
-version of \texttt{vcf2zarr}.
+on the compression ratio for call-level fields. (
+We excluded \texttt{call\_PL} from this analysis as this analysis predated 
+our implementation of local alleles.)
 
 Fig~\ref{fig-compression-compressor} shows the effect of varying compression
 codecs in Blosc. The combination of outstanding compression performance
