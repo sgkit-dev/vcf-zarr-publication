@@ -1207,22 +1207,20 @@ Table~\ref{tab-ofh-data} shows a summary of the Zarr using the BitRound filter.
 \subsection{Case study: All of Us exome-like data}
 The All of Us dataset comprises 245K clinical-grade whole genome sequences,
 identifying over 1 billion variants, including 3.9 million novel variants
-with coding consequences~\citep{all2024genomic}. Participants are from the United States,
+with coding consequences~\citep{all2024genomic}. 
+Participants are from the United States,
 with an emphasis on historically underrepresented genetic ancestry groups.
 The genomic data, generated through short-read sequencing on the Illumina NovaSeq 6000,
 is of high quality, with an average coverage depth of 30x, and is linked to extensive
-health-related information, providing a valuable resource for biomedical research.
-WGS analysis is conducted on the Illumina DRAGEN platform, with alignment performed
-using the GRCh38dh reference genome. GTC files are converted to VCF format using
-Picard GtcToVcf, and every step of the WGS procedure is rigorously controlled by
-predefined quality control measures.
-
+health-related information.
 For this study, we converted the chromosome 20 exome-like
 data from the All of Us dataset to VCF Zarr.
 The exome-like data is constructed by extracting from all WGS samples
-the SNP and indel variants that lie within the chromosome 20 exon regions of the Gencode v42 basic
+the SNP and indel variants that lie within the 
+chromosome 20 exon regions of the Gencode v42 basic
 transcripts. This dataset, stored as a single compressed VCF file of 7.44 GiB,
-includes 715,256 variants, of which more than 700 are classified as pathogenic or likely pathogenic.
+includes 715,256 variants, of which more than 700 are classified as 
+pathogenic or likely pathogenic.
 
 Conversion was performed on the All of Us Researcher Workbench platform
 (based on Google Cloud), using a single compute node with 64 CPUs and 416 GiB
@@ -1261,9 +1259,28 @@ For column details, see Table~\ref{tab-genomics-england-data}.
 \end{tabular}
 \end{table}
 
-[TODO discuss local alleles and mention Table~\ref{tab-aou-data}].
+Local alleles (see Methods) is essential in this example
+as the maximum number of alleles observed at a site is 95.
+Thus, as defined, the AD field field has an inner dimension of 95
+each $1000\times10000$ chunk 
+% >>> 1000 * 10_000 * 95 * 2 / 1024**3
+% 1.7695128917694092
+has an uncompressed size of 1.77GiB (in this 16 bit integers are required
+to store the values). Given that the vast majority
+of this encoding consists of the dimension padding sentinel (-2, see 
+Methods), it is an inefficient means of representing and processing 
+allele depth data. Translating to the local alleles representation
+here reduces the inner dimension to 2, and the uncompressed 
+% >>> 1000 * 10_000 * 2 * 2 / 1024**2
+% 38.14697265625
+size of each chunk to 38.15MiB. 
+Note that there is also no loss of information in this case 
+by encoding as local alleles, as the per-sample gVCFs used 
+in earlier stages in the All of Us pipeline were truncated
+to a maximum of two ALT alleles per site. 
 
-[Discuss why we're bigger than VCF here, people will want to understand.
+[Discussion of the sparsity of the QC field data, and how this 
+explains the difference to the VCF compression.]
 
 \subsection{Case study: 1,063 spruce whole-genome samples}
 
