@@ -1298,33 +1298,35 @@ where resequencing data has been mapped to a chromosome-scale
 reference genome. The dataset consists of approximately 3.8 million
 single-nucleotide variants and small indels from the 12 autosomes
 totalling 7.4TiB of VCF data after \texttt{bgzip} compression,
-distributed over 165 VCF files. Since the dataset originally was
-generated for downstream analyses that require genotype likelihoods,
-the genotypes include the PL field.
+distributed over 165 VCF files. 
+% Since the dataset originally was
+% generated for downstream analyses that require genotype likelihoods,
+% the genotypes include the PL field.
 
-Following the conversion process detailed in the previous section, we
-first converted the 165 VCF files (7.33TiB) to ICF, followed by
+We first converted the 165 VCF files (7.33TiB) to ICF, followed by
 conversion to Zarr. The tasks were run as single jobs on a compute
 node with 512 GB RAM and 128 cores using 120 cores. Conversion to ICF
 required 13h45min runtime. The ICF representation used a total of 6.77
-TiB over 1,340,804 data storage files. Conversion to Zarr required
-18h36min runtime, generating a dataset with 32 arrays, consuming a
-total of 6.6 TiB storage over 10,861,038 chunk files. The reduction in
-total storage (1.1X) is negligible, mainly due to the inherent
-difficulty in compressing the PL field. The output dataset storage
-size is dominated by a major component, call\_PL, which accounts for
-nearly 93\% of the total. call\_PL is yet another field with low
-compression potential due to inherent noisiness.
+TiB over 1,340,804 data storage files. Conversion to Zarr 
+using the default schema and a chunk size of 10,000 variants
+$\times$ 1,063 samples
+required 18h36min runtime, generating a dataset with 34 arrays, 
+and required a total of 6.6 TiB storage over 10,861,038 chunk files. 
+Over 90\% of this was used by the call\_PL field, mostly due to 
+the maximum number of alleles at a site being 4,
+and consequently the inner dimension of call\_PL 10 because 
+of its quadratic dependency on the number of alleles (see Methods).
 
-Therefore, to reduce storage requirements we generated a Zarr schema
-for encoding that uses local allele fields with \texttt{vcf2zarr
+We therefore generated a vcf2zarr schema
+using local allele fields with \texttt{vcf2zarr
 mkschema --local-alleles}, and used the generated schema as input to
 \texttt{vcf2zarr encode}. Zarr conversion required 14h09min runtime,
 generating a dataset with 35 arrays, consuming a total of 2.3TiB
-storage over 11,235,556 chunk files, with a reduction in storage of
-3.2X. Therefore, by using local allele fields we achieve approximately
-3X improvement of compression. The top fields in terms of storage are
-detailed inTable~\ref{tab-spruce-data}.
+storage over 11,235,556 chunk files. 
+Using local allele fields in this example we therefore 
+achieve approximately 3X improvement of compression. 
+The top fields in terms of storage are
+detailed in Table~\ref{tab-spruce-data}.
 
 \begin{table}
 \caption{Summary for VCF Zarr conversion of the Norway spruce
@@ -1389,7 +1391,6 @@ Mbp limit, but spruce chromosomes range in size from 1.0 to 1.7 Gbp.
 The spruce BAM files used for variant calling were BAI indexed, which
 motivated the partitioning into multiple VCF files in the first place,
 adding complexity to downstream processing.
-
 A similar limitation is imposed by the VCF POS field which is encoded
 in 32-bit format and can hold chromomosomes up to 2.14 Gbp. Although
 spruce does not have chromosomes that exceed the limit, other species
