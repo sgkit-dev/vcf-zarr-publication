@@ -735,7 +735,11 @@ such file access patterns can be problematic in the
 classical file-system setting.
 The Zarr Zip store (which is simply a Zip archive of the standard directory
 hierarchy) provides a useful alternative here and can
-significantly reduce overall processing time. To illustrate this
+significantly reduce overall processing time. 
+(The nascent Zarr v3 specification provides another option 
+via  ``sharding'' which essentially 
+allows multiple chunks to be stored in a single file.)
+To illustrate this
 we repeated the benchmarks in Fig~\ref{fig-whole-matrix-decode} in
 which we measure the time required to decode the entire genotype
 matrix (thus serving as a lower-bound for any subsequent computations).
