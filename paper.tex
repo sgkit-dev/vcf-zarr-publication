@@ -1520,10 +1520,12 @@ to our prototype Zarr backend.
 
 \subsection{Future applications: Cloud computing}
 To explore the use of cloud computing services with VCF Zarr,
-we uploaded the Zarr directory hierarchy for the Genomics England
-data chromosome 2 described in Table~\ref{tab-genomics-england-data}
-to an AWS S3 standard bucket. 
-We repeated the benchmarks above on the same subset
+Genomics England provided access to data within their secure
+cloud environment. The VCF Zarr files for Chromosome 2
+described in Table~\ref{tab-genomics-england-data}
+were hosted in a standard AWS S3 bucket.
+
+Using this data we repeated the benchmarks above on the same subset
 of 562,640 variants and 78,195 samples using the same
 single-threaded sequential Zarr code.
 Extracting the position array required 15s CPU, 23.8s elapsed.
