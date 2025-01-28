@@ -150,7 +150,7 @@ SARS-Cov-2 ($n$=3,960,704), % TODO update for tranche 2 data
 demonstrating the scalability and flexibility of VCF Zarr.
 We demonstrate the potential for VCF Zarr to enable a new generation
 of high-performance and cost-effective applications
-via illustrative highly parallel benchmarks on AWS and GPUs.
+via illustrative highly parallel benchmarks on AWS and experimentation with GPUs.
 
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and
@@ -1640,7 +1640,7 @@ In both cases we demonstrate on chromosome 22 of
 1000 Genomes WGS data~\citep{byrska2022high}. This consists
 of 96,514 variants and 2504 samples, converted to Zarr format
 using a chunk size of 10,000 variants $\times$ 1,000 variants.
-Benchmarks in this section were performed on a
+Experiments in this section were performed on a
 machine with an Intel Xeon Silver 4216 processor,
 Nvidia A6000 RTX GPU and NVMe SSD.
 
@@ -1655,7 +1655,7 @@ performed on the GPU, mostly with minimal changes required
 We perform the core operation of genotype classification using the
 CuPy JIT compiler to generate a custom CUDA kernel, which
 is also very similar to the Numba compiled function used in other
-benchmarks. In the simplest version, we iterate over the chunks
+experiments. In the simplest version, we iterate over the chunks
 in the \texttt{call\_genotype} array (stored as 30 chunks, consuming
 a total of 7.82MiB), decompress each to a local
 NumPy array and then copying the data to GPU memory by creating
@@ -1690,7 +1690,7 @@ copy back to host memory. This required about 0.6s with the
 fastest codecs. For reference, using the Zstandard codec and the
 standard CPU Zarr code (which does some limited multithreading for decompression
 by default) required about 7.6s. [Some discussion of how to interpret
-these benchmarks. We're just trying to illustrate the powerful toolchain
+these experiments. We're just trying to illustrate the powerful toolchain
  that is immediately to hand when data is stored in Zarr format.]
 
 \section{Discussion}
