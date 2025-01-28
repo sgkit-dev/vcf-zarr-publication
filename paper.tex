@@ -2294,7 +2294,22 @@ bcftools +fill-tags -Ou | bcftools +af-dist}. Genozip similarly
 requires a \texttt{+fill-tags} step in the pipeline.
 
 \subsection{AWS parallel Zarr prototype}
-[TODO Implementation of prototype Zarr implementaion]
+This section describes the methodology used for the AWS parallel Zarr
+throughput measurements in Fig~\ref{fig-s3-throughput}
+and Fig~\ref{fig-s3-network-throughput}, and timing measurements
+detailed in the cloud computing results.
+These measurements were run on EC2 instances using jupyter notebooks
+hosted on Genomics England's Lifebit CloudOS platform. VCF Zarr chunks
+were hosted in a standard profile S3 bucket. Both instance and bucket were
+in the same availability zone in the eu-west-2 region. Each
+of the parallel Python processes used the aioboto3 library (version 13.2.0) to
+fetch chunks concurrently from S3. The underlying aiohttp library
+limits the concurrent fetching to 100 requests per process. For decompressing
+and computing af-dist the same architecture was used but as fetched chunks
+became available in memory in each process, they were decompressed and
+computed sequentially. Decompression was performed by the blosc library
+without the use of zarr.
+
 
 \section{Availability of source code and requirements}
 
