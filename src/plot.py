@@ -1,3 +1,4 @@
+import pathlib
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -752,6 +753,50 @@ def compression_chunksize_finegrained(data, output):
     plt.savefig(output)
 
 
+@click.command()
+@click.argument("output", type=click.Path())
+def ofh_histograms(output):
+    """
+    Plot figure of OFH histograms
+    """
+    prefix = pathlib.Path("ofh_example/plots")
+
+    width = 3.46
+    fig, ax = plt.subplots(3, 1, figsize=(width, 2 * width))
+
+    for j, field in enumerate(["GS", "LRR", "BAF"]):
+
+        data = prefix / f"default_call_{field}.csv" 
+        
+        df = pd.read_csv(data)
+        bins = df.iloc[0].values
+        hist = df.iloc[1].values
+        ax[j].set_title(field)
+        width = (bins[-1] - bins[-2]) * 0.25
+        ax[j].bar(bins, hist, align='center', width=width, label="Default")
+        ax[j].set_ylabel("Count")
+
+        data = prefix / f"bitround_call_{field}.csv" 
+        df = pd.read_csv(data)
+        assert list(bins) == list(df.iloc[0].values)
+        hist = df.iloc[1].values
+        offset = width 
+        ax[j].bar(bins - offset, hist, align='center', width=width, label="BitRound")
+        ax[j].set_ylabel("Count")
+
+        data = prefix / f"quantize_call_{field}.csv" 
+        df = pd.read_csv(data)
+        assert list(bins) == list(df.iloc[0].values)
+        hist = df.iloc[1].values
+        ax[j].bar(bins + offset, hist, align='center', width=width, label="Quantize")
+        ax[j].set_ylabel("Count")
+
+    ax[0].legend()
+    plt.tight_layout()
+    plt.savefig(output)
+
+
+
 @click.group()
 def cli():
     pass
@@ -770,6 +815,7 @@ cli.add_command(compression_shuffle)
 cli.add_command(compression_chunksize)
 cli.add_command(compression_compressor)
 cli.add_command(compression_chunksize_finegrained)
+cli.add_command(ofh_histograms)
 
 
 if __name__ == "__main__":

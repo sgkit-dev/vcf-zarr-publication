@@ -5,7 +5,8 @@ FIGURES=figures/data-scaling.pdf\
 	figures/subset-matrix-compute.pdf\
 	figures/subset-matrix-compute-supplemental.pdf\
 	figures/s3-throughput.pdf\
-	figures/s3-network-throughput.pdf
+	figures/s3-network-throughput.pdf \
+	figures/ofh-histograms.pdf
 
 all: paper.pdf
 
@@ -94,6 +95,9 @@ figures/s3-throughput.pdf: plot_data/gel-s3-throughput.csv
 figures/s3-network-throughput.pdf: plot_data/gel-s3-network-throughput.csv
 	python3 src/plot.py s3-network-throughput plot_data/gel-s3-network-throughput.csv  \
 		figures/s3-network-throughput.pdf
+
+figures/ofh-histograms.pdf: 
+	python3 src/plot.py ofh-histograms figures/ofh-histograms.pdf
 
 figures/whole-matrix-compute.pdf: plot_data/whole-matrix-compute.csv
 	python3 src/plot.py whole-matrix-compute plot_data/whole-matrix-compute.csv  \
