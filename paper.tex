@@ -1512,17 +1512,23 @@ it is unlikely that \texttt{vcztools view} would be a bottleneck
 in practical processing pipelines.
 
 \subsection{Interoperability: SAIGE proof-of-concept}
-To demonstrate the potential for integrating VCF Zarr into existing utilities,
+To demonstrate the potential for integrating VCF Zarr into existing
+high-performance analysis tools,
 we developed a proof-of-concept extension of SAIGE~\cite{zhou2018efficiently,
 zhou2020scalable}, a popular package for performing genome wide
-association tests. Using the Tensorstore C++ library~\cite{tensorstore}
-we added support for VCF Zarr via an additional backend class [some details
-about the implementation].
+association tests. 
+Using the TensorStore C++ library~\cite{tensorstore}
+we added support for VCF Zarr via an additional backend 
+(SAIGE reading data from PLINK, BGEN, VCF, BCF and SAV formats) 
+for which the core functionality is defined in a 264 line C++ file.
 
-To test the performance of this implementation we compared the time required
+To assess the performance of this implementation we compared the time required
 to perform an association test using the simulated dataset of 10,000 samples
-from Fig~\ref{fig-data-storage}. We generated a phenotype using
-\texttt{tstrait}~\citep{tagami2024tstrait}.
+from Fig~\ref{fig-data-storage}. We performed a single-variant association
+test based on a phenotype simulated using
+\texttt{tstrait}~\citep{tagami2024tstrait},
+and measure the overall time required when using the 
+equivalent VCF, BCF, SAV and Zarr files.
 
 We compared the same analysis using the existing VCF, BCF and Savvy backends
 to our prototype Zarr backend.
@@ -2360,7 +2366,8 @@ transparent simplicity of the Zarr format.
 
 The VCF Zarr specification is available on GitHub at
 \url{https://github.com/sgkit-dev/vcf-zarr-spec/}.
-All source code for running benchmarks, analyses and creating
+The SAIGE prototype is available at \url{https://github.com/Will-Tyler/SAIGE}
+and all other code for running benchmarks, analyses and creating
 plots in this article is available at
 \url{https://github.com/sgkit-dev/vcf-zarr-publication}.
 Vcf2zarr is freely available under the terms of the Apache 2.0
@@ -2370,7 +2377,7 @@ and can be installed from the Python Package Index
 (\url{https://pypi.org/project/bio2zarr/}).
 Vcztools (\url{https://github.com/sgkit-dev/vcztools/})
 is freely available under the terms of the Apache 2.0
-and can be installed from the Python Package Index
+license and can be installed from the Python Package Index
 (\url{https://pypi.org/project/vcztools/}).
 
 \subsection{List of abbreviations}
