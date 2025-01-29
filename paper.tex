@@ -1140,8 +1140,8 @@ Using the BitRound filter with a parameter of 5 bits reduced the overall storage
 $6.93\times10^{-4}$ (LRR),
 $7.86\times10^{-4}$ (BAF)  and
 $3.38\times10^{-3}$ (GS).
-The histograms of the truncated fields in all cases were visually indistinguishable
-from the original in Fig~\ref{fig-ofh-field-distributions} (data not shown).
+The histograms of the truncated fields in all cases were very similar to the
+to the original (Fig~\ref{fig-ofh-field-distributions}).
 Table~\ref{tab-ofh-data} shows a summary of the Zarr dataset using the 
 BitRound filter.
 
@@ -2445,12 +2445,10 @@ to execute.
 \end{figure}
 
 \begin{figure}[h]
-\begin{tabular}{ccc}
-\includegraphics[width=2.5cm]{ofh_example/plots/default_call_LRR.png}&
-\includegraphics[width=2.5cm]{ofh_example/plots/default_call_BAF.png}&
-\includegraphics[width=2.5cm]{ofh_example/plots/default_call_GS.png}
-\end{tabular}
-\caption{Distribution of floating point fields in the Our Future Health data.
+\includegraphics{figures/ofh-histograms}
+\caption{Distribution of values in the GS, LRR and BAF fields in the Our Future
+Health data with no truncation (Default), and truncation using the BitRound
+and Quantize filters.
 \label{fig-ofh-field-distributions}}
 \end{figure}
 
