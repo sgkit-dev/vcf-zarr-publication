@@ -202,7 +202,7 @@ agriculture~\citep{ros2020accuracy,wang2023rice},
 conservation~\citep{shaffer2022landscape}
 and infectious disease surveillance~\citep{hamid2023pf7}.
 VCF's simple text-based design and widespread
-support~\cite{garrison2022spectrum} makes it an
+support~\cite{garrison2022spectrum} make it an
 excellent archival format, but it is an inefficient basis for analysis.
 Methods that require efficient access to genotype data
 either require conversion to the
@@ -363,7 +363,7 @@ benchmarks. First, we demonstrate the very high levels of throughput
 performance available on public clouds when data in an object 
 store is accessed in an asynchronous and highly parallel manner.
 Finally, we demonstrate the ease and efficiency with which data
-in Zarr format can be processed on a GPU, opening many exiting
+in Zarr format can be processed on a GPU, opening many exciting
 avenues for future research.
 
 
@@ -489,8 +489,7 @@ describes the observed genotypes for a given sample at a given variant site,
 interleaved with per-variant information
 and other call-level matrices (e.g., the GQ or AD fields).
 The data is largely numerical and of fixed dimension,
-and is therefore a natural mapping to array-oriented
-or ``tensor'' storage.
+making it a natural fit for array-oriented or ``tensor'' storage.
 We propose the VCF Zarr specification which maps the
 VCF data model into an array-oriented layout using Zarr
 (Fig~\ref{fig-data-model}).
@@ -577,10 +576,10 @@ performance over VCF (note the log-log scale). Genozip has
 superb compression, having far smaller file sizes that the
 other methods (although somewhat losing its advantage at
 larger sample sizes). Zarr and Savvy have
-very similar compression performance in this example (23.75GiB
-and 21.25GiB for $10^6$ samples, respectively). When using
+very similar compression performance in this example (23.75 GiB
+and 21.25 GiB for $10^6$ samples, respectively). When using
 a chunk size of $10^4$ variants $\times$ $10^3$ samples, Zarr
-storage is reduced to 22.07GiB for $10^6$ samples (data not shown;
+storage is reduced to 22.07 GiB for $10^6$ samples (data not shown;
 see Figs~\ref{fig-compression-chunksize} and \ref{fig-compression-chunksize-finegrained}
 for more analysis on the effect of chunk size on compression).
 It is remarkable that the simple approach of compressing
@@ -694,7 +693,7 @@ to be due to Savvy's excellent genotype decoding performance
 % savvy 6.6 GiB
 % zarr_nshf 2.7 GiB
 % zarr_lz4_nshf 2.9 GiB
-(up to 6.6GiB/s vs 1.2GiB/s for Zarr on this dataset;
+(up to 6.6 GiB/s vs 1.2 GiB/s for Zarr on this dataset;
 Fig~\ref{fig-whole-matrix-decode}).
 % sav / zarr ratio: [0.68777206 0.75870945 0.69865406 0.64644888 0.68131752
 % 0.89460906]
@@ -712,11 +711,11 @@ Fig~\ref{fig-whole-matrix-decode}).
 % 5          48129895      1000000    7254858                2bit  1689.153258
 Turning off the BitShuffle filter for the Zarr dataset,
 however, leads to a substantial increase in decoding speed
-(2.7GiB/s) at the cost of a roughly 25\% increase in storage
-space (31.2GiB up from 23.75GiB for 1 million samples; data not
+(2.7 GiB/s) at the cost of a roughly 25\% increase in storage
+space (31.2 GiB up from 23.75 GiB for 1 million samples; data not
 shown). The LZ4 codec (again without BitShuffle) leads to slightly higher
-decoding speed (2.9GiB/s), but at the cost of much larger storage requirements
-(214GiB; data not shown).
+decoding speed (2.9 GiB/s), but at the cost of much larger storage requirements
+(214 GiB; data not shown).
 Given the relatively small contribution of genotypes to the
 overall storage of real datasets (see the Genomics England example)
 and the frequency that they are likely to be accessed, using
@@ -749,7 +748,7 @@ In the case of $10^6$ samples, the Zip file requires slightly more
 % Full data table above ^
 % 58         48129895      1000000    7254858                zarr    23.752762
 % 59         48129895      1000000    7254858            zarr.zip    24.240338
-storage space than the directory hierarchy (23.75GiB and 24.24G
+storage space than the directory hierarchy (23.75 GiB and 24.24 GiB
 for file system and Zip file, respectively)
 and while total
 CPU time is similar (193m vs 187m), the elapsed wall clock
@@ -914,7 +913,7 @@ and conversion of these large VCFs is a major undertaking.
 \begin{table}
 \caption{Summary for VCF Zarr conversion of 
 Genomics England WGS data for chromosome 2 (78,195 samples, 59,880,903 variants),
-consisting of 44 fields and 2.54TiB of storage ($\sim$5X compression over
+consisting of 44 fields and 2.54 TiB of storage ($\sim$5X compression over
 source gzipped VCF).
 Each field is stored independently
 as a Zarr array with the given type (sufficient to represent all values in the
@@ -1012,7 +1011,7 @@ compression ratio because it consists entirely of missing data
 To demonstrate the computational accessibility of Zarr on this
 large human dataset, we performed some illustrative benchmarks.
 As these benchmarks take some time to run, we focus
-on a single 132GiB compressed VCF file covering
+on a single 132 GiB compressed VCF file covering
 positions 58,219,159--60,650,943 (562,640 variants)
 from the middle of the list of 106 files for chromosome 2.
 We report both the total CPU time and elapsed wall-clock time here
@@ -1126,7 +1125,7 @@ that represents the whole of the UK.
 \begin{table}
 \caption{Summary for VCF Zarr conversion of 
 Our Future Health genotype data for chromosome 22 (651,050 samples, 10,221
-variants) consisting of 19 fields and 17GiB of storage ($\sim2.5$X compression
+variants) consisting of 19 fields and 17 GiB of storage ($\sim2.5$X compression
 over source gzipped VCF).
 % 42.3  / 17 = 2.4882
 Here we use a chunk size of 1,000 variants $\times$ 10,000 samples and 
@@ -1169,18 +1168,19 @@ three VCF files representing chunks of chromosome 22 split by 5,000 variants, to
 % 19G     ofh.chr22-b1.vcf.gz
 % 3.3G    ofh.chr22-b2.vcf.gz
 % ==42.3 GiB - assuming the G is power-of-two here
-10,221 variants and 42.3GiB of storage. We first converted the VCF
+10,221 variants and 42.3 GiB of storage. We first converted the VCF
 data to ICF, which took 8m 55s elapsed (138m CPU) using 20 processes.
-The ICF representation required a total of 41GiB over XX files.
+%TODO There is an XX HERE
+The ICF representation required a total of 41 GiB over XX files.
 We then converted to VCF Zarr format using the default schema, which resulted
-in a 41GiB VCZ. On inspection, this was dominated by three floating point
+in a 41 GiB VCZ. On inspection, this was dominated by three floating point
 fields LRR, BAF and GS stored
 to a high degree of precision (7 decimal places for LRR and BAF and 4 decimal
 places for GS).
 On inspecting the histograms for these fields
 (Fig~\ref{fig-ofh-field-distributions}) it seemed that such high precision
-was likely unneccessary, and we investigated applying the Quantize
-and Bitround filters from \texttt{numcodecs}~\citep{numcodecs}
+was likely unnecessary, and we investigated applying the Quantize
+and BitRound filters from \texttt{numcodecs}~\citep{numcodecs}
 to reduce the precision in stored floating point data,
 and therefore improve compression.
 Using the Quantize filter with 5 digits of precision on these three fields reduced the
@@ -1192,7 +1192,7 @@ difference between the truncated and original values) of
 $1.91\times10^{-6}$ (LRR),
 $1.18\times10^{-6}$ (BAF)  and
 $1.88\times10^{-6}$ (GS).
-Using the Bitround filter with a parameter of 5 bits reduced the overall storage for the Zarr to
+Using the BitRound filter with a parameter of 5 bits reduced the overall storage for the Zarr to
 XX with an MAE of
 % 0   call_LRR    bitround    6.93e-04
 % 1   call_BAF    bitround    7.86e-04
@@ -1235,9 +1235,10 @@ cost of \$4.31. This second Zarr representation occupied 8.5 GiB of storage acro
 
 \begin{table}
 \caption{Summary for VCF Zarr conversion of 
-All of Us exome-like data genotype data for chromosome 22 (245,394 samples, 
+%TODO Text says chr 22, this caption says chr 20, I'm not sure which is right
+All of Us exome-like data genotype data for chromosome 20 (245,394 samples, 
 715,256 variants) 
-consisting of 25 fields and 8.5GiB of storage ($\sim1.1$X larger
+consisting of 25 fields and 8.5 GiB of storage ($\sim1.1$X larger
 % 8.5 / 7.44 = 1.142
 than source gzipped VCF; see text for discussion).
 Here we use the local alleles fields \texttt{call\_LA} and \texttt{call\_LAD}; 
@@ -1265,7 +1266,7 @@ Thus, as defined, the AD field field has an inner dimension of 95
 each $1000\times10000$ chunk 
 % >>> 1000 * 10_000 * 95 * 2 / 1024**3
 % 1.7695128917694092
-has an uncompressed size of 1.77GiB (in this 16 bit integers are required
+has an uncompressed size of 1.77 GiB (in this 16 bit integers are required
 to store the values). Given that the vast majority
 of this encoding consists of the dimension padding sentinel (-2, see 
 Methods), it is an inefficient means of representing and processing 
@@ -1273,7 +1274,7 @@ allele depth data. Translating to the local alleles representation
 here reduces the inner dimension to 2, and the uncompressed 
 % >>> 1000 * 10_000 * 2 * 2 / 1024**2
 % 38.14697265625
-size of each chunk to 38.15MiB. 
+size of each chunk to 38.15 MiB. 
 Note that there is also no loss of information in this case 
 by encoding as local alleles, as the per-sample gVCFs used 
 in earlier stages in the All of Us pipeline were truncated
@@ -1303,7 +1304,7 @@ distributed over 165 VCF files.
 % generated for downstream analyses that require genotype likelihoods,
 % the genotypes include the PL field.
 
-We first converted the 165 VCF files (7.33TiB) to ICF, followed by
+We first converted the 165 VCF files (7.33 TiB) to ICF, followed by
 conversion to Zarr. The tasks were run as single jobs on a compute
 node with 512 GB RAM and 128 cores using 120 cores. Conversion to ICF
 required 13h45min runtime. The ICF representation used a total of 6.77
@@ -1321,7 +1322,7 @@ We therefore generated a vcf2zarr schema
 using local allele fields with \texttt{vcf2zarr
 mkschema --local-alleles}, and used the generated schema as input to
 \texttt{vcf2zarr encode}. Zarr conversion required 14h09min runtime,
-generating a dataset with 35 arrays, consuming a total of 2.3TiB
+generating a dataset with 35 arrays, consuming a total of 2.3 TiB
 storage over 11,235,556 chunk files. 
 Using local allele fields in this example we therefore 
 achieve approximately 3X improvement of compression. 
@@ -1329,11 +1330,12 @@ The top fields in terms of storage are
 detailed in Table~\ref{tab-spruce-data}.
 
 \begin{table}
-\caption{Summary for VCF Zarr conversion of the Norway spruce
+\caption{Summary for VCF Zarr conversion of the Norway Spruce
+%TODO The variants number here does not match the text "3.8 million"
 WGS data on all 12 autosomes (1,063 samples, 374,517,0452 variants)
-consisting of 34 fields and 2.3TiB of storage ($\sim 3.2$X smaller 
+consisting of 34 fields and 2.3 TiB of storage ($\sim 3.2$X smaller 
 than source gzipped VCFs). The chunk size is 10,000 variants $\times$
-1,063 samples (i..e, a single sample chunk). This uses local 
+1,063 samples (i.e., a single sample chunk). This uses local 
 alleles to reduce the 
 space required by the PL field; see the text for discussion.
 For column details see the caption of
@@ -1434,7 +1436,7 @@ storing data for the entire genome, compression rates are very high.
 Based on the batch 1 release of Viridian, the Zarr dataset contains
 3,960,704 sequences of length 29903 base pairs along with 31 metadata columns
 encoding information about those samples. This full dataset is stored in a
-single 345MiB Zip file, 241MiB of which is used by the alignment data. This
+single 345 MiB Zip file, 241 MiB of which is used by the alignment data. This
 gives an average compression ratio of 468X.
 
 Computational accessibility is excellent. For example, computing the number of
@@ -1445,6 +1447,7 @@ getting the calls for all samples at a given site 209ms. [TODO confirm hardware
 details]. The storage of metadata and genetic data in a single file also
 makes many queries efficient and convenient. For example, computing the
 average number of deletions in samples with a Scorpio designation of Alpha
+%TODO "x" on next line
 required x seconds and 5 lines of code using Dask.
 
 \subsection{Interoperability: vcztools}
@@ -1456,6 +1459,7 @@ providing an evolutionary path for VCF Zarr adoption,
 with compatibility being a core objective.
 Vcztools currently supports Zarr stored in the local file system
 and Zip archives, and support for major cloud stores will be added in the near
+%TODO Resolve this note
 future. [JK: note this is a pretty simple feature, maybe we should just try
 to add it?]
 Thus, users can convert their VCF data to Zarr using \texttt{bio2zarr},
@@ -1501,7 +1505,7 @@ can produce VCF text as quickly as other processes in the pipeline can consume
 it. To get an estimate of the rate at which VCF can be parsed, we wrote a simple
 program that reads a VCF file and parses it line-by-line using the \texttt{htslib}
 API~\citep{bonfield2021htslib}. For the 10,000 variant subset discussed
-above (3.73 GiB) this took 31s, giving a parse rate of 123.1 MiB/s
+above (3.73 GiB) this took 31s, giving a parsing rate of 123.1 MiB/s
 (almost identical to the write-rate of vcztools above). Given this limiting
 factor on overall throughput,
 it is unlikely that \texttt{vcztools view} would be a bottleneck
@@ -1515,12 +1519,12 @@ association tests. Using the Tensorstore C++ library~\cite{tensorstore}
 we added support for VCF Zarr via an additional backend class [some details
 about the implementation].
 
-To test the performance of this implemenentation we compared the time required
+To test the performance of this implementation we compared the time required
 to perform an association test using the simulated dataset of 10,000 samples
 from Fig~\ref{fig-data-storage}. We generated a phenotype using
 \texttt{tstrait}~\citep{tagami2024tstrait}.
 
-We compared the same analyis using the existing VCF, BCF and Savvy backends
+We compared the same analysis using the existing VCF, BCF and Savvy backends
 to our prototype Zarr backend.
 [Times: BCF 3m, VCF6.5m, Savvy 39s, Zarr 55s]
 
@@ -1566,18 +1570,18 @@ can be decoded to RAM as well as rate at which we can compute
 af-dist (using Numba to classify genotypes, as before)
 as we increase the number of parallel processes on
 an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
-The maximum decompression rate of 47.4GiB/s
+The maximum decompression rate of 47.4 GiB/s
 occurs at 64 processes (each with 100 concurrent requests), 
 with a corresponding network data rate of 121 MiB/s
 Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
 network access by measuring the rate at which we can download the chunks
 into RAM (without decompressing) using the same parallel and asynchronous
-architecture. Here, the maximum rate of 1.2GiB/s for a c5.9xlarge instance
-and 2.4GiB/s for a c5n.9xlarge (high performance network) instance
+architecture. Here, the maximum rate of 1.2 GiB/s for a c5.9xlarge instance
+and 2.4 GiB/s for a c5n.9xlarge (high performance network) instance
 was achieved with 32 processes. 
 % Richard Durbin asked whether we were just using up all of a scarce 
 % resource on this point.
-While these measurments are simplistic and may not be an 
+While these measurements are simplistic and may not be an 
 accurate predictor of sustained bandwidth, it is still clear that 
 genotype data can be fetched
 from S3 around an order of magnitude more quickly 
@@ -1598,7 +1602,7 @@ S3~\cite{s3-performance-optimising} are achievable.
 % Discussion).
 
 Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
-calculation is performed at a maximum rate of 25.5GiB/s using 128
+calculation is performed at a maximum rate of 25.5 GiB/s using 128
 processes. At this rate, the af-dist calculation for the target region
 was completed in 4.15s (compare to 5.23min for the naive single-threaded
 method above).
@@ -1678,7 +1682,7 @@ CuPy JIT compiler to generate a custom CUDA kernel, which
 is also very similar to the Numba compiled function used in other
 experiments. In the simplest version, we iterate over the chunks
 in the \texttt{call\_genotype} array (stored as 30 chunks, consuming
-a total of 7.82MiB), decompress each to a local
+a total of 7.82 MiB), decompress each to a local
 NumPy array and then copying the data to GPU memory by creating
 the corresponding CuPy array. For this version, the total time
 in the genotype classification kernel was 25ms with an
@@ -1689,7 +1693,7 @@ a total of 1.46s running on a single CPU core.
 Another approach in which we load the entire
 \texttt{call\_genotype} array into GPU memory at once (possible
 here as the $96514 \times 2504 \times 2$ array requires
-460MiB) and uses
+460 MiB) and uses
 a more sophisticated kernel in which we map GPU resources to
 subsets of the array in two dimensions,
 reduces transfer
@@ -1705,7 +1709,7 @@ access to several GPU optimised compression codecs.
 To explore the performance of these codecs we recompressed
 the \texttt{call\_AD} (allele depth) array
 (96514, 2504, 7) [int16 more details]. In all cases it took around 1s
-to compress and store this 3.15GiB array. [Details about compression codecs?]
+to compress and store this 3.15 GiB array. [Details about compression codecs?]
 We then measured the time to decompress these arrays and
 copy back to host memory. This required about 0.6s with the
 fastest codecs. For reference, using the Zstandard codec and the
@@ -1823,7 +1827,7 @@ applications, each chunk can be processed independently and in no particular ord
 % % an effective way to use the tens of CPU cores available on a modern machines.
 % Splitting work up along the genome has provided ample opportunities to 
 % to parallelise in the past, and is part of the motivation 
-% for the current practise of providing VCF data in sub-chromosome partitions 
+% for the current practice of providing VCF data in sub-chromosome partitions 
 % (see the Genomics England, Our Future Health and Norway Spruce case-studies). 
 % However, with increasingly large sample sizes, this approach to parallelism
 
@@ -1946,7 +1950,7 @@ and Zstandard compression algorithm~\citep{collet2021rfc}.
 Blosc is a high-performance compressor optimised for numerical
 data which uses ``blocking''~\citep{alted2010modern} to
 optimise CPU-cache access patterns, as well as highly optimised
-bit and byte shuffle filters.  Remarkably, on highly
+bit-wise and byte-wise shuffle filters.  Remarkably, on highly
 compressible datasets, Blosc decompression can be faster
 than \texttt{memcpy}.
 % Mentioning this detail to reassure readers who might be thinking
@@ -2161,7 +2165,7 @@ in VCF data, we analysed their effect on compression ratio on
 recent high-coverage WGS data from the 1000 Genomes
 project~\citep{byrska2022high}. We began by downloading
 the first 100,000 lines of the VCF
-for chromosome 22 (giving a 1.1GiB compressed VCF)
+for chromosome 22 (giving a 1.1 GiB compressed VCF)
 and converted to Zarr using
 \texttt{vcf2zarr} with default settings. We then systematically
 examined the effects of varying chunk sizes and compressor settings
@@ -2294,7 +2298,7 @@ All tools used default settings,
 unless otherwise stated.
 All simulation-based benchmarks (excluding Fig~\ref{fig-whole-matrix-compute-zarr-versions}) were performed on a
 dual CPU (Intel Xeon E5-2680 v2)
-server with 256GiB of RAM running Debian GNU/Linux 11.
+server with 256 GiB of RAM running Debian GNU/Linux 11.
 To ensure that the true effects of having data distributed over a large
 number of files were reported, benchmarks for Zarr and Savvy were
 performed on a cold disk cache by running
@@ -2342,7 +2346,7 @@ fetch chunks concurrently from S3.
 For decompressing
 and computing af-dist the same architecture was used but as fetched chunks
 became available in memory in each process, they were decompressed and
-processed syncronously. Decompression was performed by using the 
+processed synchronously. Decompression was performed by using the 
 numcodecs library~\citep{numcodecs}.
 
 This prototype did not use any existing Zarr implementation as 
@@ -2451,7 +2455,7 @@ the ``No Commercial Data'' criterion.
 Total CPU time required to decode genotypes into memory using the Zarr-Python
 and Savvy C++ APIs for the data in Figure~\ref{fig-data-storage}.
 Elapsed time is also reported (dotted line).
-This corresponds to a maximum rate of 1.2GiB/s for Zarr (Zstd + BitShuffle),
+This corresponds to a maximum rate of 1.2 GiB/s for Zarr (Zstd + BitShuffle),
 2.7 GiB/s Zarr (Zstd), 2.9 GiB/s Zarr (LZ4), and 6.6 GiB/s for Savvy.
 \label{fig-whole-matrix-decode}}
 \end{figure}
@@ -2463,7 +2467,7 @@ implementations.
 Total CPU time required to run the af-dist calculation
 the data in Figure~\ref{fig-data-storage} using different Zarr implementations.
 Elapsed time is also reported (dotted line).
-These benchmarks were run on an 8-core CPU (Intel i7-9700) with 32GiB RAM running
+These benchmarks were run on an 8-core CPU (Intel i7-9700) with 32 GiB RAM running
 Linux Mint 21.3 with data on an NVMe SSD.
 Note the difference between the
 time reported here and in Fig~\ref{fig-whole-matrix-compute} for Zarr-Python
