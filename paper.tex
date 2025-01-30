@@ -448,9 +448,6 @@ make retrieving particular columns much
 more efficient and can lead to substantially better compression.
 While columnar techniques have been successfully applied
 in alignment
-% TODO check
-% Jeff: OK with the ADAM reference in here? You did some parquet based
-% alignment storage, right?
 storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
 columnar technologies for
 storing and analysing variation data have had limited
@@ -990,20 +987,18 @@ Fig~\ref{fig-column-extract}. The \texttt{bcftools} command required
 The Zarr code required 2.78 sec CPU and 1.73 min elapsed.
 This is a 1196X smaller CPU burden and a 50X speed-up in elapsed time.
 The major difference between CPU time and wall-time is noteworthy
-here, and indicates some opportunities for improvement in VCF Zarr
-in high-latency environments such as the shared file system in the
-Genomics England HPC system. Currently VCF Zarr does not store any
-specialised index to map genomic coordinates to array positions
-along the variants dimension. Instead, to find the relevant slice
+here, and highlights the importance of using an index to find
+the location of variant chunks.
+This benchmark predates the \texttt{region\_index}
+array computed by \texttt{vcf2zarr} (see Methods) which 
+stores sufficient information to identify which variant chunks intersect
+with a given range query.
+Here, to find the relevant slice
 of records corresponding to the range of positions in the target
-VCF file, we load the entire variant\_position array and
+VCF file, we simply load the entire \texttt{variant\_position} array and
 binary search. This entails reading 5,989 chunk files
-(the chunk size is 100,000 variants) which incurs a substantial
-latency penalty on this system. Later versions of the specification
-may solve this problem by storing an array of size
-(approximately) the number variant chunks
-which maps ranges of genome coordinates to chunk indexes,
-or a more specialised structure that supports overlap queries.
+(the chunk size is 100,000 variants) and incurred a substantial
+latency penalty on the Genomics England HPC shared filesystem. 
 
 % When we subsequently time the operation of
 % just populating an array of the variant positions in specified region,
@@ -1246,7 +1241,7 @@ Gb~\cite{nystedt_NorwaySpruceGenome_2013}. Here, we assess the
 performance of \texttt{vcf2zarr} as applied to 1,063 whole-genome
 resequenced spruce individuals from a recent study (in preparation),
 where resequencing data has been mapped to a chromosome-scale
-reference genome. The dataset consists of approximately 3.8 million
+reference genome. The dataset consists of approximately 3.75 billion
 single-nucleotide variants and small indels from the 12 autosomes
 totalling 7.4TiB of VCF data after \texttt{bgzip} compression,
 distributed over 165 VCF files. 
@@ -1281,8 +1276,9 @@ detailed in Table~\ref{tab-spruce-data}.
 
 \begin{table}
 \caption{Summary for VCF Zarr conversion of the Norway Spruce
-%TODO The variants number here does not match the text "3.8 million"
-WGS data on all 12 autosomes (1,063 samples, 374,517,0452 variants)
+WGS data on all 12 autosomes (1,063 samples, 
+%3745170452
+3,745,170,452 variants)
 consisting of 34 fields and 2.3 TiB of storage ($\sim 3.2$X smaller 
 than source gzipped VCFs). The chunk size is 10,000 variants $\times$
 1,063 samples (i.e., a single sample chunk). This uses local 
@@ -1502,6 +1498,15 @@ factor on overall throughput,
 it is unlikely that \texttt{vcztools view} would be a bottleneck
 in practical processing pipelines.
 
+Vcztools is implemented in Python and C, and is available for download 
+from the Python package index. 
+Based on the \texttt{region\_index} array computed by \texttt{vcf2zarr},
+we use PyRanges~\citep{stovner2020pyranges} to perform efficient interval
+search queries. 
+% While support direct support for VCF Zarr in \texttt{bcftools} would be the 
+% ideal outcome, implementation in C within \texttt{htslib} would be significant 
+% undertaking. 
+
 \subsection{Interoperability: SAIGE proof-of-concept}
 To demonstrate the potential for integrating VCF Zarr into existing
 high-performance analysis tools,
@@ -1613,9 +1618,13 @@ S3~\cite{s3-performance-optimising} are achievable.
 
 Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
 calculation is performed at a maximum rate of 25.5 GiB/s using 128
-processes. At this rate, the af-dist calculation for the target region
-was completed in 4.15s (compare to 5.23min for the naive single-threaded
-method above).
+processes. At this rate, the af-dist calculation for the target 
+% 180.80 MB in 4503 files
+% Total data: 90060.00 MB in 4503 chnnks
+region---172 MiB retrieved in 4503 chunks, 83.87 GiB of genotype data
+decompressed and processed---
+% NOTE: this doesn't quite up to the 25.5G above:  83.87 / 4.15 = 20.2
+was completed in 4.15s.
 This level of throughput would complete af-dist for all chromosomes for all samples
 % compute: cost of c5.9xlarge per hour * 1.27
 % ==                             $4.08 * 1.27
@@ -2169,6 +2178,20 @@ calls. Note also that the local alleles encoding may be lossy,
 as only information relevant to the chosen alleles for 
 each call is retained.
 
+To facilitate efficient region search queries, we compute an
+additional array \texttt{region\_index} which stores information
+about the range of genomic positions in each chunk
+and provides sufficient information to implement interval
+search queries. We can then load this index into memory and 
+use it to determine which variant chunks need to be retrieved.
+In the Norway Spruce example (Table~\ref{tab-spruce-data}),
+which has 3.75 billion variants,
+this index requires 3.14 MiB of storage over 12 chunk files
+to store information about all 
+374,518 variant chunks 
+(the \texttt{variant\_position} array, for comparison 
+is 13.95 GiB uncompressed).
+
 \subsection{Choosing default compressor settings}
 To inform the choice of compression settings across different fields
 in VCF data, we analysed their effect on compression ratio on
@@ -2240,30 +2263,6 @@ Thus, we do not expect the choice of chunk size to have a significant
 impact on overall storage usage, and so choice may be
 determined by other considerations such as expected data
 access patterns.
-
-\subsection{vcztools}
-Vcztools is available for download on the Python package index, and
-supports all major platforms [TODO do we support Windows??],
-and is written in a combination of Python and C.
-We use
-the Zarr-Python package~\citep{zarrpython} for all Zarr operations.
-The mini-language in the \texttt{query} command is parsed using
-PyParsing [TODO cite].
-[Add a note here on why it was easier to to write a Python application
-from scratch than to update bcftools.]
-
-As a general principle, data is only retrieved from the Zarr store
-when it is required to fulfil a particular query. For example,
-when a subset of samples are specified, we only retrieve chunks
-in arrays such as \texttt{call\_genotype} for those
-samples. Chunks in the variants dimension are retrieved as needed,
-and we use a multithreaded strategy to fetch and decode variant chunks
-while another thread encodes VCF. Generating VCF text at speed
-is a challenging problem, and we use a C extension module to convert
-a given set of Zarr chunks represented as numpy arrays to VCF.
-Based on the \texttt{region\_index} array computed by \texttt{vcf2zarr},
-we use PyRanges~\citep{stovner2020pyranges} to perform efficient interval
-search queries.
 
 \subsection{Benchmarks}
 In this section we describe the methodology used for the simulation-based
