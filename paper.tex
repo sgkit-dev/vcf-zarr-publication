@@ -2178,6 +2178,20 @@ calls. Note also that the local alleles encoding may be lossy,
 as only information relevant to the chosen alleles for 
 each call is retained.
 
+To facilitate efficient region search queries, we compute an
+additional array \texttt{region\_index} which stores information
+about the range of genomic positions in each chunk
+and provides sufficient information to implement interval
+search queries. We can then load this index into memory and 
+use it to determine which variant chunks need to be retrieved.
+In the Norway Spruce example (Table~\ref{tab-spruce-data}),
+which has 3.75 billion variants,
+this index requires 3.14 MiB of storage over 12 chunk files
+to store information about all 
+374,518 variant chunks 
+(the \texttt{variant\_position} array, for comparison 
+is 13.95 GiB uncompressed).
+
 \subsection{Choosing default compressor settings}
 To inform the choice of compression settings across different fields
 in VCF data, we analysed their effect on compression ratio on
