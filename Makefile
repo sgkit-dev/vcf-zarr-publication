@@ -8,7 +8,7 @@ FIGURES=figures/data-scaling.pdf\
 	figures/s3-network-throughput.pdf \
 	figures/ofh-histograms.pdf
 
-all: paper.pdf
+all: paper.pdf response-to-reviewers.pdf
 
 paper.aux: paper.tex
 	pdflatex -shell-escape paper.tex
@@ -96,7 +96,7 @@ figures/s3-network-throughput.pdf: plot_data/gel-s3-network-throughput.csv
 	python3 src/plot.py s3-network-throughput plot_data/gel-s3-network-throughput.csv  \
 		figures/s3-network-throughput.pdf
 
-figures/ofh-histograms.pdf: 
+figures/ofh-histograms.pdf:
 	python3 src/plot.py ofh-histograms figures/ofh-histograms.pdf
 
 figures/whole-matrix-compute.pdf: plot_data/whole-matrix-compute.csv
@@ -154,3 +154,6 @@ review-diff.pdf: review-diff.tex
 	bibtex review-diff
 	pdflatex review-diff.tex
 
+
+response-to-reviewers.pdf: response-to-reviewers.tex
+	pdflatex $<

@@ -1,0 +1,167 @@
+% LaTeX rebuttal letter example.
+%
+% Copyright 2019 Friedemann Zenke, fzenke.net
+%
+% Based on examples by Dirk Eddelbuettel, Fran and others from
+% https://tex.stackexchange.com/questions/2317/latex-style-or-macro-for-detailed-response-to-referee-report
+%
+% Licensed under cc by-sa 3.0 with attribution required.
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{lipsum} % to generate some filler text
+\usepackage{fullpage}
+
+% import Eq and Section references from the main manuscript where needed
+% \usepackage{xr}
+% \externaldocument{manuscript}
+
+% package needed for optional arguments
+\usepackage{xifthen}
+% define counters for reviewers and their points
+\newcounter{reviewer}
+\setcounter{reviewer}{0}
+\newcounter{point}[reviewer]
+\setcounter{point}{0}
+
+% This refines the format of how the reviewer/point reference will appear.
+\renewcommand{\thepoint}{\thereviewer.\arabic{point}}
+
+% command declarations for reviewer points and our responses
+\newcommand{\reviewersection}{\stepcounter{reviewer} \bigskip \hrule}
+                  % \section*{Reviewer \thereviewer}}
+
+\newenvironment{point}
+   {\refstepcounter{point} \bigskip \noindent {\textbf{Point~\thepoint} } ---\ }
+   {\par }
+
+\newcommand{\shortpoint}[1]{\refstepcounter{point}  \bigskip \noindent
+    {\textbf{Reviewer~Point~\thepoint} } ---~#1\par }
+
+\newenvironment{reply}
+   {\medskip \noindent \begin{sf}\textbf{Reply}:\  }
+   {\medskip \end{sf}}
+
+\newcommand{\shortreply}[2][]{\medskip \noindent \begin{sf}\textbf{Reply}:\  #2
+    \ifthenelse{\equal{#1}{}}{}{ \hfill \footnotesize (#1)}%
+    \medskip \end{sf}}
+
+\begin{document}
+
+\section*{Response to the editor}
+% General intro text goes here
+Thank you for considering this manuscript for publication.  We have addressed
+the points you and Reviewer 1 raised below in turn.
+
+\reviewersection
+\section*{Reviewer 1 comments}
+
+\begin{point}
+The authors present VCF Zarr, a specification that translates the variant call
+format (VCF) data model into an array-based representation for the Zarr storage
+format. They also present the `vcf2zarr` utility to convert large VCFs to Zarr.
+They provide data compression and analysis benchmarks comparing VCF Zarr to
+existing variant storage technologies using simulated genotype data. They also
+present a case study on real world Genomics England aggV2 data.
+
+The authors' benchmarks overall show that VCF Zarr has superior compression and
+computational analysis performance at scale relative to data stored as
+row-oriented VCF and that VCF Zarr is competitive with specialized storage
+solutions that require similarly specialized tools and access libraries for
+querying. An attractive feature is that VCF Zarr allows for variant annotation
+workflows that do not require full dataset copy and conversion. Another key
+point is that Zarr is a high-level spec and data model for the chunked storage
+of n-d arrays, rather than a byte-level encoding designed specifically around
+the genomic variant data type. I personally have used Zarr productively for
+several applications unrelated to statistical genetics. While Zarr VCF mildly
+underperforms some of the specialized formats (Savvy in compute, Genozip in
+compression) in a few instances, I believe the accessibility, interoperability,
+and reusability gains of Zarr make the small tradeoff well worthwhile. 
+
+Because Zarr has seen heavy adoption in other scientific communities like the
+geospatial and Earth sciences, and is well integrated in the scientific Python
+stack, I think it holds potential for greater reusability across the ecosystem.
+As such, I think the VCF Zarr spec is a highly valuable if not overdue
+contribution to an entrenched field that has recently been confronted by a
+scalability wall.
+
+Overall, the paper is clear, comprehensive, and well written. 
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+The benefits for large scientific datasets to be analysis-ready
+cloud-optimized (ARCO) have been well articulated by Abernathey et al., 2021.
+However, I do think that the "local"/HPC single-file use case is still
+important and won't disappear any time soon, and for some file system use
+cases, expansive and deep hierarchies can be performance limiting (this was
+hinted at in one of the benchmarks). In this scenario would a large Zarr VCF
+perform reasonably well (or even better on some file systems) via a single
+local zip store?
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+The description of the intermediate columnar format (ICF) used by `vcf2zarr`
+is missing some detail. At first I got the impression it might be based on
+something like Parquet, but running the provided code showed that it consists
+of a similar file-based chunk layout to Zarr. This should be clarified in the
+manuscript. 
+
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+The authors discuss the possibility of storing an index mapping genomic
+coordinates to chunk indexes. Have Zarr-based formats in other fields like
+geospatial introduced their own indexing approaches to take inspiration from?
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+Since VCF Zarr is still a draft proposal, it could be useful to indicate
+where community discussions are happening and how potential new contributors
+can get involved, if possible. This doesn't need to be in the paper per se, but
+perhaps documented in the spec repo.
+\end{point}
+\begin{reply}
+\end{reply}
+
+
+\begin{point}
+In the background: "For the representation to be FAIR, it must also be
+accessible," -- A is for "accessible", so "also" doesn't make sense.
+\end{point}
+\begin{reply}
+\end{reply}
+
+
+\begin{point}
+"There is currently no efficient, FAIR representation...". Just a nit and
+feel free to ignore, but the solution you present is technically "current".
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+In Figure 2, the zarr line is occluded by the sav line and hard to see.
+\end{point}
+\begin{reply}
+\end{reply}
+
+
+\reviewersection
+\section*{Reviewer 2 comments}
+
+\begin{point}
+Point
+\end{point}
+\begin{reply}
+\end{reply}
+
+
+\end{document}
