@@ -158,10 +158,44 @@ In Figure 2, the zarr line is occluded by the sav line and hard to see.
 \section*{Reviewer 2 comments}
 
 \begin{point}
-Point
+The paper presents an encoding of the VCF data using Zarr to enable fast
+retrieving subsets of the data. A vcf2arr conversion was provided and validated
+on both simulated and real-world data sets. The topic of this work is
+interesting and of good values, however, the experimental studies and
+contributions should be considerable improved.
 \end{point}
 \begin{reply}
 \end{reply}
 
+
+\begin{point}
+The proposed method is simply a conversion from VCF to Zarr format. Since
+both are existing formats, the contributions and originality of this work are
+not impressive.
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+The compression and query performance is the main concern of this work. The
+method should be compared with other state-of-the-art queriable VCF compressors
+like GTC, GBC, and GSC.
+Danek A, Deorowicz S. GTC: how to maintain huge genotype collections in a
+compressed form. Bioinformatics, 2018;34(11):1834-1840.
+Zhang L, Yuan Y, Peng W, Tang B, Li MJ, Gui H,etal. GBC: a parallel toolkit
+based on highly addressable byte-encoding blocks for extremely large-scale
+genotypes of species. Genome Biology, 2023;24(1):1-22.
+Luo X, Chen Y, Liu L, Ding L, Li Y, Li S, Zhang Y, Zhu Z. GSC: efficient
+lossless compression of VCF files with fast query. Gigascience, 2024;
+2;13:giae046. 
+\end{point}
+\begin{reply}
+\end{reply}
+
+\begin{point}
+The method should be evaluated on more real VCF data sets.
+\end{point}
+\begin{reply}
+\end{reply}
 
 \end{document}
