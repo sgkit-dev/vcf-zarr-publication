@@ -147,11 +147,10 @@ human datasets (Genomics England: $n$=78,195;
 Our Future Health: $n$=651,050; 
 All of Us: $n$=245,394) along with whole genome
 datasets for Norway Spruce ($n$=1,063) and 
-SARS-CoV-2 ($n$=4,384,310), 
-demonstrating the scalability and flexibility of VCF Zarr.
+SARS-CoV-2 ($n$=4,384,310).
 We demonstrate the potential for VCF Zarr to enable a new generation
 of high-performance and cost-effective applications
-via illustrative highly parallel benchmarks on AWS and experimentation with GPUs.
+via illustrative examples using cloud computing and GPUs.
 
 \textbf{Conclusions:}
 Large row-encoded VCF files are a major bottleneck for current research, and
@@ -1555,6 +1554,9 @@ such as MarkerID, Allele1 etc.
 %Zarr:
 %user   system  elapsed 
 %1758.976  259.924 1223.767 
+
+% BCF: 4200.508 / 1223.767 = 3.43
+% VCF 9727.995 / 1223.767 = 7.95
 
 \subsection{Future applications: Cloud computing}
 To explore the use of cloud computing services with VCF Zarr,
