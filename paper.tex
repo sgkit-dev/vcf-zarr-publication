@@ -1368,7 +1368,7 @@ is that the \texttt{variant\_alleles} field contains the REF and ALT
 alleles as observed (such that the zero'th allele is always the reference).
 In this case it is more convenient to encode the alleles as the original
 bases and IUPAC uncertainty codes~\citep{cornish1985nomenclature}, 
-such that the allele 0 is always A, 1 is C etc.
+such that allele 0 is always A, 1 is C etc.
 Other than these minor deviations in interpretation, the Zarr follows
 the VCF Zarr specification and can be processed using the same tools.
 
@@ -1382,7 +1382,7 @@ than gzipped FASTA). The chunk size is 100 variants $\times$
 10,000 samples.
 Shown are the top 9 fields consuming at least 1\% of the 
 overall storage (see Table~\ref{tab-genomics-england-data} for column details).
-Field names (derived from source CSV file) are shortened for 
+Field names (derived from source TSV file) are shortened for 
 display purposes by replacing ``Genbank'' with ``G''
 and ``Viridian'' with ``V''.
 \label{tab-sc2-data}}
@@ -1411,24 +1411,36 @@ entire dataset is stored in a single 391 MiB Zip file.
 When compressed with bgzip (so they can be indexed; see next 
 paragraph) the alignments require 22 GiB of storage.
 Table~\ref{tab-sc2-data} summarises the storage used by individual
-arrays, and shows that the alignment data takes up 298 MiB. 
-This is around 81X smaller than gzipped FASTA.
+arrays, and shows that the alignment data requires 298 MiB,
+around 81X smaller than gzipped FASTA.
 The original dataset is distributed as xz compressed FASTA files, which
 achieves even higher compression levels at a total of 218 MiB.
-However, these files cannot be accessed in-situ and must be decompressed
-in order to access the data.
+However, these files must be decompressed in order to access the data
+using standard FASTA processing techniques.
 
-Computational accessibility for the Zarr is excellent. 
-Retrieving the full alignment for the 1 millionth sample required
-[x ms]. Performing the same operation on the corresponding indexed FASTA
-file using pyfaidx~\citep{shirley2015efficient} required [x ms].
-Similarly, accessing calls for all samples 
-at the 10,000th site requires xms
-The storage of metadata and genetic data in a single file also
-makes many queries efficient and convenient. For example, computing the
-average number of deletions in samples with a Scorpio designation of Alpha
-%TODO "x" on next line
-required x seconds and 5 lines of code using Dask.
+Computational accessibility for the Zarr is excellent. For example,
+computing the total number of missing or ambiguous bases for 
+all 4.4 million samples required 55.5 seconds elapsed (6min 45s CPU)
+using 8 threads. This required 11 lines of code, using only the 
+Python standard library and NumPy. Similarly, computing allele
+counts at each site required 4min 53s (25min 35s CPU) using a slightly
+more complicated 16 line Python function.
+Existing methods for working with FASTA data provided efficient 
+access to individual alignments using the fai index format, which
+works with uncompressed or bgzip compressed files.
+For example, retrieving the alignment for the 1 millionth sample 
+from the corresponding chunk file requires only a few milliseconds
+using pyfaidx~\citep{shirley2015efficient} or 
+pysam~\citep{pysam}. Retrieving the same alignment using Zarr 
+required 365ms. 
+Accessing calls for all samples at at a given 
+site requires a similar time (here, accessing site 14,951
+required 276ms). 
+FASTA cannot support efficient retrieval
+of data for a particular site in a set of alignments.
+Storing data chunked in two dimensions means that we can avoid
+the classic choice between sample-major or variant-major storage,
+and access it efficiently in both dimensions.
 
 \subsection{Interoperability: vcztools}
 To provide compatibility with existing workflows we have
@@ -1438,10 +1450,7 @@ Vcztools is intended to be a drop-in replacement for \texttt{bcftools},
 providing an evolutionary path for VCF Zarr adoption,
 with compatibility being a core objective.
 Vcztools currently supports Zarr stored in the local file system
-and Zip archives, and support for major cloud stores will be added in the near
-%TODO Resolve this note
-future. [JK: note this is a pretty simple feature, maybe we should just try
-to add it?]
+and Zip archives, and support for major cloud stores will be added in the near future. 
 Thus, users can convert their VCF data to Zarr using \texttt{bio2zarr},
 store it in a local file system, Zip file or cloud store as desired
 and then access this data source within existing processing pipelines,
@@ -1471,20 +1480,22 @@ To form a practical replacement for bcftools in production pipelines
 it is important that \texttt{vcztools} can produce VCF text at a reasonable
 rate. To do this we measure the time taken to generate VCF text for the
 last 10,000 variants in the dataset (using the previously extracted
-position column to determine the coordinates), \texttt{vcztools view
-chr21\_10\_5.vcz -r1:47958263-}). This took 30s, at a rate of 124.3 MiB
+position column to determine the coordinates), 
+\texttt{vcztools view
+chr21\_10\_5.vcz -r1:47958263-}. This took 30s, at a rate of 124.3 MiB
 of VCF text per second. The bcftools command on the corresponding
 BCF file took 25s (152.64 MiB/s) and on the VCF file it took 63s (60.57 MiB/s).
 
 % TODO texttt
 Vcztools is primarily intended to used as a replacement for bcftools
 in existing workflows based on pipes, where VCF text is sequentially
-filtered and processed by different processes in the classical
+filtered and processed in the classical
 Unix manner. In this context the most important property is that vcztools
 can produce VCF text as quickly as other processes in the pipeline can consume
 it. To get an estimate of the rate at which VCF can be parsed, we wrote a simple
-program that reads a VCF file and parses it line-by-line using the \texttt{htslib}
-API~\citep{bonfield2021htslib}. For the 10,000 variant subset discussed
+C program that reads a VCF file and parses it line-by-line using 
+\texttt{htslib}~\citep{bonfield2021htslib}. 
+For the 10,000 variant subset discussed
 above (3.73 GiB) this took 31s, giving a parsing rate of 123.1 MiB/s
 (almost identical to the write-rate of vcztools above). Given this limiting
 factor on overall throughput,
@@ -1499,21 +1510,33 @@ zhou2020scalable}, a popular package for performing genome wide
 association tests. 
 Using the TensorStore C++ library~\cite{tensorstore}
 we added support for VCF Zarr via an additional backend 
-(SAIGE reads data from PLINK, BGEN, VCF, BCF and SAV formats) 
+(SAIGE reads data from PLINK, BGEN, VCF, BCF and SAV formats),
 for which the core functionality is defined in a 264 line C++ file.
+TensorStore provides efficient read and write access to array
+data in several formats, used, for example, in
+checkpointing~\cite{orbax-tensorstore} 
+TensorFlow model training~\citep{tensorflow2015-whitepaper}.
+It supports several cloud platforms, and is based on an
+asyncronous, parallel processing model (see Discussion).
 
 To assess the performance of this implementation we compared the time required
 to perform an association test using the simulated dataset of 100,000 samples
-from Fig~\ref{fig-data-storage}. We performed a single-variant association
+from Fig~\ref{fig-data-storage}. 
+We performed a single-variant association
 test based on a phenotype simulated using
 \texttt{tstrait}~\citep{tagami2024tstrait},
-and measure the overall time required when using the 
-equivalent VCF, BCF, SAV and Zarr files.
-
-We compared the same analysis using the existing VCF, BCF and Savvy backends
-to our prototype Zarr backend.
-[Times: BCF 70m, VCF 162m, Savvy 7m, Zarr 20m]
-
+and measured the overall time required when using the 
+equivalent VCF (162m), BCF (70m), SAV (7m) and Zarr (20m) files.
+Thus, in this case, substantially improved performance over the 
+most popular formats, along with native cloud-store support are 
+possible with relatively minor coding effort.
+We validated the implementation by comparing the association
+test results with the output of the other backends,
+confirming that they were numerically identical. 
+As TensorStore does not currently support string data for Zarr, 
+however,
+we were not able to fully replicate the output of fields 
+such as MarkerID, Allele1 etc.
 
 %BCF:
 %user   system  elapsed 
