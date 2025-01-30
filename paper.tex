@@ -2282,7 +2282,7 @@ contains the simulated ancestry and mutations for 1.4 million
 present-day samples. We then subset the full simulation
 down to ${10^1, 10^2, \dots, 10^6}$ samples using
 ARG simplification~\cite{kelleher2018efficient,wong2024general},
-storing the subsets in \texttt{tskit} format~\cite{tskit2024}.
+storing the subsets in \texttt{tskit} format~\cite{ralph2020efficiently,tskit2024}.
 Note that this procedure captures the growth
 in the number of variants (shown in the top x-axis labels)
 as we increase sample sizes as a
@@ -2502,12 +2502,19 @@ to execute.
 \begin{figure}[h]
 \includegraphics{figures/s3-throughput}
 \caption{Scalability of genotype data processing on AWS.
+Using the prototype parallel Zarr implementation (see Methods) we 
+measured the rate genotype data can be decoded to memory (decompression
+only) and the rate at which we can perform the full af-dist
+calculation as we vary the number of parallel processes.
 \label{fig-s3-throughput}}
 \end{figure}
 
 \begin{figure}[h]
 \includegraphics{figures/s3-network-throughput}
 \caption{Chunk data download rate on AWS.
+Using the prototype parallel Zarr implementation (see Methods) we 
+measured the rate at which chunks of compressed genotype data 
+can be downloaded on two different instance types.
 \label{fig-s3-network-throughput}}
 \end{figure}
 
