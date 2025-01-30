@@ -1502,6 +1502,15 @@ factor on overall throughput,
 it is unlikely that \texttt{vcztools view} would be a bottleneck
 in practical processing pipelines.
 
+Vcztools is implemented in Python and C, and is available for download 
+from the Python package index. 
+Based on the \texttt{region\_index} array computed by \texttt{vcf2zarr},
+we use PyRanges~\citep{stovner2020pyranges} to perform efficient interval
+search queries. 
+% While support direct support for VCF Zarr in \texttt{bcftools} would be the 
+% ideal outcome, implementation in C within \texttt{htslib} would be significant 
+% undertaking. 
+
 \subsection{Interoperability: SAIGE proof-of-concept}
 To demonstrate the potential for integrating VCF Zarr into existing
 high-performance analysis tools,
@@ -2240,30 +2249,6 @@ Thus, we do not expect the choice of chunk size to have a significant
 impact on overall storage usage, and so choice may be
 determined by other considerations such as expected data
 access patterns.
-
-\subsection{vcztools}
-Vcztools is available for download on the Python package index, and
-supports all major platforms [TODO do we support Windows??],
-and is written in a combination of Python and C.
-We use
-the Zarr-Python package~\citep{zarrpython} for all Zarr operations.
-The mini-language in the \texttt{query} command is parsed using
-PyParsing [TODO cite].
-[Add a note here on why it was easier to to write a Python application
-from scratch than to update bcftools.]
-
-As a general principle, data is only retrieved from the Zarr store
-when it is required to fulfil a particular query. For example,
-when a subset of samples are specified, we only retrieve chunks
-in arrays such as \texttt{call\_genotype} for those
-samples. Chunks in the variants dimension are retrieved as needed,
-and we use a multithreaded strategy to fetch and decode variant chunks
-while another thread encodes VCF. Generating VCF text at speed
-is a challenging problem, and we use a C extension module to convert
-a given set of Zarr chunks represented as numpy arrays to VCF.
-Based on the \texttt{region\_index} array computed by \texttt{vcf2zarr},
-we use PyRanges~\citep{stovner2020pyranges} to perform efficient interval
-search queries.
 
 \subsection{Benchmarks}
 In this section we describe the methodology used for the simulation-based
