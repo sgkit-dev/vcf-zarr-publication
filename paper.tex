@@ -355,7 +355,7 @@ We then present an illustrative example of how existing
 methods can adopt VCF Zarr by modifying the popular 
 SAIGE~\cite{zhou2018efficiently, zhou2020scalable} GWAS software
 (written in C++), and show significant speedups over the existing 
-VCF (6.5X) and BCF (3X) backends in a simple benchmark.
+VCF (7.9X) and BCF (3.4X) backends in a simple benchmark.
 Finally, we illustrate the potential 
 for a new generation of Zarr-based applications via some illustative
 benchmarks. First, we demonstrate the very high levels of throughput 
@@ -1499,11 +1499,11 @@ zhou2020scalable}, a popular package for performing genome wide
 association tests. 
 Using the TensorStore C++ library~\cite{tensorstore}
 we added support for VCF Zarr via an additional backend 
-(SAIGE reading data from PLINK, BGEN, VCF, BCF and SAV formats) 
+(SAIGE reads data from PLINK, BGEN, VCF, BCF and SAV formats) 
 for which the core functionality is defined in a 264 line C++ file.
 
 To assess the performance of this implementation we compared the time required
-to perform an association test using the simulated dataset of 10,000 samples
+to perform an association test using the simulated dataset of 100,000 samples
 from Fig~\ref{fig-data-storage}. We performed a single-variant association
 test based on a phenotype simulated using
 \texttt{tstrait}~\citep{tagami2024tstrait},
@@ -1512,20 +1512,21 @@ equivalent VCF, BCF, SAV and Zarr files.
 
 We compared the same analysis using the existing VCF, BCF and Savvy backends
 to our prototype Zarr backend.
-[Times: BCF 3m, VCF6.5m, Savvy 39s, Zarr 55s]
+[Times: BCF 70m, VCF 162m, Savvy 7m, Zarr 20m]
 
 
-% BCF:
-% real 3m1.068s user 2m56.944s sys 0m2.941s
-
-% VCF:
-% real 6m30.335s user 6m25.193s sys 0m2.842s
-
-% Savvy:
-% real 0m39.660s user 0m37.498s sys 0m2.183s
-
-% Zarr:
-% real 0m55.957s user 1m10.375s sys 0m12.111s
+%BCF:
+%user   system  elapsed 
+%4195.218    4.671 4200.508
+%VCF:
+%user  system elapsed 
+%9718.428    4.735 9727.995 
+%Savvy:
+%user  system elapsed 
+%415.371   2.420 418.098 
+%Zarr:
+%user   system  elapsed 
+%1758.976  259.924 1223.767 
 
 \subsection{Future applications: Cloud computing}
 To explore the use of cloud computing services with VCF Zarr,
