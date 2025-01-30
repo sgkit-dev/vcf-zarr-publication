@@ -448,9 +448,6 @@ make retrieving particular columns much
 more efficient and can lead to substantially better compression.
 While columnar techniques have been successfully applied
 in alignment
-% TODO check
-% Jeff: OK with the ADAM reference in here? You did some parquet based
-% alignment storage, right?
 storage~\citep[e.g.][]{bonfield2014scramble,nothaft2015rethinking,bonfield2022cram},
 columnar technologies for
 storing and analysing variation data have had limited
@@ -990,20 +987,18 @@ Fig~\ref{fig-column-extract}. The \texttt{bcftools} command required
 The Zarr code required 2.78 sec CPU and 1.73 min elapsed.
 This is a 1196X smaller CPU burden and a 50X speed-up in elapsed time.
 The major difference between CPU time and wall-time is noteworthy
-here, and indicates some opportunities for improvement in VCF Zarr
-in high-latency environments such as the shared file system in the
-Genomics England HPC system. Currently VCF Zarr does not store any
-specialised index to map genomic coordinates to array positions
-along the variants dimension. Instead, to find the relevant slice
+here, and highlights the importance of using an index to find
+the location of variant chunks.
+This benchmark predates the \texttt{region\_index}
+array computed by \texttt{vcf2zarr} (see Methods) which 
+stores sufficient information to identify which variant chunks intersect
+with a given range query.
+Here, to find the relevant slice
 of records corresponding to the range of positions in the target
-VCF file, we load the entire variant\_position array and
+VCF file, we simply load the entire \texttt{variant\_position} array and
 binary search. This entails reading 5,989 chunk files
-(the chunk size is 100,000 variants) which incurs a substantial
-latency penalty on this system. Later versions of the specification
-may solve this problem by storing an array of size
-(approximately) the number variant chunks
-which maps ranges of genome coordinates to chunk indexes,
-or a more specialised structure that supports overlap queries.
+(the chunk size is 100,000 variants) and incurred a substantial
+latency penalty on the Genomics England HPC shared filesystem. 
 
 % When we subsequently time the operation of
 % just populating an array of the variant positions in specified region,
