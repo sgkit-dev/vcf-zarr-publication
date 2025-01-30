@@ -1246,7 +1246,7 @@ Gb~\cite{nystedt_NorwaySpruceGenome_2013}. Here, we assess the
 performance of \texttt{vcf2zarr} as applied to 1,063 whole-genome
 resequenced spruce individuals from a recent study (in preparation),
 where resequencing data has been mapped to a chromosome-scale
-reference genome. The dataset consists of approximately 3.8 million
+reference genome. The dataset consists of approximately 3.75 billion
 single-nucleotide variants and small indels from the 12 autosomes
 totalling 7.4TiB of VCF data after \texttt{bgzip} compression,
 distributed over 165 VCF files. 
@@ -1281,8 +1281,9 @@ detailed in Table~\ref{tab-spruce-data}.
 
 \begin{table}
 \caption{Summary for VCF Zarr conversion of the Norway Spruce
-%TODO The variants number here does not match the text "3.8 million"
-WGS data on all 12 autosomes (1,063 samples, 374,517,0452 variants)
+WGS data on all 12 autosomes (1,063 samples, 
+%3745170452
+3,745,170,452 variants)
 consisting of 34 fields and 2.3 TiB of storage ($\sim 3.2$X smaller 
 than source gzipped VCFs). The chunk size is 10,000 variants $\times$
 1,063 samples (i.e., a single sample chunk). This uses local 
