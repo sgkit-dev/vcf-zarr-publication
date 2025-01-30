@@ -1618,9 +1618,13 @@ S3~\cite{s3-performance-optimising} are achievable.
 
 Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
 calculation is performed at a maximum rate of 25.5 GiB/s using 128
-processes. At this rate, the af-dist calculation for the target region
-was completed in 4.15s (compare to 5.23min for the naive single-threaded
-method above).
+processes. At this rate, the af-dist calculation for the target 
+% 180.80 MB in 4503 files
+% Total data: 90060.00 MB in 4503 chnnks
+region---172 MiB retrieved in 4503 chunks, 83.87 GiB of genotype data
+decompressed and processed---
+% NOTE: this doesn't quite up to the 25.5G above:  83.87 / 4.15 = 20.2
+was completed in 4.15s.
 This level of throughput would complete af-dist for all chromosomes for all samples
 % compute: cost of c5.9xlarge per hour * 1.27
 % ==                             $4.08 * 1.27
