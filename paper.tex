@@ -190,7 +190,7 @@ underlying data-model is now deeply embedded in bioinformatics practice.
 Dataset sizes have grown explosively since the introduction of
 VCF as part of 1000 Genomes project~\citep{10002015global},
 with Biobank scale initiatives such as
-Genomics England~\cite{turnbull2018100},
+Genomics England~\cite{turnbull2018100,caulfield2017national},
 UK Biobank~\citep{bycroft2018genome,backman2021exome,halldorsson2022sequences,uk2023whole},
 Our Future Health~\citep{cook2025our,ofhmain_2025},
 and the All of Us research program~\citep{all2024genomic}
@@ -283,7 +283,7 @@ with native support for cloud object storage.
 Such a representation can be termed ``analysis-ready''
 and ``cloud-native''~\citep{abernathey2021cloud}.
 For the representation to be FAIR~\citep{wilkinson2016fair},
-it must also be \emph{accessible}, using protocols that are
+it must be \emph{accessible}, using protocols that are
 ``open, free, and universally implementable''.
 There is currently no efficient, FAIR representation of genetic variation
 data suitable for cloud deployments.
@@ -527,7 +527,7 @@ We compare primarily with
 VCF/BCF based workflows using \texttt{bcftools} because this
 is the standard practice, used in the vast majority of cases.
 We also compare with two representative recent specialised utilities;
-see~\cite{danek2018gtc,zhang2023gbc} for further benchmarks of
+see~\cite{danek2018gtc,zhang2023gbc,luo2024gsc} for further benchmarks of
 these and other tools.
 Genozip~\cite{lan2020genozip,lan2021genozip} is a tool focused
 on compression performance, which uses a custom file format
@@ -601,7 +601,8 @@ li2016bgt, % BGT
 danek2018gtc, % GTC
 lin2020sparse, % SpVCF
 lan2020genozip,lan2021genozip, %genozip
-zhang2023gbc}. %GBC
+zhang2023gbc,%GBC
+luo2024gsc}. %GSC
 These pre-defined calculations are by necessity limited in scope, however,
 and the volumes of text involved in Biobank scale datasets
 make the classical approach of custom
@@ -878,7 +879,8 @@ In this section we demonstrate the utility of VCF Zarr on a large human dataset
 and the scalability of the \texttt{vcf2zarr} conversion utility.
 Genomics England’s multi-sample VCF dataset (aggV2) is an
 aggregate of 78,195 gVCFs from rare disease and cancer participants
-recruited as part of the 100,000 Genomes Project~\cite{turnbull2018100}.
+recruited as part of the 100,000 Genomes
+Project~\cite{turnbull2018100,caulfield2017national}.
 The dataset comprises approximately 722 million annotated single-nucleotide
 variants and small indels split into 1,371 roughly equal chunks and
 totalling 165.3 TiB of VCF data after \texttt{bgzip} compression.
@@ -1720,7 +1722,7 @@ PyTorch~\cite{paszke2019pytorch}
 and TensorFlow~\citep{tensorflow2015-whitepaper}
 providing the basic infrastructure for the field.
 
-To demonstrate the ease and efficiency with data stored in Zarr
+To demonstrate the ease and efficiency with which data stored in Zarr
 format can be processed on a GPU, we developed two proof-of-concept
 applications. 
 In both cases we demonstrate on data from chromosome 22 of
@@ -1742,7 +1744,7 @@ performed on the GPU, mostly with minimal changes required
 We perform the central operation of genotype classification using the
 CuPy JIT compiler to generate a custom CUDA kernel. 
 This is very similar to the Numba compiled function used in other
-experiments, within minimal changes required to take advantage of
+experiments, with minimal changes required to take advantage of
 on-GPU parallelism. In the simplest version, we iterate over the chunks
 in the \texttt{call\_genotype} array (stored as 30 chunks, consuming
 a total of 7.82 MiB), decompress each to a local
@@ -2189,7 +2191,9 @@ Columnar Format (ICF). The \texttt{vcf2zarr explode} command takes a set
 of VCFs, and reads through them using
 \texttt{cyvcf2}~\cite{pedersen2017cyvcf2},
 storing each field independently in (approximately) fixed-size
-compressed chunks.
+compressed chunks in a file-system hierarchy.
+ICF is designed to support efficient Zarr encoding within \texttt{vcf2zarr}
+and not intended for reuse outside that context.
 Large files can be partitioned based on information extracted from the
 CSI or Tabix indexes, and so different parts of a file can be
 converted to ICF in parallel.
