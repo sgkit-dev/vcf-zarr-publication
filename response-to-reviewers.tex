@@ -51,6 +51,8 @@
 \section*{Response to the editor}
 % General intro text goes here
 Thank you for considering this manuscript for publication.  
+We have addressed the comments from both reviewers point-by-point
+below.
 
 \reviewersection
 \section*{Reviewer 1 comments}
@@ -182,8 +184,29 @@ interesting and of good values, however, the experimental studies and
 contributions should be considerable improved.
 \end{point}
 \begin{reply}
+Thank you for your valuable feedback; it has resulted in a much improved
+manuscript. We have significantly extended the scope 
+of this work by providing 
+\begin{itemize}
+\item The vcztools program, which converts from Zarr to VCF efficiently.
+\item A new case study on the Our Future Health genotype data, for 
+651K samples.
+\item A new case study on the All of Us exome-like data, for 245K
+samples.
+\item A new case study on Norway Spruce data, for 1063 samples
+and 3.75 \emph{billion} variants.
+\item A new case study on SARS-CoV-2 data for 4.3 million samples.
+\item A new section demonstrating a propotype of the SAIGE software
+incorporating support for VCF Zarr, with excellent performance.
+\item A new section exploring the use of VCF Zarr in cloud computing 
+platforms, showing how data processing rates of up to 25.5GiB/s
+are possible.
+\item A new section exploring the use of GPU acceleration on VCF Zarr data.
+\end{itemize}
+We hope that you agree that these extensive additions on 
+boundary-pushing datasets, demonstrate the 
+real-world value and transformative potential of VCF Zarr.
 \end{reply}
-
 
 \begin{point}
 The proposed method is simply a conversion from VCF to Zarr format. Since
@@ -191,28 +214,45 @@ both are existing formats, the contributions and originality of this work are
 not impressive.
 \end{point}
 \begin{reply}
+We believe that the extensive work detailed in the previous response
+addresses this criticism.
 \end{reply}
 
 \begin{point}
 The compression and query performance is the main concern of this work. The
 method should be compared with other state-of-the-art queriable VCF compressors
-like GTC, GBC, and GSC.
-Danek A, Deorowicz S. GTC: how to maintain huge genotype collections in a
-compressed form. Bioinformatics, 2018;34(11):1834-1840.
-Zhang L, Yuan Y, Peng W, Tang B, Li MJ, Gui H,etal. GBC: a parallel toolkit
-based on highly addressable byte-encoding blocks for extremely large-scale
-genotypes of species. Genome Biology, 2023;24(1):1-22.
-Luo X, Chen Y, Liu L, Ding L, Li Y, Li S, Zhang Y, Zhu Z. GSC: efficient
-lossless compression of VCF files with fast query. Gigascience, 2024;
-2;13:giae046. 
+like GTC, GBC, and GSC. [References ommitted]
 \end{point}
 \begin{reply}
+We disagree on this point, and respectfully point out that for our 
+purposes, these methods are essentially equivalent to Genozip
+(which we have included in our benchmarks as a representative 
+of this class of method). 
+As we argue in the ``Calculating with the genotype matrix'' section,
+a fundamental point
+is that compression methods that only provide access to data 
+output via VCF text are limiting the rate at which the data can be 
+processed to the rate at which VCF text can be parsed. Producing VCF text
+as output cannot be seen as the end point of analysis, and the rate at which it can be
+done (beyond a certain minimum value of around 120 MiB/s, as we argue in the 
+new vcztools section) is of no real practical interest. Our benchmarks 
+in e.g. Figures 3 and 4 show that the Genozip like approach of 
+of highly compressed genotype data that is accessed only via VCF text
+cannot form the basis of efficient processing pipelines. It is 
+intrinsically and irredeemably inefficient.
+
+We have included references to GTC, GBC and GSC, and discussing them in the 
+``Storing genetic variation data'' section, directing the reader to 
+the benchmarks performed  in the ``Calculating with the genotype matrix''
+section.
 \end{reply}
 
 \begin{point}
 The method should be evaluated on more real VCF data sets.
 \end{point}
 \begin{reply}
+We have added four new case studies on large scale real datasets
+on different organisms with entirely different genome properties.
 \end{reply}
 
 \end{document}
