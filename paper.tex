@@ -1692,44 +1692,30 @@ These benchmarks illustrate the transformative
 potential of Zarr and cloud computing.
 
 \subsection{Future applications: GPU acceleration}
-GPU acceleration has revolutionized scientific computing by leveraging the
-massively parallel architecture of GPUs to achieve significant speedups in
+GPU acceleration has revolutionized scientific computing by leveraging 
+their massively parallel architecture to achieve significant speedups in
 computationally intensive tasks such as simulations, data analysis, and machine
 learning, often by one or two orders of magnitude~\citep{nickolls2010gpu,
 mittal2014survey,owens2008gpu}
-% (Nickolls & Dally, 2010;
-% Mittal & Vetter, 2015; 
-% Owens et al., 2008). 
-This has profound implications for
-fields ranging from molecular dynamics~\citep{stone2007accelerating}
-% (Stone et al., 2010) 
-to deep learning~\citep{lecun2015deep}
-% (LeCun et al., 2015). 
+This has had a transformative impact across many 
+% TODO More
+fields~\citep[e.g.][]{stone2007accelerating,pandey2022transformational}.
 While early GPU programming required expertise in
 low-level languages like CUDA or OpenCL, the advent of high-level Python
 libraries such as Numba~\citep{lam2015numba}, CuPy~\citep{okuta2017cupy} 
-%(Okuta et al., 2017), 
-and
-PyCUDA/PyOpenCL~\citep{klockner2012pycuda}
-% (Klöckner, 2012) 
-has democratized access to GPU acceleration.
-These tools offer user-friendly interfaces and just-in-time compilation,
-allowing scientists to harness the power of GPUs within the familiar Python
-ecosystem, thereby significantly accelerating scientific discovery and
-broadening the adoption of accelerated computing across various research
-domains.
-
-% [JK: this is a super rough first narrative draft.]
-% Machine learning, and in particular deep learning methods, have led to
-% major breakthroughs in many different fields in recent years [CITES].
-% GPUs have been a key enabling factor in this [details and cites].
-% The PyData ecosystem [cites] has also enabled this. Techologies like
-% [Cupy, lots of others] substantially lower the bar for writing efficient
-% GPU code.
-% Deep learning methods depend crucially on efficient access to vast
-% datasets for training, and Zarr is emerging as a popular choice
-% [cites from geosciences?]. The RAPIDs GPU Accelerated data science
-% library [which does] now supports Zarr through [kvikio, more?].
+and PyCUDA/PyOpenCL~\citep{klockner2012pycuda}
+has made GPU acceleration far more accessible.
+Deep learning~\citep{lecun2015deep} has led to major breakthroughs in 
+several domains in recent 
+% TODO more?
+years~\citep[e.g.][]{jumper2021highly,merchant2023scaling}
+and depends crucially on processing large volumes of data
+on GPUs or other custom hardware accelerators.
+The Python data science ecosystem is particularly powerful in this area,
+with GPU-native libraries like
+PyTorch~\cite{paszke2019pytorch}
+and TensorFlow~\citep{tensorflow2015-whitepaper}
+providing the basic infrastructure for the field.
 
 To demonstrate the ease and efficiency with this data stored in Zarr
 format can be processed on a GPU, we developed two proof-of-concept
@@ -1916,6 +1902,7 @@ the Python data science ecosystem is a particularly powerful
 platform,
 with a rich suite of tools~\cite[e.g.][]{
 mckinney2010data,
+scikit-learn, 
 lam2015numba,
 kluyver2016jupyter,
 harris2020array,
