@@ -1565,7 +1565,7 @@ such as MarkerID, Allele1 etc.
 
 \subsection{Future applications: Cloud computing}
 To explore the use of cloud computing services with VCF Zarr,
-Genomics England provided access to Aggv2 data 
+Genomics England provided access to aggV2 data 
 in VCF Zarr format within their secure
 cloud environment. The VCF Zarr files for Chromosome 2
 described in Table~\ref{tab-genomics-england-data}
@@ -1588,13 +1588,13 @@ To explore the limits of performance we developed a simple prototype
 Zarr implementation, designed to maximise concurrency using asynchronous
 IO and multiple processes (see Methods for details).
 Fig~\ref{fig-s3-throughput} shows the rate at which genotypes
-can be decoded to RAM as well as rate at which we can compute
+can be decoded to RAM along with the rate at which we can compute
 af-dist (using Numba to classify genotypes, as before)
 as we increase the number of parallel processes on
 an EC2 c5.24xlarge instance with 96 vCPUs (48 physical).
 The maximum decompression rate of 47.4 GiB/s
 occurs at 64 processes (each with 100 concurrent requests), 
-with a corresponding network data rate of 121 MiB/s
+with a corresponding network data rate of 121 MiB/s.
 Fig~\ref{fig-s3-network-throughput} explores the limitations imposed by
 network access by measuring the rate at which we can download the chunks
 into RAM (without decompressing) using the same parallel and asynchronous
@@ -1623,29 +1623,73 @@ S3~\cite{s3-performance-optimising} are achievable.
 % for genotype data and the usual cloud storage cost structuring models (see
 % Discussion).
 
+% >>> 78_195 * 722*10**6 * 2 / 1024**4
+% 102.69430276821367
+% >>> (78_195 * 722*10**6 * 2 / 1024**3) / 25.5
+% 4123.881020966698
+% >>> 4123.881020966698 / 360
+% 1.1455
+% >>> 4123.881020966698 / 60
+% 68.73135034944497
+% >>> 1.1455 * 4.848
+% 5.553383999999999
 Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
 calculation is performed at a maximum rate of 25.5 GiB/s using 128
-processes. This level of throughput would complete af-dist for all
-chromosomes for all samples (104 TiB of genotype data)
-% timing: 722000000 * 79000 * 2bytes = 104 TiB
-% 104TiB / 25.5GiB/s = 1.16 hours
-% compute: cost of c5.9xlarge per hour * 1.16
-% ==                             $4.08 * 1.16
-% io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
-% ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
-in 1.16 hours for a compute cost of \$4.73 and an IO cost of \$2.28.
+processes. Genome wide, the aggV2 dataset consists of
+722 million variants for 78,195 samples, giving a total of around
+103 TiB of genotype data. We could therefore process the entire
+dataset at this maximum rate in about 69 minutes, with a compute
+cost of \$5.55
+(on-demand hourly rate of \$4.848 for a c5.24xlarge instance
+in the eu-west-2 region, as-of 2025-01-31~\cite{ec2-pricing}).
+AWS and other major clouds charge per object request (i.e. without
+considering the number of bytes transferred) and so the IO
+cost of this operation is determined by the number of chunks.
+% >>> (10_000 * 1000 * 2) / 1024**2
+% 19.073486328125
+% >>> (78_195 * 722*10**6 * 2) / (10_000 * 1000 * 2)
+% 5645679.0
+% >>> (5645679.0 / 1000) *0.00042
+% 2.3711851800000003
+As each 10,000 $\times$ 1,000 chunk encodes 19 MiB of 
+genotype data, we incur about 5.6 million object requests
+to retrieve all chunks. 
+At \$0.00042 per 1000 GET requests for S3 Standard
+storage 
+(eu-west-2 region as-of 2025-01-31~\cite{s3-pricing}), 
+this comes to \$2.37.
+Thus, it should be possible to perform af-dist and similar
+calculations genome wide on aggV2 for less than \$10.
+Assuming 50KiB per chunk (the average stored chunk size 
+for chromosome 2 is 47.57 KiB) we would need a total
+of 269 GiB to store the genotype data for the entire dataset.
+% >>> (5645679.0 * 50 * 1024) / 1024**3
+% 269.20695304870605
+% 269.20695304870605 * 0.024 * 12
+% 77.53160247802734
+At \$0.024 per GiB per month for S3 Standard
+(eu-west-2 region as-of 2025-01-31~\cite{s3-pricing})
+this comes to a yearly storage cost of \$77.53
+(note that this is just the genotype data, not including
+other, much larger, fields 
+listed in Table~\ref{tab-genomics-england-data}).
 
-Using this parallel architecture, the af-dist calculation for the target 
-% 180.80 MB in 4503 files
-% Total data: 90060.00 MB in 4503 chunks
-region used for the single threaded benchmarks above ---172 MiB retrieved in 4503
-chunks, 83.87 GiB of genotype data decompressed and processed---
-% This gives an effective rate lower than  25.5G above:  83.87 / 4.15 = 20.2
-was completed in 4.15s. A slightly slower effective throughput than in
-Fig~\ref{fig-s3-throughput} as the short time to completion means that
-the timing is sensitive to set-up and tear-down costs.
-See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
-benchmarks in cloud settings.
+One of our benchmarks in the Genomics England case
+study section was to compare to compare a straightforward
+sequential Zarr implementation of af-dist with
+\texttt{bcftools} 
+on the genome slice corresponding to one of the original
+106 VCF files for chromosome 2. There, Zarr's efficient data format
+allows us to perform the same calculation in 4.25
+% >>> 716.3 / 60
+% 11.938333333333333
+minutes vs almost 12 hours for VCF. 
+Here, by adapting our code to the 
+high-throughput, high-variance nature of cloud stores and 
+using the natural chunk-based parallelism of Zarr
+we reduce the elapsed time to 4.15 seconds.
+These benchmarks illustrate the transformative 
+potential of Zarr and cloud computing.
 
 \subsection{Future applications: GPU acceleration}
 GPU acceleration has revolutionized scientific computing by leveraging the
@@ -2007,7 +2051,9 @@ model of downloading and analysing locally, and are migrating to
 centralised cloud repositories \citep{abernathey2021cloud,moore2021ome}.
 The combination of Zarr's simple and cloud-friendly storage
 of data chunks with state-of-the-art compression methods has
-led to Zarr gaining significant traction in these settings.
+led to Zarr gaining significant traction in these settings
+(see \citep{durbin2020task,moore2021ome,gowan2022using} 
+Zarr cloud benchmarks).
 Multiple petabyte-scale datasets are now stored using
 Zarr~\cite[e.g.][]{gowan2022using, % weather model data
 fahnestock2023mappin, % ITS_LIVE dataset
