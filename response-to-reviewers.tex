@@ -105,7 +105,7 @@ perform reasonably well (or even better on some file systems) via a single
 local zip store?
 \end{point}
 \begin{reply}
-This is good point, and we have added several mentions of the Zip file backend
+This is a good point, and we have added several mentions of the Zip file backend
 as well as benchmarks using it. We added a new paragraph on pg5, (l318-338)
 to discuss this point. We also added benchmarks based on the SARS-CoV-2
 dataset, which is distributed as a Zipfile.
@@ -162,8 +162,7 @@ Fixed
 feel free to ignore, but the solution you present is technically "current".
 \end{point}
 \begin{reply}
-You are right, but for narrative purposes it is simpler to pose VCF Zarr 
-as new, so we'd prefer to keep this as it is.
+You are right, but we would like to keep this as it is for narrative clarity.
 \end{reply}
 
 \begin{point}
@@ -196,16 +195,17 @@ samples.
 \item A new case study on Norway Spruce data, for 1063 samples
 and 3.75 \emph{billion} variants.
 \item A new case study on SARS-CoV-2 data for 4.3 million samples.
-\item A new section demonstrating a propotype of the SAIGE software
+\item A new section demonstrating a prototype of the SAIGE software
 incorporating support for VCF Zarr, with excellent performance.
 \item A new section exploring the use of VCF Zarr in cloud computing 
 platforms, showing how data processing rates of up to 25.5GiB/s
 are possible.
 \item A new section exploring the use of GPU acceleration on VCF Zarr data.
 \end{itemize}
-We hope that you agree that these extensive additions on 
-boundary-pushing datasets, demonstrate the 
-real-world value and transformative potential of VCF Zarr.
+We hope that you agree that these extensive additions
+and demonstrations on a selection of the largest genomic datasets
+in the world (in terms of both sample and genome size),
+demonstrate the real-world value and transformative potential of VCF Zarr.
 \end{reply}
 
 \begin{point}
@@ -236,10 +236,10 @@ processed to the rate at which VCF text can be parsed. Producing VCF text
 as output cannot be seen as the end point of analysis, and the rate at which it can be
 done (beyond a certain minimum value of around 120 MiB/s, as we argue in the 
 new vcztools section) is of no real practical interest. Our benchmarks 
-in e.g. Figures 3 and 4 show that the Genozip like approach of 
+in e.g. Figures 3 and 4 show that the Genozip like approach 
 of highly compressed genotype data that is accessed only via VCF text
 cannot form the basis of efficient processing pipelines. It is 
-intrinsically and irredeemably inefficient.
+intrinsically inefficient.
 
 We have included references to GTC, GBC and GSC, and discussing them in the 
 ``Storing genetic variation data'' section, directing the reader to 
@@ -251,8 +251,11 @@ section.
 The method should be evaluated on more real VCF data sets.
 \end{point}
 \begin{reply}
-We have added four new case studies on large scale real datasets
-on different organisms with entirely different genome properties.
+We have added four new case studies applying VCF Zarr
+to some of the world's largest 
+datasets with different data modalities (genotype, exome-like, whole genome sequence),
+on three very different organisms (Human, Tree, Virus)
+with widely differing genome properties. 
 \end{reply}
 
 \end{document}
