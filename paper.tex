@@ -1286,17 +1286,6 @@ the maximum number of alleles at a site being 4,
 and consequently the inner dimension of call\_PL 10 because 
 of its quadratic dependency on the number of alleles (see Methods).
 
-We therefore generated a vcf2zarr schema
-using local allele fields with \texttt{vcf2zarr
-mkschema --local-alleles}, and used the generated schema as input to
-\texttt{vcf2zarr encode}. Zarr conversion required 14h09min runtime,
-generating a dataset with 35 arrays, consuming a total of 2.3 TiB
-storage over 11,235,556 chunk files. 
-Using local allele fields in this example we therefore 
-achieve approximately 3X improvement of compression. 
-The top fields in terms of storage are
-detailed in Table~\ref{tab-spruce-data}.
-
 \begin{table}
 \caption{Summary for VCF Zarr conversion of the Norway Spruce
 WGS data on all 12 autosomes (1,063 samples, 
@@ -1339,6 +1328,17 @@ variant\_MQ & int8 & 489.41 MiB & 7.3 & 0.02\% \\
 \end{tabular}
 \end{table}
 
+We therefore generated a vcf2zarr schema
+using local allele fields with \texttt{vcf2zarr
+mkschema --local-alleles}, and used the generated schema as input to
+\texttt{vcf2zarr encode}. Zarr conversion required 14h09min runtime,
+generating a dataset with 35 arrays, consuming a total of 2.3 TiB
+storage over 11,235,556 chunk files. 
+Using local allele fields in this example we therefore 
+achieve approximately 3X improvement of compression. 
+The top fields in terms of storage are
+detailed in Table~\ref{tab-spruce-data}.
+
 Large genomes from non-model organisms pose particular problems for
 analysis workflows that often are tailored for human conditions. For
 instance, the binary Sequence Alignment/Map index format
@@ -1375,22 +1375,6 @@ available for download~\citep{zhan2023towards}. This dataset has quite
 different properties to those examined in previous case studies, and
 illustrates the flexibility of Zarr across a range of biological applications.
 
-One of the unusual properties of this dataset is that whole genome alignments
-are stored, such that information on all 29,903 bases is stored for every
-sample. Given the number of samples and that nearly all bases have 
-variation (all sites have at least one sample with missing data,
-and 99.4\% have more than one allele)
-it is simply more convenient to
-store the entire alignment for each sample than to manage the complexity
-of subsetting the sites. Similarly, the usual convention in VCF Zarr
-is that the \texttt{variant\_alleles} field contains the REF and ALT
-alleles as observed (such that the zero'th allele is always the reference).
-In this case it is more convenient to encode the alleles as the original
-bases and IUPAC uncertainty codes~\citep{cornish1985nomenclature}, 
-such that allele 0 is always A, 1 is C etc.
-Other than these minor deviations in interpretation, the Zarr follows
-the VCF Zarr specification and can be processed using the same tools.
-
 \begin{table}
 \caption{Summary for VCF Zarr conversion of Viridian SARS-CoV-2
 whole genome alignments and metadata 
@@ -1421,6 +1405,22 @@ sample\_V\_pangolin & str & 3.89 MiB & 8.6 & 1.11\% \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+One of the unusual properties of this dataset is that whole genome alignments
+are stored, such that information on all 29,903 bases is stored for every
+sample. Given the number of samples and that nearly all bases have 
+variation (all sites have at least one sample with missing data,
+and 99.4\% have more than one allele)
+it is simply more convenient to
+store the entire alignment for each sample than to manage the complexity
+of subsetting the sites. Similarly, the usual convention in VCF Zarr
+is that the \texttt{variant\_alleles} field contains the REF and ALT
+alleles as observed (such that the zero'th allele is always the reference).
+In this case it is more convenient to encode the alleles as the original
+bases and IUPAC uncertainty codes~\citep{cornish1985nomenclature}, 
+such that allele 0 is always A, 1 is C etc.
+Other than these minor deviations in interpretation, the Zarr follows
+the VCF Zarr specification and can be processed using the same tools.
 
 Decompressed, the Viridian dataset consists of 48
 FASTA files totaling 125 GiB of storage and a 1.4 GiB
