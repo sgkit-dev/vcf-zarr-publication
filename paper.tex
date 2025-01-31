@@ -1647,35 +1647,38 @@ considering the number of bytes transferred) and so the IO
 cost of this operation is determined by the number of chunks.
 % >>> (10_000 * 1000 * 2) / 1024**2
 % 19.073486328125
-% >>> (78_195 * 722*10**6 * 2) / (10_000 * 1000 * 2)
-% 5645679.0
-% >>> (5645679.0 / 1000) *0.00042
-% 2.3711851800000003
+% ceil here as a whole chunk is always used
+% >>> ceil(78_195/1_000) * ceil(722*10**6/10_000)
+% 5703800
+% >>> (5703800 / 1000) *0.00042
+% 2.3955960000000003
 As each 10,000 $\times$ 1,000 chunk encodes 19 MiB of 
-genotype data, we incur about 5.6 million object requests
+genotype data, we incur about 5.7 million object requests
 to retrieve all chunks. 
 At \$0.00042 per 1000 GET requests for S3 Standard
 storage 
 (eu-west-2 region as-of 2025-01-31~\cite{s3-pricing}), 
-this comes to \$2.37.
+this comes to \$2.39.
 Thus, it should be possible to perform af-dist and similar
 calculations genome wide on aggV2 for less than \$10.
 Assuming 50KiB per chunk (the average stored chunk size 
 for chromosome 2 is 47.57 KiB) we would need a total
-of 269 GiB to store the genotype data for the entire dataset.
-% >>> (5645679.0 * 50 * 1024) / 1024**3
-% 269.20695304870605
-% 269.20695304870605 * 0.024 * 12
-% 77.53160247802734
+of 272 GiB to store the genotype data for the entire dataset.
+% the boundary chunks where a whole chunk is not used will be smaller
+% but this is a tiny effect.
+% >>> (5703800.0 * 50 * 1024) / 1024**3
+% 271.97837829589844
+% 271.97837829589844 * 0.024 * 12
+% 78.32977294921875
 At \$0.024 per GiB per month for S3 Standard
 (eu-west-2 region as-of 2025-01-31~\cite{s3-pricing})
-this comes to a yearly storage cost of \$77.53
+this comes to a yearly storage cost of \$78.33
 (note that this is just the genotype data, not including
 other, much larger, fields 
 listed in Table~\ref{tab-genomics-england-data}).
 
 One of our benchmarks in the Genomics England case
-study section was to compare to compare a straightforward
+study section was to compare a straightforward
 sequential Zarr implementation of af-dist with
 \texttt{bcftools} 
 on the genome slice corresponding to one of the original
