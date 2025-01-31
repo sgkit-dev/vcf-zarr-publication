@@ -1717,13 +1717,10 @@ PyTorch~\cite{paszke2019pytorch}
 and TensorFlow~\citep{tensorflow2015-whitepaper}
 providing the basic infrastructure for the field.
 
-To demonstrate the ease and efficiency with this data stored in Zarr
+To demonstrate the ease and efficiency with data stored in Zarr
 format can be processed on a GPU, we developed two proof-of-concept
-applications. In the first we re-implement the af-dist calculation
-used throughout as an example of a non-trivial whole-matrix operation
-on GPU. In the second, we demonstrate some emerging technology
-in which Zarr data can be decompressed directly in GPU memory.
-In both cases we demonstrate on chromosome 22 of
+applications. 
+In both cases we demonstrate on data from chromosome 22 of
 1000 Genomes WGS data~\citep{byrska2022high}. This consists
 of 96,514 variants and 2504 samples, converted to Zarr format
 using a chunk size of 10,000 variants $\times$ 1,000 samples.
@@ -1731,18 +1728,19 @@ Experiments in this section were performed on a
 computer with an Intel Xeon Silver 4216 processor,
 Nvidia A6000 RTX GPU and NVMe SSD.
 
-We first illustrate the ease with which computations can be
-be performed on GPU, 
-we reimplemented the af-dist calculation
+To demonstate the ease at which non-trivial, novel calculations 
+can be performed on a GPU,
+we first reimplemented the af-dist calculation
 described above using CuPy~\citep{okuta2017cupy}, a GPU accelerated library
 of core operations for scientific computing.
 All of the operations required to compute  af-dist are
 performed on the GPU, mostly with minimal changes required
 (e.g.\ replacing \texttt{np.digitize} with \texttt{cp.digitize}).
 We perform the central operation of genotype classification using the
-CuPy JIT compiler to generate a custom CUDA kernel, which
-is also very similar to the Numba compiled function used in other
-experiments. In the simplest version, we iterate over the chunks
+CuPy JIT compiler to generate a custom CUDA kernel. 
+This is very similar to the Numba compiled function used in other
+experiments, within minimal changes required to take advantage of
+on-GPU parallelism. In the simplest version, we iterate over the chunks
 in the \texttt{call\_genotype} array (stored as 30 chunks, consuming
 a total of 7.82 MiB), decompress each to a local
 NumPy array and then copy the data to GPU memory by creating
@@ -1773,7 +1771,7 @@ To explore the performance of the GPU optimised compression
 codecs available, we recompressed
 the \texttt{call\_AD} (allele depth) array
 which had dimensions of $96514\times2504\times7$
-and an 16 bit integer data type (note that 
+and 16 bit integer data type (note that 
 we did not use local alleles encoding here, and this 
 array is therefore highly sparse and compressible).
 For all five codecs considered
