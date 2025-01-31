@@ -283,7 +283,7 @@ with native support for cloud object storage.
 Such a representation can be termed ``analysis-ready''
 and ``cloud-native''~\citep{abernathey2021cloud}.
 For the representation to be FAIR~\citep{wilkinson2016fair},
-it must also be \emph{accessible}, using protocols that are
+it must be \emph{accessible}, using protocols that are
 ``open, free, and universally implementable''.
 There is currently no efficient, FAIR representation of genetic variation
 data suitable for cloud deployments.
@@ -2190,7 +2190,9 @@ Columnar Format (ICF). The \texttt{vcf2zarr explode} command takes a set
 of VCFs, and reads through them using
 \texttt{cyvcf2}~\cite{pedersen2017cyvcf2},
 storing each field independently in (approximately) fixed-size
-compressed chunks.
+compressed chunks in a file-system hierarchy.
+ICF is designed to support efficient Zarr encoding within \texttt{vcf2zarr}
+and not intended for reuse outside that context.
 Large files can be partitioned based on information extracted from the
 CSI or Tabix indexes, and so different parts of a file can be
 converted to ICF in parallel.

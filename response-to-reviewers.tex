@@ -50,8 +50,7 @@
 
 \section*{Response to the editor}
 % General intro text goes here
-Thank you for considering this manuscript for publication.  We have addressed
-the points you and Reviewer 1 raised below in turn.
+Thank you for considering this manuscript for publication.  
 
 \reviewersection
 \section*{Reviewer 1 comments}
@@ -88,6 +87,9 @@ scalability wall.
 Overall, the paper is clear, comprehensive, and well written. 
 \end{point}
 \begin{reply}
+Thank you!  We are delighted that you agree with us on the transformative
+potential of VCF Zarr, and thank you for your insightful points and
+helpful suggestions.
 \end{reply}
 
 \begin{point}
@@ -101,6 +103,10 @@ perform reasonably well (or even better on some file systems) via a single
 local zip store?
 \end{point}
 \begin{reply}
+This is good point, and we have added several mentions of the Zip file backend
+as well as benchmarks using it. We added a new paragraph on pg5, (l318-338)
+to discuss this point. We also added benchmarks based on the SARS-CoV-2
+dataset, which is distributed as a Zipfile.
 \end{reply}
 
 \begin{point}
@@ -109,9 +115,13 @@ is missing some detail. At first I got the impression it might be based on
 something like Parquet, but running the provided code showed that it consists
 of a similar file-based chunk layout to Zarr. This should be clarified in the
 manuscript. 
-
 \end{point}
 \begin{reply}
+We have tried to clarify this (and the purpose of ICF) by saying
+``...storing each field independently in (approximately) fixed-size
+compressed chunks in a file-system hierarchy.
+ICF is designed to support efficient Zarr encoding within \texttt{vcf2zarr}
+and not intended for reuse outside that context.''
 \end{reply}
 
 \begin{point}
@@ -120,6 +130,9 @@ coordinates to chunk indexes. Have Zarr-based formats in other fields like
 geospatial introduced their own indexing approaches to take inspiration from?
 \end{point}
 \begin{reply}
+We have added a new \texttt{region\_index} field for this purpose, which 
+supports efficient genomic range searches. This is discussed in the last 
+paragraph of the vcf2zarr Methods section (pg 13).
 \end{reply}
 
 \begin{point}
@@ -129,6 +142,8 @@ can get involved, if possible. This doesn't need to be in the paper per se, but
 perhaps documented in the spec repo.
 \end{point}
 \begin{reply}
+Thank you, that is an excellent idea. We have added basic guidance for 
+contributors to the specification repo.
 \end{reply}
 
 
@@ -137,22 +152,24 @@ In the background: "For the representation to be FAIR, it must also be
 accessible," -- A is for "accessible", so "also" doesn't make sense.
 \end{point}
 \begin{reply}
+Fixed
 \end{reply}
-
 
 \begin{point}
 "There is currently no efficient, FAIR representation...". Just a nit and
 feel free to ignore, but the solution you present is technically "current".
 \end{point}
 \begin{reply}
+You are right, but for narrative purposes it is simpler to pose VCF Zarr 
+as new, so we'd prefer to keep this as it is.
 \end{reply}
 
 \begin{point}
 In Figure 2, the zarr line is occluded by the sav line and hard to see.
 \end{point}
 \begin{reply}
+The benchmarks have changed slightly, and the lines are now more separated.
 \end{reply}
-
 
 \reviewersection
 \section*{Reviewer 2 comments}
