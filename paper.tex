@@ -1625,19 +1625,25 @@ S3~\cite{s3-performance-optimising} are achievable.
 
 Returning to Fig~\ref{fig-s3-throughput}, we can see that the af-dist
 calculation is performed at a maximum rate of 25.5 GiB/s using 128
-processes. At this rate, the af-dist calculation for the target 
-% 180.80 MB in 4503 files
-% Total data: 90060.00 MB in 4503 chnnks
-region---172 MiB retrieved in 4503 chunks, 83.87 GiB of genotype data
-decompressed and processed---
-% NOTE: this doesn't quite up to the 25.5G above:  83.87 / 4.15 = 20.2
-was completed in 4.15s.
-This level of throughput would complete af-dist for all chromosomes for all samples
-% compute: cost of c5.9xlarge per hour * 1.27
-% ==                             $4.08 * 1.27
+processes. This level of throughput would complete af-dist for all
+chromosomes for all samples (104 TiB of genotype data)
+% timing: 722000000 * 79000 * 2bytes = 104 TiB
+% 104TiB / 25.5GiB/s = 1.16 hours
+% compute: cost of c5.9xlarge per hour * 1.16
+% ==                             $4.08 * 1.16
 % io: ((total # variants / variant chunk size) * (sample count/sample chunk size)) /1000 * cost for 1000 IOPS
 % ==  (((722000000       / 10000)              * (79000       /1000))              /1000)* $0.0004
-in 1.27 hours for a compute cost of \$5.18 and an IO cost of \$2.28.
+in 1.16 hours for a compute cost of \$4.73 and an IO cost of \$2.28.
+
+Using this parallel architecture, the af-dist calculation for the target 
+% 180.80 MB in 4503 files
+% Total data: 90060.00 MB in 4503 chunks
+region used for the single threaded benchmarks above ---172 MiB retrieved in 4503
+chunks, 83.87 GiB of genotype data decompressed and processed---
+% This gives an effective rate lower than  25.5G above:  83.87 / 4.15 = 20.2
+was completed in 4.15s. A slightly slower effective throughput than in
+Fig~\ref{fig-s3-throughput} as the short time to completion means that
+the timing is sensitive to set-up and tear-down costs.
 See \citep{durbin2020task,moore2021ome,gowan2022using} for further Zarr
 benchmarks in cloud settings.
 
@@ -2356,11 +2362,13 @@ hosted on Genomics England's Lifebit CloudOS platform. VCF Zarr chunks
 were hosted in a standard profile S3 bucket. Both instance and bucket were
 in the same availability zone in the eu-west-2 region. Each
 of the parallel Python processes used the aioboto3 library (version 13.2.0) to
-fetch chunks concurrently from S3.
+fetch chunks concurrently from S3. To measure throughput accurately, the
+number of chunks fetched was scaled with the number of processes such that
+each process fetched 60 GiB of decompressed data.
 % The underlying aiohttp library
 % limits the concurrent fetching to 100 requests per process. 
 For decompressing
-and computing af-dist the same architecture was used but as fetched chunks
+and computing af-dist the same architecture was used, but as fetched chunks
 became available in memory in each process, they were decompressed and
 processed synchronously. Decompression was performed by using the 
 numcodecs library~\citep{numcodecs}.
