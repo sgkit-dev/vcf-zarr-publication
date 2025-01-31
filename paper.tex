@@ -1721,7 +1721,7 @@ PyTorch~\cite{paszke2019pytorch}
 and TensorFlow~\citep{tensorflow2015-whitepaper}
 providing the basic infrastructure for the field.
 
-To demonstrate the ease and efficiency with data stored in Zarr
+To demonstrate the ease and efficiency with which data stored in Zarr
 format can be processed on a GPU, we developed two proof-of-concept
 applications. 
 In both cases we demonstrate on data from chromosome 22 of
@@ -1743,7 +1743,7 @@ performed on the GPU, mostly with minimal changes required
 We perform the central operation of genotype classification using the
 CuPy JIT compiler to generate a custom CUDA kernel. 
 This is very similar to the Numba compiled function used in other
-experiments, within minimal changes required to take advantage of
+experiments, with minimal changes required to take advantage of
 on-GPU parallelism. In the simplest version, we iterate over the chunks
 in the \texttt{call\_genotype} array (stored as 30 chunks, consuming
 a total of 7.82 MiB), decompress each to a local
