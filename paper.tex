@@ -1231,8 +1231,25 @@ by encoding as local alleles, as the per-sample gVCFs used
 in earlier stages in the All of Us pipeline were truncated
 to a maximum of two ALT alleles per site. 
 
-[Discussion of the sparsity of the QC field data, and how this 
-explains the difference to the VCF compression.]
+At 1.1X larger than the source gzipped VCF,
+the relatively poor compression performance here 
+is noteworthy and interesting. At only 7.44 GiB for
+for 245K samples and 715K variants, VCF compression performance 
+is exceptional and a result of several data reduction techniques.
+Firstly, data for the AD, RGQ and FT fields is not stored 
+for homozygous reference calls and the fields are consequently
+extremely sparse. This is reflected in the Zarr, where 
+compression performance for e.g.\ LAD is more than 10X higher
+than the AD field in the Genomics England data
+(Table~\ref{tab-genomics-england-data}).
+Secondly, the GQ field has a very limited range of values 
+as a result of gVCF reblocking. Together, these
+techniques mean that the VCF text stream is highly compressible.
+While the Zarr does not compress as well as VCF text in this 
+case, the sparsity of the QC columns is reflected in the very
+high compression rates. It is interesting to note that the 
+BCF representation of this file is also larger than the VCF
+(and Zarr) at 8.8GiB.
 
 \subsection{Case study: 1,063 spruce whole-genome samples}
 
