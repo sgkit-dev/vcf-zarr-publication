@@ -1166,7 +1166,7 @@ pathogenic or likely pathogenic.
 Conversion was performed on the All of Us Researcher Workbench platform
 (based on Google Cloud), using a single compute node with 64 CPUs and 416 GiB
 of RAM, which cost \$3.80/hour. We first converted the VCF to  ICF, which
-took 6 hours and 17 minutes of effective runtime and utilized 343 hours of CPU
+took 6 hours and 17 minutes of effective runtime and used 343 hours of CPU
 time, achieving a parallel efficiency of 86\%. This step incurred a cost of
 \$23.88. The resulting ICF representation required 7.5 GiB of storage distributed
 across 91,232 files. Next, the ICF was converted to Zarr, which took 1 hour and 8 minutes, with
@@ -1380,7 +1380,7 @@ illustrates the flexibility of Zarr across a range of biological applications.
 whole genome alignments and metadata 
 (4,384,310 samples, 29903 variants)
 consisting of 37 fields and 391 MiB of storage, 
-of which 280MiB is used by aligments ($\sim 81$X smaller 
+of which 280MiB is used by alignments ($\sim 81$X smaller 
 than gzipped FASTA). The chunk size is 100 variants $\times$
 10,000 samples.
 Shown are the top 9 fields consuming at least 1\% of the 
@@ -1423,7 +1423,7 @@ Other than these minor deviations in interpretation, the Zarr follows
 the VCF Zarr specification and can be processed using the same tools.
 
 Decompressed, the Viridian dataset consists of 48
-FASTA files totaling 125 GiB of storage and a 1.4 GiB
+FASTA files totalling 125 GiB of storage and a 1.4 GiB
 TSV file for sample metadata.
 When aligned to the reference and converted to Zarr, the
 entire dataset is stored in a single 391 MiB Zip file.
@@ -1545,7 +1545,7 @@ data in several formats, used, for example, in
 checkpointing~\cite{orbax-tensorstore} 
 TensorFlow model training~\citep{tensorflow2015-whitepaper}.
 It supports several cloud platforms, and is based on an
-asyncronous, parallel processing model (see Discussion).
+asynchronous, parallel processing model (see Discussion).
 
 To assess the performance of this implementation we compared the time required
 to perform an association test using the simulated dataset of 100,000 samples
@@ -1714,7 +1714,7 @@ These benchmarks illustrate the transformative
 potential of Zarr and cloud computing.
 
 \subsection{Future applications: GPU acceleration}
-GPU acceleration has revolutionized scientific computing by leveraging 
+GPU acceleration has revolutionised scientific computing by leveraging 
 their massively parallel architecture to achieve significant speedups in
 computationally intensive tasks such as simulations, data analysis, and machine
 learning, often by one or two orders of magnitude~\citep{nickolls2010gpu,
@@ -1750,7 +1750,7 @@ Experiments in this section were performed on a
 computer with an Intel Xeon Silver 4216 processor,
 Nvidia A6000 RTX GPU and NVMe SSD.
 
-To demonstate the ease at which non-trivial, novel calculations 
+To demonstrate the ease at which non-trivial, novel calculations 
 can be performed on a GPU,
 we first reimplemented the af-dist calculation
 described above using CuPy~\citep{okuta2017cupy}, a GPU accelerated library
