@@ -1695,77 +1695,61 @@ These benchmarks illustrate the transformative
 potential of Zarr and cloud computing.
 
 \subsection{Future applications: GPU acceleration}
-GPU acceleration has revolutionized scientific computing by leveraging the
-massively parallel architecture of GPUs to achieve significant speedups in
+GPU acceleration has revolutionized scientific computing by leveraging 
+their massively parallel architecture to achieve significant speedups in
 computationally intensive tasks such as simulations, data analysis, and machine
 learning, often by one or two orders of magnitude~\citep{nickolls2010gpu,
 mittal2014survey,owens2008gpu}
-% (Nickolls & Dally, 2010;
-% Mittal & Vetter, 2015; 
-% Owens et al., 2008). 
-This has profound implications for
-fields ranging from molecular dynamics~\citep{stone2007accelerating}
-% (Stone et al., 2010) 
-to deep learning~\citep{lecun2015deep}
-% (LeCun et al., 2015). 
+This has had a transformative impact across many 
+% TODO More
+fields~\citep[e.g.][]{stone2007accelerating,pandey2022transformational}.
 While early GPU programming required expertise in
 low-level languages like CUDA or OpenCL, the advent of high-level Python
 libraries such as Numba~\citep{lam2015numba}, CuPy~\citep{okuta2017cupy} 
-%(Okuta et al., 2017), 
-and
-PyCUDA/PyOpenCL~\citep{klockner2012pycuda}
-% (Klöckner, 2012) 
-has democratized access to GPU acceleration.
-These tools offer user-friendly interfaces and just-in-time compilation,
-allowing scientists to harness the power of GPUs within the familiar Python
-ecosystem, thereby significantly accelerating scientific discovery and
-broadening the adoption of accelerated computing across various research
-domains.
+and PyCUDA/PyOpenCL~\citep{klockner2012pycuda}
+has made GPU acceleration far more accessible.
+Deep learning~\citep{lecun2015deep} has led to major breakthroughs in 
+several domains in recent 
+% TODO more?
+years~\citep[e.g.][]{jumper2021highly,merchant2023scaling}
+and depends crucially on processing large volumes of data
+on GPUs or other custom hardware accelerators.
+The Python data science ecosystem is particularly powerful in this area,
+with GPU-native libraries like
+PyTorch~\cite{paszke2019pytorch}
+and TensorFlow~\citep{tensorflow2015-whitepaper}
+providing the basic infrastructure for the field.
 
-% [JK: this is a super rough first narrative draft.]
-% Machine learning, and in particular deep learning methods, have led to
-% major breakthroughs in many different fields in recent years [CITES].
-% GPUs have been a key enabling factor in this [details and cites].
-% The PyData ecosystem [cites] has also enabled this. Techologies like
-% [Cupy, lots of others] substantially lower the bar for writing efficient
-% GPU code.
-% Deep learning methods depend crucially on efficient access to vast
-% datasets for training, and Zarr is emerging as a popular choice
-% [cites from geosciences?]. The RAPIDs GPU Accelerated data science
-% library [which does] now supports Zarr through [kvikio, more?].
-
-To demonstrate the ease and efficiency with this data stored in Zarr
+To demonstrate the ease and efficiency with data stored in Zarr
 format can be processed on a GPU, we developed two proof-of-concept
-applications. In the first we re-implement the af-dist calculation
-used throughout as an example of a non-trivial whole-matrix operation
-on GPU. In the second, we demonstrate some emerging technology
-in which Zarr data can be decompressed directly in GPU memory.
-In both cases we demonstrate on chromosome 22 of
+applications. 
+In both cases we demonstrate on data from chromosome 22 of
 1000 Genomes WGS data~\citep{byrska2022high}. This consists
 of 96,514 variants and 2504 samples, converted to Zarr format
-using a chunk size of 10,000 variants $\times$ 1,000 variants.
+using a chunk size of 10,000 variants $\times$ 1,000 samples.
 Experiments in this section were performed on a
-machine with an Intel Xeon Silver 4216 processor,
+computer with an Intel Xeon Silver 4216 processor,
 Nvidia A6000 RTX GPU and NVMe SSD.
 
-We first illustrate the ease with which computations can be
-be peformed on the GPU, with little or no preprocessing of the
-data. To do this we reimplemented the af-dist calculation
+To demonstate the ease at which non-trivial, novel calculations 
+can be performed on a GPU,
+we first reimplemented the af-dist calculation
 described above using CuPy~\citep{okuta2017cupy}, a GPU accelerated library
 of core operations for scientific computing.
 All of the operations required to compute  af-dist are
 performed on the GPU, mostly with minimal changes required
 (e.g.\ replacing \texttt{np.digitize} with \texttt{cp.digitize}).
-We perform the core operation of genotype classification using the
-CuPy JIT compiler to generate a custom CUDA kernel, which
-is also very similar to the Numba compiled function used in other
-experiments. In the simplest version, we iterate over the chunks
+We perform the central operation of genotype classification using the
+CuPy JIT compiler to generate a custom CUDA kernel. 
+This is very similar to the Numba compiled function used in other
+experiments, within minimal changes required to take advantage of
+on-GPU parallelism. In the simplest version, we iterate over the chunks
 in the \texttt{call\_genotype} array (stored as 30 chunks, consuming
 a total of 7.82 MiB), decompress each to a local
-NumPy array and then copying the data to GPU memory by creating
+NumPy array and then copy the data to GPU memory by creating
 the corresponding CuPy array. For this version, the total time
-in the genotype classification kernel was 25ms with an
-overall data transfer time of 179ms (we discount decompression
+in the genotype classification kernel was 25ms with a
+data transfer time of 179ms (we discount decompression
 time here; see next paragraph). For comparison,
 our standard Numba compiled classification function required
 a total of 1.46s running on a single CPU core.
@@ -1775,27 +1759,51 @@ here as the $96514 \times 2504 \times 2$ array requires
 460 MiB) and uses
 a more sophisticated kernel in which we map GPU resources to
 subsets of the array in two dimensions,
-reduces transfer
-time to 138ms and processing time to 6ms.
+reduces transfer time to 138ms and processing time to 6ms.
 
 Chunk decompression comprises a significant fraction of processing
-time [FIXME crossrefs?] and host-to-GPU data transfer is
+time (see Figs~\ref{fig-whole-matrix-decode},\ref{fig-s3-throughput})
+and host-to-GPU data transfer is
 often a bottleneck. It is therefore useful in some applications
 to directly decompress Zarr chunks into GPU memory.
-KvikIO~\cite{kvikio} is a Python package that provides access to optimised
-GPU IO routines, and providing support for Zarr along with
-access to several GPU optimised compression codecs.
-To explore the performance of these codecs we recompressed
+The KvikIO~\cite{kvikio} Python package provides a GPU 
+implementation of Zarr, such that both data transfers
+(file and network IO) and decompression are performed 
+directly on the GPU. 
+To explore the performance of the GPU optimised compression
+codecs available, we recompressed
 the \texttt{call\_AD} (allele depth) array
-(96514, 2504, 7) [int16 more details]. In all cases it took around 1s
-to compress and store this 3.15 GiB array. [Details about compression codecs?]
+which had dimensions of $96514\times2504\times7$
+and 16 bit integer data type (note that 
+we did not use local alleles encoding here, and this 
+array is therefore highly sparse and compressible).
+For all five codecs considered
+(Bitcomp, Snappy, LZ4, Cascaded, Gdeflate)
+% GPU Bitcomp compress time = 1.372 (s)
+% GPU Snappy compress time = 0.996 (s)
+% GPU LZ4 compress time = 0.937 (s)
+% GPU Cascaded compress time = 0.703 (s)
+% GPU Gdeflate compress time = 0.955 (s)
+it took approximately 1s
+to compress and store this 3.15 GiB array. 
 We then measured the time to decompress these arrays and
-copy back to host memory. This required about 0.6s with the
-fastest codecs. For reference, using the Zstandard codec and the
-standard CPU Zarr code (which does some limited multithreading for decompression
-by default) required about 7.6s. [Some discussion of how to interpret
-these experiments. We're just trying to illustrate the powerful toolchain
- that is immediately to hand when data is stored in Zarr format.]
+copy back to host memory,
+% GPU snappy deflate time =  0.606 (s)
+% GPU bitcomp deflate time =  0.626 (s)
+% GPU cascade deflate time =  0.574 (s)
+% GPU gdeflate deflate time =  0.967 (s)
+% GPU lz4 deflate time =  0.567 (s)
+% CPU zarr time =  7.560 (s)
+which varied from 0.57s (Cascaded, LZ4) to 0.97s (Gdeflate) across
+the codecs.
+For reference, using the Zstandard codec and the
+standard CPU Zarr code (which performs some limited multithreading for 
+chunk decompression by default) required about 7.6s. 
+
+These experiments are not formal benchmarks and are intended simply 
+as illustative examples of the diverse, powerful and rapidly
+growing toolchain available with Zarr. Efficient access to VCF 
+data in GPU memory may enable a number of downstream applications.
 
 \section{Discussion}
 % Zarr is great
@@ -1919,6 +1927,7 @@ the Python data science ecosystem is a particularly powerful
 platform,
 with a rich suite of tools~\cite[e.g.][]{
 mckinney2010data,
+scikit-learn, 
 lam2015numba,
 kluyver2016jupyter,
 harris2020array,
