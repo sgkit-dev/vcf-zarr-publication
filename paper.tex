@@ -147,7 +147,7 @@ human datasets (Genomics England: $n$=78,195;
 Our Future Health: $n$=651,050; 
 All of Us: $n$=245,394) along with whole genome
 datasets for Norway Spruce ($n$=1,063) and 
-SARS-CoV-2 ($n$=4,384,310).
+SARS-CoV-2 ($n$=4,484,157).
 We demonstrate the potential for VCF Zarr to enable a new generation
 of high-performance and cost-effective applications
 via illustrative examples using cloud computing and GPUs.
@@ -339,7 +339,7 @@ for species with large genomes using Norway Spruce data (3.2X smaller
 than gzipped VCF),
 and in a large collection of short whole genome alignments
 using SARS-CoV-2 data 
-(81X smaller than gzipped FASTA). 
+(77X smaller than gzipped FASTA). 
 Interoperability with the vast ecosystem of tools
 based on VCF~\citep{danecek2021twelve,garrison2022spectrum}
 is crucial. 
@@ -1367,20 +1367,20 @@ overwhelmed classical phylogenetic methods, leading to the development
 of a new class of tools~\citep{turakhia2021ultrafast,ye2022matoptimize,zhan2023towards}
 capable of handling millions of samples.
 The Viridian dataset~\citep{hunt2024addressing} is a consistently assembled
-set of consensus sequences for 4,384,310 samples, addressing a range of systematic
+set of consensus sequences for 4,484,157 samples, addressing a range of systematic
 errors. The \texttt{sc2ts} inference tool uses VCF-Zarr as its
-input format, and Zhan et al have made the Viridian dataset,
+input format, and Zhan et al~\citep{zhan2023towards} have made the Viridian dataset,
 aligned to the reference using MAFFT~\citep{katoh2013mafft},
-available for download~\citep{zhan2023towards}. This dataset has quite
+available for download~\citep{kelleher2025viridian}. This dataset has quite
 different properties to those examined in previous case studies, and
 illustrates the flexibility of Zarr across a range of biological applications.
 
 \begin{table}
 \caption{Summary for VCF Zarr conversion of Viridian SARS-CoV-2
 whole genome alignments and metadata 
-(4,384,310 samples, 29903 variants)
-consisting of 37 fields and 391 MiB of storage, 
-of which 280MiB is used by alignments ($\sim 81$X smaller 
+(4,484,157 samples, 29,903 variants)
+consisting of 37 fields and 401 MiB of storage, 
+of which 279 is used by alignments ($\sim 77$X smaller 
 than gzipped FASTA). The chunk size is 100 variants $\times$
 10,000 samples.
 Shown are the top 9 fields consuming at least 1\% of the 
@@ -1426,12 +1426,12 @@ Decompressed, the Viridian dataset consists of 48
 FASTA files totalling 125 GiB of storage and a 1.4 GiB
 TSV file for sample metadata.
 When aligned to the reference and converted to Zarr, the
-entire dataset is stored in a single 391 MiB Zip file.
+entire dataset is stored in a single 401 MiB Zip file.
 When compressed with bgzip (so they can be indexed; see next 
 paragraph) the alignments require 22 GiB of storage.
 Table~\ref{tab-sc2-data} summarises the storage used by individual
-arrays, and shows that the alignment data requires 298 MiB,
-around 81X smaller than gzipped FASTA.
+arrays, and shows that the alignment data requires 279 MiB,
+around 77X smaller than gzipped FASTA.
 The original dataset is distributed as xz compressed FASTA files, which
 achieves even higher compression levels at a total of 218 MiB.
 However, these files must be decompressed in order to access the data
@@ -1439,10 +1439,10 @@ using standard FASTA processing techniques.
 
 Computational accessibility for the Zarr is excellent. For example,
 computing the total number of missing or ambiguous bases for 
-all 4.4 million samples required 55.5 seconds elapsed (6min 45s CPU)
+all 4.4 million samples required 57.4 seconds elapsed (7min 08s CPU)
 using 8 threads. This required 11 lines of code, using only the 
 Python standard library and NumPy. Similarly, computing allele
-counts at each site required 4min 53s (25min 35s CPU) using a slightly
+counts at each site required 4min 19s (20min 50s CPU) using a slightly
 more complicated 16 line Python function.
 Existing methods for working with FASTA data provided efficient 
 access to individual alignments using the fai index format, which
@@ -1450,11 +1450,12 @@ works with uncompressed or bgzip compressed files.
 For example, retrieving the alignment for the 1 millionth sample 
 from the corresponding chunk file requires only a few milliseconds
 using pyfaidx~\citep{shirley2015efficient} or 
-pysam~\citep{pysam}. Retrieving the same alignment using Zarr 
-required 365ms. 
+pysam~\citep{pysam}. 
+Retrieving the same alignment using Zarr 
+required 327ms. 
 Accessing calls for all samples at at a given 
 site requires a similar time (here, accessing site 14,951
-required 276ms). 
+required 482ms). 
 FASTA cannot support efficient retrieval
 of data for a particular site in a set of alignments.
 Storing data chunked in two dimensions means that we can avoid
@@ -1468,8 +1469,8 @@ implements a subset of \texttt{bcftools} functionality.
 Vcztools is intended to be a drop-in replacement for \texttt{bcftools},
 providing an evolutionary path for VCF Zarr adoption,
 with compatibility being a core objective.
-Vcztools currently supports Zarr stored in the local file system
-and Zip archives, and support for major cloud stores will be added in the near future. 
+Vcztools currently supports Zarr stored in the local file system,
+Zip archives, and major cloud stores.
 Thus, users can convert their VCF data to Zarr using \texttt{bio2zarr},
 store it in a local file system, Zip file or cloud store as desired
 and then access this data source within existing processing pipelines,
