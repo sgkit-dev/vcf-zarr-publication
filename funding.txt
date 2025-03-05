@@ -1,0 +1,9 @@
+The Robertson Foundation, , , J Kelleher;
+NIH, National Human Genome Research Institute, HG011395, J Kelleher;
+NIH, National Human Genome Research Institute, HG012473, J Kelleher;
+Bill and Melinda Gates Foundation, , INV-001927, J Kelleher;
+Bill and Melinda Gates Foundation, , INV-001927, A Miles;
+The New Zealand Institute for Plant \& Food Research Ltd, Kiwifruit Royalty Investment Programme, , T R Millar;
+Knut and Alice Wallenberg Foundation, SciLifeLab \& Wallenberg Data Driven Life Science Program, KAW 2020.0239, P Unneberg;
+Knut and Alice Wallenberg Foundation, SciLifeLab \& Wallenberg Data Driven Life Science Program, KAW 2017.0003, P Unneberg;
+National Bioinformatics Infrastructure Sweden (NBIS), SciLifeLab, , P Unneberg;
