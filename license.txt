@@ -1,0 +1,5 @@
+The contents of this repository are licensed as follows:
+
+- The manuscript text and associated images: CC-BY 
+- All scripts and source code: Apache-2.0 
+- All other files (e.g. CSV data): CC0
